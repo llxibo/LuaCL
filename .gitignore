@@ -2,3 +2,4 @@ Debug/
 *.sdf
 *.opensdf
 *.suo
+*.vcxproj.user
