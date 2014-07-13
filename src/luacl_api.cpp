@@ -22,7 +22,19 @@ int luacl_GetPlatformInfo(lua_State *L) {
 }
 
 int luacl_GetNumDevices(lua_State *L) {
-	cl_platform_id platform = NULL;
+	cl_uint index = static_cast<cl_uint>(luaL_checkinteger(L, 1));
+	cl_platform_id platform = GetPlatformId(index - 1);
 	lua_pushnumber(L, GetNumDevices(platform));
 	return 1;
+}
+
+int luacl_GetDeviceInfo(lua_State *L) {
+	cl_uint platformIndex = static_cast<cl_uint>(luaL_checkinteger(L, 1));
+	cl_platform_id platform = GetPlatformId(platformIndex);
+	
+	cl_uint deviceIndex = static_cast<cl_uint>(luaL_checkinteger(L, 2));
+	cl_device_id device = GetDeviceId(platform, deviceIndex);
+
+	size_t work_group_size = GetDeviceInfo<size_t>(device, CL_DEVICE_MAX_WORK_GROUP_SIZE);
+	return 0;
 }

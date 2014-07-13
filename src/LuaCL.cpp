@@ -3,8 +3,6 @@
 #include "luacl_api.h"
 #include "luacl_info.h"
 
-using namespace std;
-
 int main(int argc, char **argv) {
 	lua_State *L = luaL_newstate();
 	if (NULL == L) {
