@@ -74,7 +74,7 @@ cl_device_id GetDeviceId(cl_platform_id platform, cl_uint index) {
 	return deviceId;
 }
 
-template <typename T> T GetDeviceInfo(cl_device_id device, cl_platform_info param) {
+template <typename T> T GetDeviceInfo(cl_device_id device, cl_device_info param) {
 #if _DEBUG
 	size_t size = 0;
 	cl_int errNumDebug = clGetDeviceInfo(device, param, 0, NULL, &size);
