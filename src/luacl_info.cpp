@@ -1,5 +1,4 @@
 #include "luacl_info.h"
-#include <assert.h>
 
 void PushPlatformInfo(lua_State *L, cl_platform_id platform, cl_platform_info param, std::string key) {
 	/* Check size of value */
@@ -74,16 +73,20 @@ cl_device_id GetDeviceId(cl_platform_id platform, cl_uint index) {
 	return deviceId;
 }
 
-template <typename T> T GetDeviceInfo(cl_device_id device, cl_device_info param) {
-#if _DEBUG
+void PushDeviceInfoStr(lua_State *L, cl_device_id device, cl_device_info param, std::string key) {
 	size_t size = 0;
-	cl_int errNumDebug = clGetDeviceInfo(device, param, 0, NULL, &size);
-	assert(size == sizeof(T));
-#endif
-	T value;
-	cl_int errNum = clGetDeviceInfo(device, param, sizeof(T), &value, NULL);
-	if (errNum == CL_SUCCESS) {
-		value = 0;
+	cl_int errNum = clGetDeviceInfo(device, param, 0, NULL, &size);
+	if (errNum != CL_SUCCESS || size == 0) {
+		return;
 	}
-	return value;
+	char * value = static_cast<char *>(malloc(sizeof(char) * size));
+	errNum = clGetDeviceInfo(device, param, size, value, NULL);
+	if (errNum != CL_SUCCESS) {
+		return;
+	}
+
+	lua_pushstring(L, key.c_str());
+	lua_pushlstring(L, value, size);
+	lua_settable(L, -3);
 }
+

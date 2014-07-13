@@ -3,6 +3,7 @@
 
 #include "LuaCL.h"
 #include <string>
+#include <assert.h>
 
 void PushPlatformInfo(lua_State *L, cl_platform_id platform, cl_platform_info param, std::string key);
 
@@ -14,6 +15,27 @@ cl_uint GetNumDevices(cl_platform_id platform);
 
 cl_device_id GetDeviceId(cl_platform_id platform, cl_uint index);
 
-template <typename T> T GetDeviceInfo(cl_device_id device, cl_device_info param);
+template <typename T> T GetDeviceInfo(cl_device_id device, cl_device_info param) {
+#if _DEBUG
+	size_t size = 0;
+	cl_int errNumDebug = clGetDeviceInfo(device, param, 0, NULL, &size);
+	assert(size == sizeof(T));
+#endif
+	T value;
+	cl_int errNum = clGetDeviceInfo(device, param, sizeof(T), &value, NULL);
+	if (errNum != CL_SUCCESS) {
+		value = 0;
+	}
+	return value;
+}
+
+template <typename T> void PushDeviceInfo(lua_State *L, cl_device_id device, cl_device_info param, std::string key) {
+	T value = GetDeviceInfo<size_t>(device, param);
+	lua_pushstring(L, key.c_str());
+	lua_pushnumber(L, value);
+	lua_settable(L, -3);
+}
+
+void PushDeviceInfoStr(lua_State *L, cl_device_id device, cl_device_info param, std::string key)
 
 #endif
