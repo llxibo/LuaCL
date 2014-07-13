@@ -36,6 +36,6 @@ template <typename T> void PushDeviceInfo(lua_State *L, cl_device_id device, cl_
 	lua_settable(L, -3);
 }
 
-void PushDeviceInfoStr(lua_State *L, cl_device_id device, cl_device_info param, std::string key)
+void PushDeviceInfoStr(lua_State *L, cl_device_id device, cl_device_info param, std::string key);
 
 #endif
