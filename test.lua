@@ -1,16 +1,36 @@
-function PrintTable(t, name, level, levelstr)
-	local levelstr = levelstr or "    "
-	local level = level or ""
-	local nextlevel = level .. levelstr
-	print(level .. "[" .. name .. "] = {")
-	for key, value in pairs(t) do
-		if type(value) == "table" then
-			PrintTable(value, key, nextlevel, levelstr)
-		else
-			print(nextlevel .. key .. " = \"" .. tostring(value), "\"")
+function write_table( table, indent )
+	local file = io.stdout
+	local indent = indent or ""
+	for key, value in pairs(table) do
+		file:write(indent)
+		if type(key) == "number" then
+			file:write("[", key, "]")
+		elseif type(key) == "string" then
+			file:write("[", string.format("%q", key), "]")
 		end
+		file:write(" = ")
+		if type(value) == "number" then
+			file:write(value)
+		elseif type(value) == "string" then
+			file:write(string.format("%q", value))
+		elseif type(value) == "table" then
+			file:write("{\n")
+			write_table(value, indent .. "\t")
+			file:write(indent)
+			file:write("}")
+		elseif type(value) == "boolean" then
+			file:write(tostring(value))
+		else
+			file:write("nil")
+		end
+		file:write(",\n")
 	end
-	print(level .. "}")
+end
+
+function dump_table( table, name )
+	print(name .. " = {")
+	write_table(table, "  ")
+	print("}")
 end
 
 print("LuaCL environment test\n")
@@ -18,12 +38,18 @@ print("LuaCL environment test\n")
 local numPlatforms = GetNumPlatforms();
 print("Total platforms: ", numPlatforms)
 
-for index = 1, numPlatforms do
-	local cl_info = GetPlatformInfo(index)
+for platform = 1, numPlatforms do
+	local cl_info = GetPlatformInfo(platform)
 	print("Dumping result ...")
-	PrintTable(cl_info, "cl_info")
+	dump_table(cl_info, "cl_info")
 
-	print("Platform", index, "has device:", GetNumDevices(index))
+	print("Platform", platform, "has device:", GetNumDevices(platform))
+
+	for device = 1, GetNumDevices(platform) do
+		print("Device", device)
+		local deviceInfo = GetDeviceInfo(platform, device)
+		dump_table(deviceInfo, "deviceInfo")
+	end
 end
 
 print("Assertion on GetPlatformInfo ... ")

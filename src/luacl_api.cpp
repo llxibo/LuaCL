@@ -30,11 +30,19 @@ int luacl_GetNumDevices(lua_State *L) {
 
 int luacl_GetDeviceInfo(lua_State *L) {
 	cl_uint platformIndex = static_cast<cl_uint>(luaL_checkinteger(L, 1));
-	cl_platform_id platform = GetPlatformId(platformIndex);
-	
-	cl_uint deviceIndex = static_cast<cl_uint>(luaL_checkinteger(L, 2));
-	cl_device_id device = GetDeviceId(platform, deviceIndex);
+	cl_platform_id platform = GetPlatformId(platformIndex - 1);
 
-	size_t work_group_size = GetDeviceInfo<size_t>(device, CL_DEVICE_MAX_WORK_GROUP_SIZE);
-	return 0;
+	cl_uint deviceIndex = static_cast<cl_uint>(luaL_checkinteger(L, 2));
+	cl_device_id device = GetDeviceId(platform, deviceIndex - 1);
+
+	lua_newtable(L);
+	PushDeviceInfo<size_t>(L, device, CL_DEVICE_MAX_WORK_GROUP_SIZE, "MAX_WORK_GROUP_SIZE");
+	PushDeviceInfo<cl_uint>(L, device, CL_DEVICE_MAX_CLOCK_FREQUENCY, "MAX_CLOCK_FREQUENCY");
+	PushDeviceInfoStr(L, device, CL_DEVICE_NAME, "NAME");
+	PushDeviceInfoStr(L, device, CL_DEVICE_VENDOR, "VENDOR");
+	PushDeviceInfoStr(L, device, CL_DEVICE_VERSION, "VERSION");
+	PushDeviceInfoStr(L, device, CL_DEVICE_PROFILE, "PROFILE");
+	PushDeviceInfoStr(L, device, CL_DRIVER_VERSION, "DRIVER_VERSION");
+	PushDeviceInfoStr(L, device, CL_DEVICE_EXTENSIONS, "EXTENSIONS");
+	return 1;
 }
