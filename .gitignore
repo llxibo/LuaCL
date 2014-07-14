@@ -3,3 +3,4 @@ Debug/
 *.opensdf
 *.suo
 *.vcxproj.user
+*.o
