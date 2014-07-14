@@ -72,9 +72,9 @@ typedef struct{
     k8u snapshot;
 } event_t;
 typedef struct{
-    k32u count;
+    k16u count;
+    k16u power_suffice;
     event_t event[63];
-    event_t power_suffice;
 } event_queue_t;
 
 /* Runtime info struct, each thread preserves its own. */
@@ -103,6 +103,7 @@ void init_rng( seed_t* state, k32u seed ) {
 float rng( seed_t* seed ) {
     k32u y; /* Should be a register. */
     assert( seed->mti < 4 ); /* If not, RNG is uninitialized. */
+
     /* Concat lower-right and upper-left state bits. */
     y = ( seed->mt[seed->mti] & 0xfffffffeU ) | ( seed->mt[( seed->mti + 1 ) & 3] & 0x00000001U );
     /* Compute next state with the recurring equation. */
@@ -119,8 +120,8 @@ float rng( seed_t* seed ) {
     return ( *( float* )&y ) - 1.0f; /* Decrease to [.0f, 1.0f). */
 }
 
-/* Enroll an event into EQ. */
-event_t* eq_enroll(event_queue_t* eq, time_t trigger, k8u routine, k8u snapshot){
+/* Enqueue an event into EQ. */
+event_t* eq_enqueue(event_queue_t* eq, time_t trigger, k8u routine, k8u snapshot){
     k32u i = ++eq->count;
     event_t* p = &eq->event[-1];
 
@@ -130,6 +131,12 @@ event_t* eq_enroll(event_queue_t* eq, time_t trigger, k8u routine, k8u snapshot)
         p[i] = p[i >> 1];
     p[i] = (event_t){ .time = trigger, .routine = routine, .snapshot = snapshot };
     return &p[i];
+}
+
+/* Enqueue a power suffice event into EQ. */
+void eq_enqueue_ps(event_queue_t* eq, time_t trigger){
+    if (!eq->power_suffice || eq->power_suffice > trigger)
+        eq->power_suffice = trigger;
 }
 
 /* Execute the top priority. */
@@ -142,7 +149,7 @@ void eq_execute( rtinfo_t* rti ){
     assert( rti->eq.count < 64 ); /* Not zero but negative? */
 
     min = p[1];
-    if (!rti->eq.power_suffice.time || rti->eq.power_suffice.time >= min.time){
+    if (!rti->eq.power_suffice || rti->eq.power_suffice >= min.time){
         /* Delete from heap. */
         last = p[rti->eq.count--];
         for( i = 1; i << 1 <= rti->eq.count; i = child ){
@@ -155,16 +162,17 @@ void eq_execute( rtinfo_t* rti ){
                 break;
         }
         p[i] = last;
+
+        /* Now 'min' contains the top priority. Execute it. */
+        rti->timestamp = min.time;
+        /* TODO: execute a event. */
+        printf("Execute %d\n", min.routine);
+
     }else{
         /* Invoke power suffice routine. */
-        min = rti->eq.power_suffice;
-        rti->eq.power_suffice.time = 0;
+        rti->timestamp = rti->eq.power_suffice;
+        rti->eq.power_suffice = 0;
     }
-
-    /* Now 'min' contains the top priority. Execute it. */
-    rti->timestamp = min.time;
-    /* TODO: execute a event. */
-    printf("Execute %d\n", min.routine);
 
     /* TODO: scan APL. */
 }
@@ -172,14 +180,14 @@ void eq_execute( rtinfo_t* rti ){
 /* Delete this. */
 int main(){
     rtinfo_t rti = {};
-    eq_enroll(&rti.eq, 1, 2, 0);
-    eq_enroll(&rti.eq, 3, 4, 0);
-    eq_enroll(&rti.eq, 12, 13, 0);
-    eq_enroll(&rti.eq, 7, 8, 0);
-    eq_enroll(&rti.eq, 5, 6, 0);
+    eq_enqueue(&rti.eq, 1, 2, 0);
+    eq_enqueue(&rti.eq, 3, 4, 0);
+    eq_enqueue(&rti.eq, 12, 13, 0);
+    eq_enqueue(&rti.eq, 7, 8, 0);
+    eq_enqueue(&rti.eq, 5, 6, 0);
     eq_execute(&rti); printf("\tTime = %d\n", rti.timestamp);
-    eq_enroll(&rti.eq, 2, 3, 0);
-    eq_enroll(&rti.eq, 2, 3, 0);
+    eq_enqueue(&rti.eq, 2, 3, 0);
+    eq_enqueue(&rti.eq, 2, 3, 0);
     eq_execute(&rti); printf("\tTime = %d\n", rti.timestamp);
     eq_execute(&rti); printf("\tTime = %d\n", rti.timestamp);
     eq_execute(&rti); printf("\tTime = %d\n", rti.timestamp);
