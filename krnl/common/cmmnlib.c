@@ -74,7 +74,7 @@ typedef struct{
 typedef struct{
     k32u count;
     event_t event[63];
-    event_t energy_suffice;
+    event_t power_suffice;
 } event_queue_t;
 
 /* Runtime info struct, each thread preserves its own. */
@@ -119,8 +119,8 @@ float rng( seed_t* seed ) {
     return ( *( float* )&y ) - 1.0f; /* Decrease to [.0f, 1.0f). */
 }
 
-/* Register an event into EQ. */
-event_t* eq_register(event_queue_t* eq, time_t trigger, k8u routine, k8u snapshot){
+/* Enroll an event into EQ. */
+event_t* eq_enroll(event_queue_t* eq, time_t trigger, k8u routine, k8u snapshot){
     k32u i = ++eq->count;
     event_t* p = &eq->event[-1];
 
@@ -142,7 +142,7 @@ void eq_execute( rtinfo_t* rti ){
     assert( rti->eq.count < 64 ); /* Not zero but negative? */
 
     min = p[1];
-    if (!rti->eq.energy_suffice.time || rti->eq.energy_suffice.time >= min.time){
+    if (!rti->eq.power_suffice.time || rti->eq.power_suffice.time >= min.time){
         /* Delete from heap. */
         last = p[rti->eq.count--];
         for( i = 1; i << 1 <= rti->eq.count; i = child ){
@@ -156,9 +156,9 @@ void eq_execute( rtinfo_t* rti ){
         }
         p[i] = last;
     }else{
-        /* Invoke energy suffice routine. */
-        min = rti->eq.energy_suffice;
-        rti->eq.energy_suffice.time = 0;
+        /* Invoke power suffice routine. */
+        min = rti->eq.power_suffice;
+        rti->eq.power_suffice.time = 0;
     }
 
     /* Now 'min' contains the top priority. Execute it. */
@@ -172,14 +172,14 @@ void eq_execute( rtinfo_t* rti ){
 /* Delete this. */
 int main(){
     rtinfo_t rti = {};
-    eq_register(&rti.eq, 1, 2, 0);
-    eq_register(&rti.eq, 3, 4, 0);
-    eq_register(&rti.eq, 12, 13, 0);
-    eq_register(&rti.eq, 7, 8, 0);
-    eq_register(&rti.eq, 5, 6, 0);
+    eq_enroll(&rti.eq, 1, 2, 0);
+    eq_enroll(&rti.eq, 3, 4, 0);
+    eq_enroll(&rti.eq, 12, 13, 0);
+    eq_enroll(&rti.eq, 7, 8, 0);
+    eq_enroll(&rti.eq, 5, 6, 0);
     eq_execute(&rti); printf("\tTime = %d\n", rti.timestamp);
-    eq_register(&rti.eq, 2, 3, 0);
-    eq_register(&rti.eq, 2, 3, 0);
+    eq_enroll(&rti.eq, 2, 3, 0);
+    eq_enroll(&rti.eq, 2, 3, 0);
     eq_execute(&rti); printf("\tTime = %d\n", rti.timestamp);
     eq_execute(&rti); printf("\tTime = %d\n", rti.timestamp);
     eq_execute(&rti); printf("\tTime = %d\n", rti.timestamp);
