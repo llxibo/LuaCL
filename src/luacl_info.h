@@ -18,12 +18,12 @@ cl_device_id GetDeviceId(cl_platform_id platform, cl_uint index);
 template <typename T> T GetDeviceInfo(cl_device_id device, cl_device_info param) {
 #if _DEBUG
 	size_t size = 0;
-	cl_int errNumDebug = clGetDeviceInfo(device, param, 0, NULL, &size);
+	cl_int errDebug = clGetDeviceInfo(device, param, 0, NULL, &size);
 	assert(size == sizeof(T));
 #endif
 	T value;
-	cl_int errNum = clGetDeviceInfo(device, param, sizeof(T), &value, NULL);
-	if (errNum != CL_SUCCESS) {
+	cl_int err = clGetDeviceInfo(device, param, sizeof(T), &value, NULL);
+	if (err != CL_SUCCESS) {
 		value = 0;
 	}
 	return value;

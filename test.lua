@@ -35,7 +35,13 @@ end
 
 print("LuaCL environment test\n")
 
+local start1 = os.clock()
 local numPlatforms = GetNumPlatforms();
+local start2 = os.clock()
+print("First call GetNumPlatforms:", start2 - start1)
+local numPlatforms = GetNumPlatforms();
+local start3 = os.clock()
+print("Second call GetNumPlatforms:", start3 - start2)
 print("Total platforms: ", numPlatforms)
 
 for platform = 1, numPlatforms do
@@ -52,11 +58,25 @@ for platform = 1, numPlatforms do
 	end
 end
 
-print("Assertion on GetPlatformInfo ... ")
+print("Asserting invalid args GetPlatformInfo ... ")
 local cl_info = GetPlatformInfo(-1)
 assert(cl_info == nil)
 local cl_info = GetPlatformInfo(numPlatforms + 1)
 assert(cl_info == nil)
-print("Assertion passed")
+local ret = pcall(GetPlatformInfo, "test")
+assert(not ret)
+local cl_info = GetPlatformInfo(0.9)
+assert(cl_info == nil)
+print("Assertion passed.")
+
+print("Asserting invalid args GetDeviceInfo ... ")
+local deviceInfo = GetDeviceInfo(0, 1)
+assert(deviceInfo == nil)
+if numPlatforms > 1 then
+	local numDevices = GetNumDevices(1)
+	local deviceInfo = GetDeviceInfo(1, numDevices + 1)
+	assert(deviceInfo == nil)
+end
+print("Assertion passed.")
 
 print("\nFinished")
