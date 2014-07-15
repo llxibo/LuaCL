@@ -3,7 +3,10 @@
     2014.7.14
 */
 
+#if !defined(__OPENCL_VERSION__)
 #define _DEBUG
+#pragma once
+#endif /* !defined(__OPENCL_VERSION__) */
 
 /* Diagnostic. */
 #if defined(_DEBUG) && !defined(__OPENCL_VERSION__)
@@ -86,6 +89,7 @@ typedef struct kdeclspec( packed ) {
     seed_t seed;
     time_t timestamp;
     event_queue_t eq;
+    float* statistic; /* Should be __global__ ? */
 
 } rtinfo_t;
 
@@ -135,11 +139,12 @@ float rng( seed_t* seed ) {
 }
 
 /* Enqueue an event into EQ. */
-event_t* eq_enqueue(event_queue_t* eq, time_t trigger, k8u routine, k8u snapshot){
-    k32u i = ++eq->count;
-    event_t* p = &eq->event[-1];
+event_t* eq_enqueue(rtinfo_t* rti, time_t trigger, k8u routine, k8u snapshot){
+    k32u i = ++(rti->eq.count);
+    event_t* p = &(rti->eq.event[-1]);
 
-    assert( eq->count < 64 ); /* No full check on device. */
+    assert( rti->eq.count < 64 ); /* No full check on device. */
+    assert( rti->timestamp <= trigger );
 
     for( ; i > 1 && p[i >> 1].time > trigger; i >>= 1 )
         p[i] = p[i >> 1];
@@ -156,15 +161,20 @@ void eq_enqueue_ps(event_queue_t* eq, time_t trigger){
 /* Execute the top priority. */
 void eq_execute( rtinfo_t* rti ){
     k16u i, child;
-    kbool rescan;
     event_t min, last;
     event_t* p = &rti->eq.event[-1];
 
     assert( rti->eq.count ); /* No empty check on device. */
     assert( rti->eq.count < 64 ); /* Not zero but negative? */
 
+    /* When time elapse, trigger a full scanning at APL. */
+    if (rti->timestamp < p[1].time && (!rti->eq.power_suffice || rti->timestamp < rti->eq.power_suffice))
+        scan_apl(rti); /* This may change p[1]. */
+
     min = p[1];
+
     if (!rti->eq.power_suffice || rti->eq.power_suffice >= min.time){
+
         /* Delete from heap. */
         last = p[rti->eq.count--];
         for( i = 1; i << 1 <= rti->eq.count; i = child ){
@@ -179,7 +189,6 @@ void eq_execute( rtinfo_t* rti ){
         p[i] = last;
 
         /* Now 'min' contains the top priority. Execute it. */
-        rescan = (rti->timestamp != min.time);
         rti->timestamp = min.time;
         /* TODO: Some preparations? */
         routine_entries(rti, min);
@@ -187,30 +196,9 @@ void eq_execute( rtinfo_t* rti ){
 
     }else{
         /* Invoke power suffice routine. */
-        rescan = (rti->timestamp != rti->eq.power_suffice);
         rti->timestamp = rti->eq.power_suffice;
         rti->eq.power_suffice = 0;
+        /* Power suffices would not make any impact, just a reserved APL scanning. */
     }
 
-    /* Event with elapsed timestamp should trigger a full scanning at APL. */
-    if (rescan) scan_apl(rti);
-}
-
-/* Delete this. */
-int main(){
-    rtinfo_t rti = {};
-    eq_enqueue(&rti.eq, 1, 2, 0);
-    eq_enqueue(&rti.eq, 3, 4, 0);
-    eq_enqueue(&rti.eq, 12, 13, 0);
-    eq_enqueue(&rti.eq, 7, 8, 0);
-    eq_enqueue(&rti.eq, 5, 6, 0);
-    eq_execute(&rti); printf("\tTime = %d\n", rti.timestamp);
-    eq_enqueue(&rti.eq, 2, 3, 0);
-    eq_enqueue(&rti.eq, 2, 3, 0);
-    eq_execute(&rti); printf("\tTime = %d\n", rti.timestamp);
-    eq_execute(&rti); printf("\tTime = %d\n", rti.timestamp);
-    eq_execute(&rti); printf("\tTime = %d\n", rti.timestamp);
-    eq_execute(&rti); printf("\tTime = %d\n", rti.timestamp);
-    eq_execute(&rti); printf("\tTime = %d\n", rti.timestamp);
-    eq_execute(&rti); printf("\tTime = %d\n", rti.timestamp);
 }
