@@ -95,3 +95,13 @@ void PushDeviceInfoStr(lua_State *L, cl_device_id device, cl_device_info param, 
 	lua_settable(L, -3);
 }
 
+cl_uint GetContextReferenceCount(cl_context context) {
+	cl_uint count = 0;
+	cl_int err = clGetContextInfo(context, CL_CONTEXT_REFERENCE_COUNT, sizeof(cl_uint), &count, NULL);
+	if (err != CL_SUCCESS) {
+		printf("GetContextReferenceCount failed\n");
+		return 0;
+	}
+	printf("context ref: %d\n", count);
+	return count;
+}

@@ -15,6 +15,8 @@ cl_uint GetNumDevices(cl_platform_id platform);
 
 cl_device_id GetDeviceId(cl_platform_id platform, cl_uint index);
 
+cl_uint GetContextReferenceCount(cl_context context);
+
 template <typename T> T GetDeviceInfo(cl_device_id device, cl_device_info param) {
 #if _DEBUG
 	size_t size = 0;

@@ -11,14 +11,7 @@ int main(int argc, char **argv) {
 
 	luaL_openlibs(L);
 	
-	lua_pushcfunction(L, luacl_GetPlatformInfo);
-	lua_setglobal(L, "GetPlatformInfo");
-	lua_pushcfunction(L, luacl_GetNumPlatforms);
-	lua_setglobal(L, "GetNumPlatforms");
-	lua_pushcfunction(L, luacl_GetNumDevices);
-	lua_setglobal(L, "GetNumDevices");
-	lua_pushcfunction(L, luacl_GetDeviceInfo);
-	lua_setglobal(L, "GetDeviceInfo");
+	luaopen_LuaCL(L);
 
 	int error = luaL_dofile(L, "test.lua");
 	if (error) {
