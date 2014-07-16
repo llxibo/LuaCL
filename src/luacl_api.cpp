@@ -90,7 +90,7 @@ static int luacl_CreateContext(lua_State *L) {
 		lua_rawgeti(L, 2, static_cast<lua_Number>(index + 1));
 		cl_uint deviceIndex = static_cast<cl_uint>(lua_tonumber(L, -1));
 		// printf("Device %d: %d\n", index, deviceIndex);
-		devices[index] = GetDeviceId(platform, deviceIndex);
+		devices[index] = GetDeviceId(platform, deviceIndex - 1);
 		if (devices[index] == NULL) {
 			free(devices);
 			return luaL_error(L, "CreateContext: invalid deviceIndex %d", index);
@@ -101,7 +101,7 @@ static int luacl_CreateContext(lua_State *L) {
 	cl_int err;
 	cl_context context = clCreateContext(properties, size, devices, NULL, NULL, &err);
 	if (err != CL_SUCCESS) {
-		return luaL_error(L, "CreateContext: failed creating context");
+		return luaL_error(L, "CreateContext: failed creating context - code %d", err);
 	}
 
 	cl_context * udata_context = static_cast<cl_context*>(lua_newuserdata(L, sizeof(cl_context *)));
