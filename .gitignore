@@ -1,4 +1,5 @@
-Debug/
+x64/
+Win32/
 *.sdf
 *.opensdf
 *.suo
