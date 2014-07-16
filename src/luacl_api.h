@@ -6,12 +6,9 @@
 #include <string>
 #include "luacl_info.h"
 
-int luacl_GetNumPlatforms(lua_State *L);
+static const char LUACL_UDATA_CONTEXT[] = "LuaCL.context";
+static const char LUACL_GLOBAL_NAME[] = "LuaCL";
 
-int luacl_GetPlatformInfo(lua_State *L);
-
-int luacl_GetNumDevices(lua_State *L);
-
-int luacl_GetDeviceInfo(lua_State *L);
+LUALIB_API int luaopen_LuaCL(lua_State *L);
 
 #endif

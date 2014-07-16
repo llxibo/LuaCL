@@ -1,3 +1,10 @@
+require "LuaCL"
+
+-- Copy LuaCL from package to global environment
+for key, value in pairs(LuaCL) do
+	_G[key] = value
+end
+
 function write_table( table, indent )
 	local file = io.stdout
 	local indent = indent or ""
@@ -21,7 +28,7 @@ function write_table( table, indent )
 		elseif type(value) == "boolean" then
 			file:write(tostring(value))
 		else
-			file:write("nil")
+			file:write(tostring(value))
 		end
 		file:write(",\n")
 	end
@@ -51,13 +58,21 @@ for platform = 1, numPlatforms do
 
 	print("Platform", platform, "has device:", GetNumDevices(platform))
 
+	local deviceList = {}
 	for device = 1, GetNumDevices(platform) do
 		print("Device", device)
 		local deviceInfo = GetDeviceInfo(platform, device)
 		dump_table(deviceInfo, "deviceInfo")
+		if deviceInfo then
+			table.insert(deviceList, device)
+		end
 	end
+	print("List of devices:")
+	dump_table(deviceList, "deviceList")
+	local context = CreateContext(platform, deviceList)
 end
 
+----- GetPlatformInfo -----
 print("Asserting invalid args GetPlatformInfo ... ")
 local cl_info = GetPlatformInfo(-1)
 assert(cl_info == nil)
@@ -69,6 +84,7 @@ local cl_info = GetPlatformInfo(0.9)
 assert(cl_info == nil)
 print("Assertion passed.")
 
+----- GetDeviceInfo -----
 print("Asserting invalid args GetDeviceInfo ... ")
 local deviceInfo = GetDeviceInfo(0, 1)
 assert(deviceInfo == nil)
@@ -78,5 +94,11 @@ if numPlatforms > 1 then
 	assert(deviceInfo == nil)
 end
 print("Assertion passed.")
+
+local context = CreateContext(1, {1})
+print("Created context:", tostring(context))
+context = nil
+print("Collecting garbage")
+collectgarbage()
 
 print("\nFinished")

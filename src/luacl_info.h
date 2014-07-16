@@ -15,10 +15,13 @@ cl_uint GetNumDevices(cl_platform_id platform);
 
 cl_device_id GetDeviceId(cl_platform_id platform, cl_uint index);
 
+cl_uint GetContextReferenceCount(cl_context context);
+
 template <typename T> T GetDeviceInfo(cl_device_id device, cl_device_info param) {
 #if _DEBUG
 	size_t size = 0;
 	cl_int errDebug = clGetDeviceInfo(device, param, 0, NULL, &size);
+	// printf("%d: %d - %d\n", param, size, sizeof(T));
 	assert(size == sizeof(T));
 #endif
 	T value;
@@ -30,9 +33,9 @@ template <typename T> T GetDeviceInfo(cl_device_id device, cl_device_info param)
 }
 
 template <typename T> void PushDeviceInfo(lua_State *L, cl_device_id device, cl_device_info param, std::string key) {
-	T value = GetDeviceInfo<size_t>(device, param);
+	T value = GetDeviceInfo<T>(device, param);
 	lua_pushstring(L, key.c_str());
-	lua_pushnumber(L, value);
+	lua_pushnumber(L, static_cast<lua_Number>(value));
 	lua_settable(L, -3);
 }
 
