@@ -143,8 +143,8 @@ event_t* eq_enqueue(rtinfo_t* rti, time_t trigger, k8u routine, k8u snapshot){
     k32u i = ++(rti->eq.count);
     event_t* p = &(rti->eq.event[-1]);
 
-    assert( rti->eq.count < 64 ); /* No full check on device. */
-    assert( rti->timestamp <= trigger );
+    assert( rti->eq.count < 64 ); /* Full check. */
+    assert( rti->timestamp <= trigger ); /* Time won't go back. */
 
     for( ; i > 1 && p[i >> 1].time > trigger; i >>= 1 )
         p[i] = p[i >> 1];
@@ -153,9 +153,9 @@ event_t* eq_enqueue(rtinfo_t* rti, time_t trigger, k8u routine, k8u snapshot){
 }
 
 /* Enqueue a power suffice event into EQ. */
-void eq_enqueue_ps(event_queue_t* eq, time_t trigger){
-    if (!eq->power_suffice || eq->power_suffice > trigger)
-        eq->power_suffice = trigger;
+void eq_enqueue_ps(rtinfo_t* rti, time_t trigger){
+    if (!rti->eq.power_suffice || rti->eq.power_suffice > trigger)
+        rti->eq.power_suffice = trigger;
 }
 
 /* Execute the top priority. */
@@ -164,8 +164,9 @@ void eq_execute( rtinfo_t* rti ){
     event_t min, last;
     event_t* p = &rti->eq.event[-1];
 
-    assert( rti->eq.count ); /* No empty check on device. */
+    assert( rti->eq.count ); /* Empty check. */
     assert( rti->eq.count < 64 ); /* Not zero but negative? */
+    assert( rti->timestamp <= p[1].time ); /* Time won't go back. */
 
     /* When time elapse, trigger a full scanning at APL. */
     if (rti->timestamp < p[1].time && (!rti->eq.power_suffice || rti->timestamp < rti->eq.power_suffice))
