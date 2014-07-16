@@ -33,6 +33,8 @@ void abort( void );
 #define k32u uint
 #define k64s long
 #define k64u ulong
+#define K64S_C(num) (num##L)
+#define K64U_C(num) (num##UL)
 #else
 #define kbool int
 #define k8s signed char
@@ -43,6 +45,8 @@ void abort( void );
 #define k32u unsigned long int
 #define k64s long long int
 #define k64u unsigned long long int
+#define K64S_C(num) (num##LL)
+#define K64U_C(num) (num##ULL)
 #endif /* defined(__OPENCL_VERSION__) */
 
 /* Unified compile hint. */
@@ -57,6 +61,99 @@ void abort( void );
 #define hdeclspec(...) __attribute__((__VA_ARGS__))
 #endif /* defined(_MSC_VER) */
 #endif /* defined(__OPENCL_VERSION__) */
+
+/* get_global_id() on CPU. */
+#if !defined(__OPENCL_VERSION__)
+#if defined(_MSC_VER)
+#define htlsvar __declspec(thread)
+#else
+#define htlsvar __thread
+#endif /* defined(_MSC_VER) */
+htlsvar int global_idx[3] = {0};
+int get_global_id(int dim){
+    return global_idx[dim];
+}
+void set_global_id(int dim, int idx){
+    global_idx[dim] = idx;
+}
+#endif /* !defined(__OPENCL_VERSION__) */
+
+/* clz() "Count leading zero" on CPU */
+#if !defined(__OPENCL_VERSION__)
+#if defined(_MSC_VER)
+#if defined(_M_IA64) || defined(_M_X64)
+unsigned char _BitScanReverse64(unsigned long * _Index, unsigned __int64 _Mask); /* MSVC Intrinsic. */
+/*
+    _BitScanReverse64 set IDX to the position(from LSB) of the first bit set in mask.
+    What we need is counting leading zero, thus return 64 - (IDX + 1).
+*/
+k8u clz(k64u mask){
+    unsigned long IDX = 0;
+    _BitScanReverse64( &IDX, mask );
+    return 63 - IDX;
+}
+#elif defined(_M_IX86)
+unsigned char _BitScanReverse(unsigned long * _Index, unsigned long _Mask); /* MSVC Intrinsic. */
+/*
+    On 32-bit machine, _BitScanReverse only accept 32 bit number.
+    So we need do some cascade.
+*/
+k8u clz(k64u mask){
+    unsigned long IDX = 0;
+    if (mask >> 32){
+        _BitScanReverse( &IDX, mask >> 32 );
+        return 31 - IDX;
+    }
+    _BitScanReverse( &IDX, mask & 0xFFFFFFFFULL );
+    return 63 - IDX;
+}
+#else
+/*
+    This machine is not x86/amd64/Itanium Processor Family(IPF).
+    the processor don't have a 'bsr' instruction so _BitScanReverse is not available.
+    Need some bit manipulation...
+*/
+#define NEED_CLZ_BIT_TWIDDLING
+#endif /* defined(_M_IA64) || defined(_M_X64) */
+#elif defined(__GNUC__)
+#define clz __builtin_clzll /* GCC have already done this. */
+#else
+/*
+    Unkown compilers. We know nothing about what intrinsics they have,
+    nor what their inline assembly format is.
+*/
+#define NEED_CLZ_BIT_TWIDDLING
+#endif /* defined(_MSC_VER) */
+#endif /* !defined(__OPENCL_VERSION__) */
+#if defined(NEED_CLZ_BIT_TWIDDLING)
+#undef NEED_CLZ_BIT_TWIDDLING
+/*
+    Tons of magic numbers... For how could this works, see:
+        http://supertech.csail.mit.edu/papers/debruijn.pdf
+    result for zero input is NOT same as MSVC intrinsic version, but still undefined.
+*/
+k8u clz(k64u mask){
+		static k8u DeBruijn[64] = {
+		/*        0   1   2   3   4   5   6   7 */
+		/*  0 */  0, 63, 62, 11, 61, 57, 10, 37,
+		/*  8 */ 60, 26, 23, 56, 30,  9, 16, 36,
+		/* 16 */  2, 59, 25, 18, 20, 22, 42, 55,
+		/* 24 */ 40, 29,  5,  8, 15, 46, 35, 53,
+		/* 32 */  1, 12, 58, 38, 27, 24, 31, 17,
+		/* 40 */  3, 19, 21, 43, 41,  6, 47, 54,
+		/* 48 */ 13, 39, 28, 32,  4, 44,  7, 48,
+		/* 56 */ 14, 33, 45, 49, 34, 50, 51, 52,
+		};
+		v |= v >> 1;
+		v |= v >> 2;
+		v |= v >> 4;
+		v |= v >> 8;
+		v |= v >> 16;
+		v |= v >> 32;
+		v++;
+		return DeBruijn[(v * 0x022fdd63cc95386dULL) >> 58];
+}
+#endif /* defined(NEED_CLZ_BIT_TWIDDLING) */
 
 /* Seed struct which holds the current state. */
 typedef struct {
@@ -85,13 +182,23 @@ typedef struct {
     event_t event[EQ_SIZE];
 } event_queue_t;
 
+/* Snapshot saves past states. */
+#define SNAPSHOT_SIZE (64)
+typedef struct {
+    k32u placeholder; /* ... */
+} snapshot_t;
+typedef struct {
+    snapshot_t* buffer; /* Should be __global__ ! */
+    k64u bitmap;
+} snapshot_manager_t;
+
 /* Runtime info struct, each thread preserves its own. */
 typedef struct kdeclspec( packed ) {
     seed_t seed;
     time_t timestamp;
     event_queue_t eq;
     float* statistic; /* Should be __global__ ? */
-    snapshot_t* snapshot;
+    snapshot_manager_t snapshot_manager;
 
 } rtinfo_t;
 
@@ -150,7 +257,9 @@ event_t* eq_enqueue( rtinfo_t* rti, time_t trigger, k8u routine, k8u snapshot ) 
 
     for( ; i > 1 && p[i >> 1].time > trigger; i >>= 1 )
         p[i] = p[i >> 1];
-    p[i] = ( event_t ) { .time = trigger, .routine = routine, .snapshot = snapshot };
+    p[i] = ( event_t ) {
+        .time = trigger, .routine = routine, .snapshot = snapshot
+                                };
     return &p[i];
 }
 
@@ -204,4 +313,38 @@ void eq_execute( rtinfo_t* rti ) {
         /* Power suffices would not make any impact, just a reserved APL scanning. */
     }
 
+}
+
+/*
+    Assumed char is exactly 8 bit.
+    Most std headers will pollute the namespace, thus we do not use CHAR_BIT,
+    which is defined in <limits.h>.
+*/
+#define K64U_MSB ( K64U_C( 1 ) << (sizeof(k64u) * 8 - 1) )
+
+k8u snapshot_save( rtinfo_t* rti, snapshot_t snapshot ) {
+    k8u no;
+    assert( rti->snapshot_manager.bitmap ); /* Full check. */
+    no = clz( rti->snapshot_manager.bitmap ); /* Get first available place. */
+    rti->snapshot_manager.bitmap &= ~(K64U_MSB >> no); /* Mark as occupied. */
+    rti->snapshot_manager.buffer[ no ] = snapshot;
+    return no;
+}
+
+snapshot_t* snapshot_kill( rtinfo_t* rti, k8u no ) {
+    assert( no < SNAPSHOT_SIZE ); /* Subscript check. */
+    assert( ~rti->snapshot_manager.bitmap & ( K64U_MSB >> no ) ); /* Existance check. */
+    rti->snapshot_manager.bitmap |= K64U_MSB >> no; /* Mark as available. */
+    return &(rti->snapshot_manager.buffer[ no ]);
+}
+
+snapshot_t* snapshot_read( rtinfo_t* rti, k8u no ) {
+    assert( no < SNAPSHOT_SIZE ); /* Subscript check. */
+    assert( ~rti->snapshot_manager.bitmap & ( K64U_MSB >> no ) ); /* Existance check. */
+    return &(rti->snapshot_manager.buffer[ no ]);
+}
+
+void snapshot_init( rtinfo_t* rti, snapshot_t* buffer ){
+    rti->snapshot_manager.bitmap = ~ K64U_C( 0 ); /* every bit is set to available. */
+    rti->snapshot_manager.buffer = &buffer[ get_global_id(0) * SNAPSHOT_SIZE ];
 }
