@@ -45,7 +45,9 @@ template <typename T> void PushDeviceInfoArray(lua_State *L, cl_device_id device
 	if (err != CL_SUCCESS) {
 		return;
 	}
-	printf("Device Array: %d - %d", size, sizeof(T));
+#if _DEBUG
+	printf("Device Array: %zu - %zu\n", size, sizeof(T));
+#endif
 	assert(size % sizeof(T) == 0);
 	T * value = static_cast<T *>(malloc(size));
 	err = clGetDeviceInfo(device, param, size, value, NULL);
