@@ -1,14 +1,5 @@
 #include "luacl_api.h"
 
-int luaopen_LuaCL(lua_State *L) {
-	luaL_register(L, LUACL_GLOBAL_NAME, LuaCL_API);
-
-	luaL_newmetatable(L, LUACL_UDATA_CONTEXT);
-	lua_pushcfunction(L, luacl_ReleaseContext);
-	lua_setfield(L, -2, "__gc");
-	return 1;
-}
-
 static int luacl_GetNumPlatforms(lua_State *L) {
 	lua_pushnumber(L, GetNumPlatforms());
 	return 1;
@@ -131,4 +122,23 @@ int luacl_ReleaseContext(lua_State *L) {
 
 int luacl_CreateProgram(lua_State *L) {
 	return 0;
+}
+
+static const struct luaL_Reg LuaCL_API[] = {
+	{ "CreateProgram", luacl_CreateProgram },
+	{ "GetNumPlatforms", luacl_GetNumPlatforms },
+	{ "GetPlatformInfo", luacl_GetPlatformInfo },
+	{ "GetNumDevices", luacl_GetNumDevices },
+	{ "GetDeviceInfo", luacl_GetDeviceInfo },
+	{ "CreateContext", luacl_CreateContext },
+	{ NULL, NULL }
+};
+
+LUALIB_API int luaopen_LuaCL(lua_State *L) {
+	luaL_register(L, LUACL_GLOBAL_NAME, LuaCL_API);
+    
+	luaL_newmetatable(L, LUACL_UDATA_CONTEXT);
+	lua_pushcfunction(L, luacl_ReleaseContext);
+	lua_setfield(L, -2, "__gc");
+	return 1;
 }
