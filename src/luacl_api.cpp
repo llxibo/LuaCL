@@ -91,15 +91,15 @@ static int luacl_CreateContext(lua_State *L) {
 	
 	luaL_checktype(L, 2, LUA_TTABLE);
 
-	size_t size = lua_objlen(L, 2);
+	cl_uint size = static_cast<cl_uint>(lua_objlen(L, 2));
 	//printf("Total: %d\n", size);
 
 	cl_device_id * devices = static_cast<cl_device_id *>(malloc(size * sizeof(cl_device_id)));
 	for (size_t index = 0; index < size; index++) {
-		lua_rawgeti(L, 2, index + 1);
+		lua_rawgeti(L, 2, static_cast<lua_Number>(index + 1));
 		cl_uint deviceIndex = static_cast<cl_uint>(lua_tonumber(L, -1));
 		// printf("Device %d: %d\n", index, deviceIndex);
-		devices[index] = GetDeviceId(platform, index);
+		devices[index] = GetDeviceId(platform, deviceIndex);
 		if (devices[index] == NULL) {
 			free(devices);
 			return luaL_error(L, "CreateContext: invalid deviceIndex %d", index);
@@ -124,7 +124,7 @@ static int luacl_CreateContext(lua_State *L) {
 
 int luacl_ReleaseContext(lua_State *L) {
 	cl_context * udata_context = static_cast<cl_context *>(luaL_checkudata(L, 1, LUACL_UDATA_CONTEXT));
-	printf("__gc: Releasing context %X\n", reinterpret_cast<size_t>(udata_context));
+	printf("__gc: Releasing context %p\n", udata_context);
 	clReleaseContext(*udata_context);
 	return 0;
 }

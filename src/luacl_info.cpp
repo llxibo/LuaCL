@@ -34,7 +34,7 @@ cl_uint GetNumPlatforms() {
 
 cl_platform_id GetPlatformId(cl_uint index) {
 	cl_uint numPlatforms = GetNumPlatforms();
-	if (index < 0 || index >= numPlatforms) {
+	if (index >= numPlatforms) {
 		return NULL;
 	}
 	cl_platform_id *platformIds = static_cast<cl_platform_id *>(malloc(sizeof(cl_platform_id) * numPlatforms));

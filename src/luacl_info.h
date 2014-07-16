@@ -33,7 +33,7 @@ template <typename T> T GetDeviceInfo(cl_device_id device, cl_device_info param)
 }
 
 template <typename T> void PushDeviceInfo(lua_State *L, cl_device_id device, cl_device_info param, std::string key) {
-	T value = GetDeviceInfo<size_t>(device, param);
+	T value = GetDeviceInfo<T>(device, param);
 	lua_pushstring(L, key.c_str());
 	lua_pushnumber(L, static_cast<lua_Number>(value));
 	lua_settable(L, -3);
