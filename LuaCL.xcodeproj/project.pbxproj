@@ -61,7 +61,6 @@
 		8D51E27719761EAA00C5F80C /* OpenCL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenCL.framework; path = ../../../System/Library/Frameworks/OpenCL.framework; sourceTree = "<group>"; };
 		8DADEFA119763E1100FCB9E8 /* test.lua */ = {isa = PBXFileReference; lastKnownFileType = text; path = test.lua; sourceTree = "<group>"; };
 		8DB74FC3197615AE0021F366 /* LuaCL */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = LuaCL; sourceTree = BUILT_PRODUCTS_DIR; };
-		8DB74FC8197615AE0021F366 /* LuaCL.1 */ = {isa = PBXFileReference; lastKnownFileType = text.man; path = LuaCL.1; sourceTree = "<group>"; };
 		8DDF122519761629001AD698 /* LuaCL.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LuaCL.cpp; sourceTree = "<group>"; };
 		8DDF122619761629001AD698 /* LuaCL.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LuaCL.h; sourceTree = "<group>"; };
 		8DDF122719761629001AD698 /* luacl_api.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = luacl_api.cpp; sourceTree = "<group>"; };
@@ -141,7 +140,6 @@
 				8D51E27719761EAA00C5F80C /* OpenCL.framework */,
 				8DDF12851976164E001AD698 /* lua-5.1.4 */,
 				8DDF122419761629001AD698 /* src */,
-				8DB74FC5197615AE0021F366 /* LuaCL */,
 				8DB74FC4197615AE0021F366 /* Products */,
 				8DADEFA119763E1100FCB9E8 /* test.lua */,
 			);
@@ -153,14 +151,6 @@
 				8DB74FC3197615AE0021F366 /* LuaCL */,
 			);
 			name = Products;
-			sourceTree = "<group>";
-		};
-		8DB74FC5197615AE0021F366 /* LuaCL */ = {
-			isa = PBXGroup;
-			children = (
-				8DB74FC8197615AE0021F366 /* LuaCL.1 */,
-			);
-			path = LuaCL;
 			sourceTree = "<group>";
 		};
 		8DDF122419761629001AD698 /* src */ = {
