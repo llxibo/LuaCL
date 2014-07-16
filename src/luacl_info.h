@@ -21,10 +21,10 @@ template <typename T> T GetDeviceInfo(cl_device_id device, cl_device_info param)
 #if _DEBUG
 	size_t size = 0;
 	cl_int errDebug = clGetDeviceInfo(device, param, 0, NULL, &size);
-	// printf("%d: %d - %d\n", param, size, sizeof(T));
+	printf("%d: %d - %d\n", param, size, sizeof(T));
 	assert(size == sizeof(T));
 #endif
-	T value;
+	T value = 0;
 	cl_int err = clGetDeviceInfo(device, param, sizeof(T), &value, NULL);
 	if (err != CL_SUCCESS) {
 		value = 0;
@@ -36,6 +36,28 @@ template <typename T> void PushDeviceInfo(lua_State *L, cl_device_id device, cl_
 	T value = GetDeviceInfo<T>(device, param);
 	lua_pushstring(L, key.c_str());
 	lua_pushnumber(L, static_cast<lua_Number>(value));
+	lua_settable(L, -3);
+}
+
+template <typename T> void PushDeviceInfoArray(lua_State *L, cl_device_id device, cl_device_info param, std::string key) {
+	size_t size = 0;
+	cl_int err = clGetDeviceInfo(device, param, 0, NULL, &size);
+	if (err != CL_SUCCESS) {
+		return;
+	}
+	printf("Device Array: %d - %d", size, sizeof(T));
+	assert(size % sizeof(T) == 0);
+	T * value = static_cast<T *>(malloc(size));
+	err = clGetDeviceInfo(device, param, size, value, NULL);
+	if (err != CL_SUCCESS) {
+		return;
+	}
+	lua_pushstring(L, key.c_str());
+	lua_newtable(L);
+	for (unsigned int index = 0; index < (size / sizeof(T)); index++) {
+		lua_pushnumber(L, static_cast<lua_Number>(value[index]));
+		lua_rawseti(L, -2, index + 1);
+	}
 	lua_settable(L, -3);
 }
 
