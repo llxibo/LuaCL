@@ -2,6 +2,14 @@ x64/
 Win32/
 Release/
 Debug/
+*.exe
+*.obj
+*.tlog
+*.lastbuildstate
+*.log
+*.ilk
+*.pdb
+*.idb
 *.sdf
 *.opensdf
 *.suo
