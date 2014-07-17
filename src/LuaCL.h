@@ -3,11 +3,14 @@
 
 /* Lua.h is not protected with extern C */
 extern "C" {
+#pragma warning(push)
+#pragma warning(disable: 4334)
 	#include <stdio.h>
 	#include <string.h>
 	#include "lua.h"
 	#include "lauxlib.h"
 	#include "lualib.h"
+#pragma warning(pop)
 } /* extern "C" */
 
 #include <stdlib.h>
