@@ -114,7 +114,6 @@ static int luacl_GetDeviceInfo(lua_State *L) {
 	PushDeviceInfoStr							(L, device, CL_DEVICE_PROFILE,							"PROFILE");
 	PushDeviceInfoStr							(L, device, CL_DEVICE_VERSION,							"VERSION");
 	PushDeviceInfoStr							(L, device, CL_DEVICE_EXTENSIONS,						"EXTENSIONS");
-	PushDeviceInfoStr							(L, device, CL_DEVICE_PLATFORM,							"PLATFORM");
 	PushDeviceInfo<cl_device_fp_config>			(L, device, CL_DEVICE_DOUBLE_FP_CONFIG,					"DOUBLE_FP_CONFIG");
 	PushDeviceInfo<cl_uint>						(L, device, CL_DEVICE_PREFERRED_VECTOR_WIDTH_HALF,		"PREFERRED_VECTOR_WIDTH_HALF");
 	PushDeviceInfo<cl_bool>						(L, device, CL_DEVICE_HOST_UNIFIED_MEMORY,				"HOST_UNIFIED_MEMORY");
