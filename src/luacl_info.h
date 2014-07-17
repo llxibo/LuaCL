@@ -21,7 +21,7 @@ template <typename T> T GetDeviceInfo(cl_device_id device, cl_device_info param)
 #if _DEBUG
 	size_t size = 0;
 	cl_int errDebug = clGetDeviceInfo(device, param, 0, NULL, &size);
-	printf("%d: %d - %d\n", param, size, sizeof(T));
+	//printf("%d: %d - %d\n", param, size, sizeof(T));
 	assert(size == sizeof(T));
 #endif
 	T value = 0;
@@ -45,9 +45,9 @@ template <typename T> void PushDeviceInfoArray(lua_State *L, cl_device_id device
 	if (err != CL_SUCCESS) {
 		return;
 	}
-#if _DEBUG
-	printf("Device Array: %zu - %zu\n", size, sizeof(T));
-#endif
+//#if _DEBUG && _MSC_VER
+//	printf("Device Array: %Iu - %Iu\n", size, sizeof(T));
+//#endif
 	assert(size % sizeof(T) == 0);
 	T * value = static_cast<T *>(malloc(size));
 	err = clGetDeviceInfo(device, param, size, value, NULL);
