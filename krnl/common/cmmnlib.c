@@ -295,8 +295,8 @@ float stdnor_rng( seed_t* seed ) {
     return sqrt( -2.0f * log( uni_rng( seed ) + 1.1920929E-7 ) ) * cospi( 2.0f * uni_rng( seed ) );
     /*
         To get another individual normally distributed number in pair, replace 'cospi' to 'sinpi'.
-        It's simply thrown away here, because of diverage penalty.
-        With only one thread in a warp need to recalculate, the whole warp must diverage.
+        It's simply thrown away here, because of diverge penalty.
+        With only one thread in a warp need to recalculate, the whole warp must diverge.
     */
 }
 
@@ -456,7 +456,7 @@ void sim_init(rtinfo_t* rti, k32u seed, snapshot_t* ssbuf){
 
     /* Combat length. */
     assert( vary_combat_length < max_length ); /* Vary can't be greater than max. */
-    assert( vary_combat_length + max_length < 655.35f ); /* It's suggested  */
+    assert( vary_combat_length + max_length < 655.35f );
     rti->expected_combat_length = FROM_SECONDS( max_length + vary_combat_length * clamp( stdnor_rng( &rti->seed ) * ( 1.0f / 3.0f ), -1.0f, 1.0f ) );
 
     eq_enqueue( rti, rti->expected_combat_length, EVENT_END_SIMULATION, 0 );
