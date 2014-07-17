@@ -1,5 +1,7 @@
 x64/
 Win32/
+Release/
+Debug/
 *.sdf
 *.opensdf
 *.suo
