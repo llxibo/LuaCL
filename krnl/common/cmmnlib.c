@@ -3,10 +3,23 @@
     2014.7.14
 */
 
+#define vary_combat_length 20.0f
+#define max_length 450.0f
+#define initial_health_percentage 100.0f
+#define death_pct 0.0f
+
 #if !defined(__OPENCL_VERSION__)
 #define _DEBUG
 #pragma once
 #endif /* !defined(__OPENCL_VERSION__) */
+
+#if defined(__OPENCL_VERSION__)
+#define hostonly(...)
+#define deviceonly(...) __VA_ARGS__
+#else
+#define hostonly(...) __VA_ARGS__
+#define deviceonly(...)
+#endif /* defined(__OPENCL_VERSION__) */
 
 /* Diagnostic. */
 #if defined(_DEBUG) && !defined(__OPENCL_VERSION__)
@@ -164,6 +177,11 @@ double cos(double x);
 #define cospi(x) cos(x * M_PI)
 double sqrt(double x);
 double log(double x);
+double clamp(double val, double min, double max){
+    return val < min ? min : val > max ? max : val;
+}
+#define max(a, b) ((a) > (b) ? (a) : (b))
+#define mix(x, y, a) ((x) + (( (y) - (x) ) * (a)))
 #endif /* !defined(__OPENCL_VERSION__) */
 
 /* Seed struct which holds the current state. */
@@ -208,8 +226,8 @@ typedef struct kdeclspec( packed ) {
     seed_t seed;
     time_t timestamp;
     event_queue_t eq;
-    float* statistic; /* Should be __global__ ? */
     snapshot_manager_t snapshot_manager;
+    time_t expected_combat_length;
 
 } rtinfo_t;
 
@@ -225,7 +243,7 @@ void routine_entries( rtinfo_t* rti, event_t e );
 
 /* Initialize RNG */
 /*** Behaviors of uninitialized RNG is undefined!!! ***/
-void init_rng( seed_t* state, k32u seed ) {
+void rng_init( seed_t* state, k32u seed ) {
     state->mti = 0; /* Reset counter */
     /* Use a LCG to fill state matrix. See Knuth TAOCP Vol2. 3rd Ed. P.106 for multiplier. */
     state->mt[0] = seed & 0xffffffffUL;
@@ -282,14 +300,24 @@ event_t* eq_enqueue( rtinfo_t* rti, time_t trigger, k8u routine, k8u snapshot ) 
     event_t* p = &( rti->eq.event[-1] );
 
     assert( rti->eq.count <= EQ_SIZE ); /* Full check. */
-    assert( rti->timestamp <= trigger ); /* Time won't go back. */
 
-    for( ; i > 1 && p[i >> 1].time > trigger; i >>= 1 )
-        p[i] = p[i >> 1];
-    p[i] = ( event_t ) {
-        .time = trigger, .routine = routine, .snapshot = snapshot
-                                };
-    return &p[i];
+    /*
+        There are two circumstances which could cause the assert below fail:
+        1. Devs got something wrong in the class module, enqueued an event happens before 'now'.
+        2. Time register is about to overflow, the triggering delay + current timestamp have exceeded the max representable time.
+        Since the later circumstance is not a fault, we would just throw the event away and continue quietly.
+        When you are exceeding the max time limits, all new events will be thrown, and finally you will get an empty EQ,
+        then the empty checks on EQ will fail.
+    */
+    if ( rti->timestamp <= trigger ){
+        for( ; i > 1 && p[i >> 1].time > trigger; i >>= 1 )
+            p[i] = p[i >> 1];
+        p[i] = ( event_t ) {
+            .time = trigger, .routine = routine, .snapshot = snapshot
+                                    };
+        return &p[i];
+    }
+    return 0;
 }
 
 /* Enqueue a power suffice event into EQ. */
@@ -378,21 +406,53 @@ void snapshot_init( rtinfo_t* rti, snapshot_t* buffer ) {
     rti->snapshot_manager.buffer = &buffer[ get_global_id( 0 ) * SNAPSHOT_SIZE ];
 }
 
+float enemy_health_percent( rtinfo_t* rti ){
+    /*
+        What differs from SimulationCraft, OpenCL iterations are totally parallelized.
+        It's impossible to determine mob initial health by the results from previous iterations.
+        The best solution here is to use a linear mix of time to approximate the health precent,
+        which is used in SimC for the very first iteration.
+    */
+    time_t remainder = max( FROM_SECONDS( 0 ), rti->expected_combat_length - rti->timestamp );
+    return mix( death_pct, initial_health_percentage, (float)remainder / (float)rti->expected_combat_length );
+}
 
+void sim_init(rtinfo_t* rti, k32u seed, snapshot_t* ssbuf){
+    /* Simulate get_global_id for CPU. */
+    hostonly(
+        static int gid = 0;
+        set_global_id(0, gid++);
+    )
+    /* Write zero to RTI. */
+    *rti = (rtinfo_t){};
+    /* RNG. */
+    rng_init( &rti->seed, seed );
+    /* Snapshot manager. */
+    snapshot_init( rti, ssbuf );
+
+    /* Combat length. */
+    assert( vary_combat_length < max_length ); /* Vary can't be greater than max. */
+    assert( vary_combat_length + max_length < 655.35f ); /* It's suggested  */
+    rti->expected_combat_length = FROM_SECONDS( max_length + vary_combat_length * clamp( stdnor_rng( &rti->seed ) * ( 1.0f / 3.0f ), -1.0f, 1.0f ) );
+
+}
 
 /* Delete this. */
 void scan_apl( rtinfo_t* rti ){
 }
 void routine_entries( rtinfo_t* rti, event_t e ){
+    printf("Time = %d, Event %d, snapshot: %d\n", rti->timestamp, e.routine, snapshot_kill(rti, e.snapshot)->placeholder);
 }
 
 int main(){
-    seed_t seed;
+    rtinfo_t rti;
+    deviceonly(__global) snapshot_t buffer[SNAPSHOT_SIZE];
     int i, j;
-    init_rng(&seed, 4262);
-    for(i=0;i<20;i++){
-        for(j=0;j<5;j++)
-            printf("%.3f\t", stdnor_rng(&seed));
+    for (j = 0; j < 20; j++){
+        for (i = 0; i < 5; i++){
+            sim_init(&rti, j*5+i, buffer);
+            printf("%d\t", rti.expected_combat_length);
+        }
         printf("\n");
     }
 }
