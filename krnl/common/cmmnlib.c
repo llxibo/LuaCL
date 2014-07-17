@@ -3,16 +3,19 @@
     2014.7.14
 */
 
+/* Front-end gives these defines. */
 #define vary_combat_length 20.0f
 #define max_length 450.0f
 #define initial_health_percentage 100.0f
 #define death_pct 0.0f
 
+/* Debug on CPU! */
 #if !defined(__OPENCL_VERSION__)
 #define _DEBUG
 #pragma once
 #endif /* !defined(__OPENCL_VERSION__) */
 
+/* Codes enclosed in 'hostonly' will be discarded at OpenCL devices, and vice versa. */
 #if defined(__OPENCL_VERSION__)
 #define hostonly(...)
 #define deviceonly(...) __VA_ARGS__
