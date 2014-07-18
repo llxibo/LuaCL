@@ -10,6 +10,9 @@ void PushPlatformInfo(lua_State *L, cl_platform_id platform, cl_platform_info pa
 
 	/* Request platform parameter */
 	char * value = (char *)malloc(sizeof(char) * size);
+	if (value == NULL) {
+		return;
+	}
 	err = clGetPlatformInfo(platform, param, size, value, NULL);
 	if (err != CL_SUCCESS) {
 		free(value);
@@ -39,6 +42,9 @@ cl_platform_id GetPlatformId(cl_uint index) {
 		return NULL;
 	}
 	cl_platform_id *platformIds = static_cast<cl_platform_id *>(malloc(sizeof(cl_platform_id) * numPlatforms));
+	if (platformIds == NULL) {
+		return NULL;
+	}
 	cl_int err = clGetPlatformIDs(index + 1, platformIds, NULL);
 	cl_platform_id platformId = platformIds[index];
 	if (err != CL_SUCCESS) {
@@ -66,6 +72,9 @@ cl_device_id GetDeviceId(cl_platform_id platform, cl_uint index) {
 		return NULL;
 	}
 	cl_device_id *deviceIds = static_cast<cl_device_id *>(malloc(sizeof(cl_device_id) * numDevices));
+	if (deviceIds == NULL) {
+		return NULL;
+	}
 	cl_int err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, numDevices, deviceIds, &numDevices);
 	cl_device_id deviceId = deviceIds[index];
 	if (err != CL_SUCCESS) {
@@ -84,7 +93,11 @@ void PushDeviceInfoStr(lua_State *L, cl_device_id device, cl_device_info param, 
 	if (err != CL_SUCCESS || size == 0) {
 		return;
 	}
+
 	char * value = static_cast<char *>(malloc(sizeof(char) * size));
+	if (value == NULL) {
+		return;
+	}
 	err = clGetDeviceInfo(device, param, size, value, NULL);
 	if (err != CL_SUCCESS) {
         free(value);

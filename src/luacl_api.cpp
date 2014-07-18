@@ -121,6 +121,9 @@ static int luacl_CreateContext(lua_State *L) {
 	//printf("Total: %d\n", size);
 
 	cl_device_id * devices = static_cast<cl_device_id *>(malloc(size * sizeof(cl_device_id)));
+	if (devices == NULL) {
+		return luaL_error(L, "CreateContext: out of memory");
+	}
 	for (size_t index = 0; index < size; index++) {
 		lua_rawgeti(L, 2, static_cast<int>(index + 1));
 		cl_uint deviceIndex = static_cast<cl_uint>(lua_tonumber(L, -1));
