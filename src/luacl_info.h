@@ -5,6 +5,10 @@
 #include <string>
 #include <assert.h>
 
+void CheckAllocError(lua_State *L, void *p, const char * msg);
+
+void CheckCLError(lua_State *L, cl_uint err, const char * msg, void *p = NULL);
+
 void PushPlatformInfo(lua_State *L, cl_platform_id platform, cl_platform_info param, std::string key);
 
 cl_uint GetNumPlatforms();
@@ -50,8 +54,12 @@ template <typename T> void PushDeviceInfoArray(lua_State *L, cl_device_id device
 //#endif
 	assert(size % sizeof(T) == 0);
 	T * value = static_cast<T *>(malloc(size));
+	if (value == NULL) {
+		return;
+	}
 	err = clGetDeviceInfo(device, param, size, value, NULL);
 	if (err != CL_SUCCESS) {
+        free(value);
 		return;
 	}
 	lua_pushstring(L, key.c_str());
@@ -60,6 +68,7 @@ template <typename T> void PushDeviceInfoArray(lua_State *L, cl_device_id device
 		lua_pushnumber(L, static_cast<lua_Number>(value[index]));
 		lua_rawseti(L, -2, index + 1);
 	}
+    free(value);
 	lua_settable(L, -3);
 }
 

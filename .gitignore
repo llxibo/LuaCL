@@ -15,3 +15,6 @@ Debug/
 *.suo
 *.vcxproj.user
 *.o
+
+*.xcodeproj/project.xcworkspace
+*.xcodeproj/xcuserdata

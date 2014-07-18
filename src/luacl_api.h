@@ -9,6 +9,7 @@
 static const char LUACL_UDATA_CONTEXT[] = "LuaCL.context";
 static const char LUACL_GLOBAL_NAME[] = "LuaCL";
 static const char LUACL_KERNEL_DEFAULT_NAME[] = "<anonymous kernel>";
+
 LUALIB_API int luaopen_LuaCL(lua_State *L);
 
 #endif
