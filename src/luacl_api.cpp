@@ -42,29 +42,6 @@ static int luacl_GetDeviceInfo(lua_State *L) {
 	}
 
 	lua_newtable(L);
-	//PushDeviceInfo<cl_uint>(L, device, CL_DEVICE_VENDOR_ID, "VENDOR_ID");
-	//PushDeviceInfo<cl_uint>(L, device, CL_DEVICE_MAX_COMPUTE_UNITS, "MAX_COMPUTE_UNITS");
-	//PushDeviceInfo<cl_uint>(L, device, CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS, "MAX_WORK_ITEM_DIMENSIONS");
-	//PushDeviceInfo<size_t>(L, device, CL_DEVICE_MAX_WORK_GROUP_SIZE, "MAX_WORK_GROUP_SIZE");
-	//PushDeviceInfo<cl_uint>(L, device, CL_DEVICE_MAX_CLOCK_FREQUENCY, "MAX_CLOCK_FREQUENCY");
-	//PushDeviceInfo<cl_uint>(L, device, CL_DEVICE_ADDRESS_BITS, "ADDRESS_BITS");
-	//PushDeviceInfo<cl_device_mem_cache_type>(L, device, CL_DEVICE_GLOBAL_MEM_CACHE_TYPE, "GLOBAL_MEM_CACHE_TYPE");
-	//PushDeviceInfo<cl_uint>(L, device, CL_DEVICE_GLOBAL_MEM_CACHELINE_SIZE, "GLOBAL_MEM_CACHELINE_SIZE");
-	//PushDeviceInfo<cl_ulong>(L, device, CL_DEVICE_MAX_MEM_ALLOC_SIZE, "MAX_MEM_ALLOC_SIZE");
-	//PushDeviceInfo<cl_ulong>(L, device, CL_DEVICE_LOCAL_MEM_SIZE, "LOCAL_MEM_SIZE");
-	//PushDeviceInfo<cl_uint>(L, device, CL_DEVICE_MAX_CONSTANT_ARGS, "MAX_CONSTANT_ARGS");
-	//PushDeviceInfo<cl_bool>(L, device, CL_DEVICE_ERROR_CORRECTION_SUPPORT, "ERROR_CORRECTION_SUPPORT");
-	//PushDeviceInfo<cl_bool>(L, device, CL_DEVICE_HOST_UNIFIED_MEMORY, "HOST_UNIFIED_MEMORY");
-	//PushDeviceInfo<size_t>(L, device, CL_DEVICE_PROFILING_TIMER_RESOLUTION, "PROFILING_TIMER_RESOLUTION");
-	//PushDeviceInfo<cl_bool>(L, device, CL_DEVICE_ENDIAN_LITTLE, "ENDIAN_LITTLE");
-	//PushDeviceInfo<cl_bool>(L, device, CL_DEVICE_AVAILABLE, "AVAILABLE");
-	//PushDeviceInfo<cl_bool>(L, device, CL_DEVICE_COMPILER_AVAILABLE, "COMPILER_AVAILABLE");
-	//PushDeviceInfoStr(L, device, CL_DEVICE_NAME, "NAME");
-	//PushDeviceInfoStr(L, device, CL_DEVICE_VENDOR, "VENDOR");
-	//PushDeviceInfoStr(L, device, CL_DEVICE_VERSION, "VERSION");
-	//PushDeviceInfoStr(L, device, CL_DEVICE_PROFILE, "PROFILE");
-	//PushDeviceInfoStr(L, device, CL_DRIVER_VERSION, "DRIVER_VERSION");
-	//PushDeviceInfoStr(L, device, CL_DEVICE_EXTENSIONS, "EXTENSIONS");
 	PushDeviceInfo<cl_device_type>				(L, device, CL_DEVICE_TYPE,								"TYPE");
 	PushDeviceInfo<cl_uint>						(L, device, CL_DEVICE_VENDOR_ID,						"VENDOR_ID");
 	PushDeviceInfo<cl_uint>						(L, device, CL_DEVICE_MAX_COMPUTE_UNITS,				"MAX_COMPUTE_UNITS");
@@ -179,6 +156,19 @@ int luacl_ReleaseContext(lua_State *L) {
 }
 
 int luacl_CreateProgram(lua_State *L) {
+	cl_context * udata_context = static_cast<cl_context *>(luaL_checkudata(L, 1, LUACL_UDATA_CONTEXT));
+	size_t size = 0;
+	cl_int err = 0;
+	const char * source = luaL_checklstring(L, 2, &size);
+	cl_program program = clCreateProgramWithSource(*udata_context, 1, &source, &size, &err);
+	if (err != CL_SUCCESS) {
+		return luaL_error(L, "Failed creating program from source");
+	}
+	const char * programName = lua_tolstring(L, 3, NULL);	/* Optional program name. Lua ensures string always end with '\0' */
+	cl_kernel kernel = clCreateKernel(program, programName ? programName : LUACL_KERNEL_DEFAULT_NAME, &err);
+	if (err != CL_SUCCESS) {
+		return luaL_error(L, "Failed creating kernel from program");
+	}
 	return 0;
 }
 
