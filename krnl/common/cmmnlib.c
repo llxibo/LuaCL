@@ -343,8 +343,14 @@ int eq_execute( rtinfo_t* rti ) {
     assert( rti->timestamp <= p[1].time ); /* Time won't go back. */
     assert( !rti->eq.power_suffice || rti->timestamp <= rti->eq.power_suffice ); /* Time won't go back. */
 
+    /* If time jumps over 1 second, insert a check point (as a power suffice event). */
+    if ( FROM_SECONDS( 1 ) < p[1].time - rti->timestamp &&
+        ( !rti->eq.power_suffice || FROM_SECONDS( 1 ) < rti->eq.power_suffice - rti->timestamp ) )
+        rti->eq.power_suffice = rti->timestamp + FROM_SECONDS( 1 );
+
     /* When time elapse, trigger a full scanning at APL. */
-    if ( rti->timestamp < p[1].time && ( !rti->eq.power_suffice || rti->timestamp < rti->eq.power_suffice ) ){
+    if ( FROM_SECONDS( 0 ) < p[1].time - rti->timestamp &&
+        ( !rti->eq.power_suffice || FROM_SECONDS( 0 ) < rti->eq.power_suffice - rti->timestamp ) ) {
         scan_apl( rti ); /* This may change p[1]. */
 
         /* Check again. */
@@ -353,11 +359,6 @@ int eq_execute( rtinfo_t* rti ) {
         assert( rti->timestamp <= p[1].time );
         assert( !rti->eq.power_suffice || rti->timestamp <= rti->eq.power_suffice );
     }
-
-    /* If time jumps over 1 second, insert a check point (as a power suffice event). */
-    if ( FROM_SECONDS( 1 ) < p[1].time - rti->timestamp &&
-        ( !rti->eq.power_suffice || FROM_SECONDS( 1 ) < rti->eq.power_suffice - rti->timestamp ) )
-        rti->eq.power_suffice = rti->timestamp + FROM_SECONDS( 1 );
 
     min = p[1];
 
