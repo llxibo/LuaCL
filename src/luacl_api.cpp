@@ -132,9 +132,10 @@ static int luacl_CreateContext(lua_State *L) {
 		}
 		lua_pop(L, 1);
 	}
-
+    
 	cl_int err;
 	cl_context context = clCreateContext(properties, size, devices, NULL, NULL, &err);
+    free(devices);
 	if (err != CL_SUCCESS) {
 		return luaL_error(L, "CreateContext: failed creating context - code %d", err);
 	}

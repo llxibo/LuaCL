@@ -18,7 +18,8 @@ void PushPlatformInfo(lua_State *L, cl_platform_id platform, cl_platform_info pa
 
 	/* Push key and value to table */
 	std::string value_s(value, size);	/* Construct string with max length for safety constraint */
-	lua_pushstring(L, key.c_str());
+	free(value);
+    lua_pushstring(L, key.c_str());
 	lua_pushstring(L, value_s.c_str());
 	lua_settable(L, -3);
 }
@@ -86,10 +87,12 @@ void PushDeviceInfoStr(lua_State *L, cl_device_id device, cl_device_info param, 
 	char * value = static_cast<char *>(malloc(sizeof(char) * size));
 	err = clGetDeviceInfo(device, param, size, value, NULL);
 	if (err != CL_SUCCESS) {
+        free(value);
 		return;
 	}
 
 	std::string value_s(value, size);
+    free(value);
 	lua_pushstring(L, key.c_str());
 	lua_pushstring(L, value_s.c_str());
 	lua_settable(L, -3);
