@@ -8,6 +8,11 @@
 #define max_length 450.0f
 #define initial_health_percentage 100.0f
 #define death_pct 0.0f
+#define iterations 50000
+#define deterministic_seed 5171
+#define PLAYER_T_FILLER k32u placeholder_1; \
+                        k32u placeholder_2;
+#define OTHER_TYPEDEFS
 
 /* Debug on CPU! */
 #if !defined(__OPENCL_VERSION__)
@@ -176,11 +181,11 @@ k8u clz( k64u mask ) {
 
 /* Math utilities on CPU. */
 #if !defined(__OPENCL_VERSION__)
-double cos(double x);
+double cos( double x );
 #define cospi(x) cos(x * M_PI)
-double sqrt(double x);
-double log(double x);
-double clamp(double val, double min, double max){
+double sqrt( double x );
+double log( double x );
+double clamp( double val, double min, double max ) {
     return val < min ? min : val > max ? max : val;
 }
 #define max(a, b) ((a) > (b) ? (a) : (b))
@@ -200,6 +205,7 @@ typedef struct {
 typedef k16u time_t;
 #define FROM_SECONDS( sec ) ((time_t)((float)(sec) * 100.0f))
 #define FROM_MILLISECONDS( msec ) ((time_t)((float)(msec) / 10.0f))
+#define TO_SECONDS( timestamp ) ((float)(timestamp) * 0.01f)
 
 /* Event queue. */
 #define EQ_SIZE (63)
@@ -224,6 +230,13 @@ typedef struct {
     k64u bitmap;
 } snapshot_manager_t;
 
+/* Aggregators defined by class modules. */
+OTHER_TYPEDEFS
+/* Player struct, filled by the front-end. */
+typedef struct {
+    PLAYER_T_FILLER
+} player_t;
+
 /* Runtime info struct, each thread preserves its own. */
 typedef struct kdeclspec( packed ) {
     seed_t seed;
@@ -231,6 +244,7 @@ typedef struct kdeclspec( packed ) {
     event_queue_t eq;
     snapshot_manager_t snapshot_manager;
     float damage_collected;
+    player_t player;
     time_t expected_combat_length;
 
 } rtinfo_t;
@@ -315,7 +329,7 @@ event_t* eq_enqueue( rtinfo_t* rti, time_t trigger, k8u routine, k8u snapshot ) 
         When you are exceeding the max time limits, all new events will be thrown, and finally you will get an empty EQ,
         then the empty checks on EQ will fail.
     */
-    if ( rti->timestamp <= trigger ){
+    if ( rti->timestamp <= trigger ) {
         for( ; i > 1 && p[i >> 1].time > trigger; i >>= 1 )
             p[i] = p[i >> 1];
         p[i] = ( event_t ) {
@@ -345,12 +359,12 @@ int eq_execute( rtinfo_t* rti ) {
 
     /* If time jumps over 1 second, insert a check point (as a power suffice event). */
     if ( FROM_SECONDS( 1 ) < p[1].time - rti->timestamp &&
-        ( !rti->eq.power_suffice || FROM_SECONDS( 1 ) < rti->eq.power_suffice - rti->timestamp ) )
+            ( !rti->eq.power_suffice || FROM_SECONDS( 1 ) < rti->eq.power_suffice - rti->timestamp ) )
         rti->eq.power_suffice = rti->timestamp + FROM_SECONDS( 1 );
 
     /* When time elapse, trigger a full scanning at APL. */
     if ( FROM_SECONDS( 0 ) < p[1].time - rti->timestamp &&
-        ( !rti->eq.power_suffice || FROM_SECONDS( 0 ) < rti->eq.power_suffice - rti->timestamp ) ) {
+            ( !rti->eq.power_suffice || FROM_SECONDS( 0 ) < rti->eq.power_suffice - rti->timestamp ) ) {
         scan_apl( rti ); /* This may change p[1]. */
 
         /* Check again. */
@@ -431,7 +445,7 @@ void snapshot_init( rtinfo_t* rti, snapshot_t* buffer ) {
     rti->snapshot_manager.buffer = &buffer[ get_global_id( 0 ) * SNAPSHOT_SIZE ];
 }
 
-float enemy_health_percent( rtinfo_t* rti ){
+float enemy_health_percent( rtinfo_t* rti ) {
     /*
         What differs from SimulationCraft, OpenCL iterations are totally parallelized.
         It's impossible to determine mob initial health by the results from previous iterations.
@@ -439,17 +453,17 @@ float enemy_health_percent( rtinfo_t* rti ){
         which is used in SimC for the very first iteration.
     */
     time_t remainder = max( FROM_SECONDS( 0 ), rti->expected_combat_length - rti->timestamp );
-    return mix( death_pct, initial_health_percentage, (float)remainder / (float)rti->expected_combat_length );
+    return mix( death_pct, initial_health_percentage, ( float )remainder / ( float )rti->expected_combat_length );
 }
 
-void sim_init(rtinfo_t* rti, k32u seed, snapshot_t* ssbuf){
-    /* Simulate get_global_id for CPU. */
+void sim_init( rtinfo_t* rti, k32u seed, snapshot_t* ssbuf ) {
+    /* Analogize get_global_id for CPU. */
     hostonly(
         static int gid = 0;
-        set_global_id(0, gid++);
+        set_global_id( 0, gid++ );
     )
     /* Write zero to RTI. */
-    *rti = (rtinfo_t){};
+    *rti = ( rtinfo_t ) {};
     /* RNG. */
     rng_init( &rti->seed, seed );
     /* Snapshot manager. */
@@ -464,22 +478,38 @@ void sim_init(rtinfo_t* rti, k32u seed, snapshot_t* ssbuf){
 
 }
 
-/* Delete this. */
-void scan_apl( rtinfo_t* rti ){
-}
-void routine_entries( rtinfo_t* rti, event_t e ){
-    printf("Time = %d, Event %d, snapshot: %lu\n", rti->timestamp, e.routine, snapshot_kill(rti, e.snapshot)->placeholder);
+/* Single iteration logic. */
+void sim_iterate( float* dps_result ) {
+    deviceonly( __global ) snapshot_t snapshot_buffer[SNAPSHOT_SIZE * iterations];
+    deviceonly( __local  ) rtinfo_t _rti;
+
+    sim_init(
+        &_rti,
+        ( k32u )deterministic_seed + ( k32u )get_global_id( 0 ),
+        snapshot_buffer
+    );
+
+    while( eq_execute( &_rti ) );
+
+    dps_result[get_global_id( 0 )] = _rti.damage_collected / TO_SECONDS( _rti.expected_combat_length );
 }
 
-int main(){
+/* Delete this. */
+void scan_apl( rtinfo_t* rti ) {
+}
+void routine_entries( rtinfo_t* rti, event_t e ) {
+    printf( "Time = %d, Event %d, snapshot: %lu\n", rti->timestamp, e.routine, snapshot_kill( rti, e.snapshot )->placeholder );
+}
+
+int main() {
     rtinfo_t rti;
-    deviceonly(__global) snapshot_t buffer[SNAPSHOT_SIZE];
+    deviceonly( __global ) snapshot_t buffer[SNAPSHOT_SIZE];
     int i, j;
-    for (j = 0; j < 20; j++){
-        for (i = 0; i < 5; i++){
-            sim_init(&rti, j*5+i, buffer);
-            printf("%d\t", rti.expected_combat_length);
+    for ( j = 0; j < 20; j++ ) {
+        for ( i = 0; i < 5; i++ ) {
+            sim_init( &rti, j * 5 + i, buffer );
+            printf( "%d\t", rti.expected_combat_length );
         }
-        printf("\n");
+        printf( "\n" );
     }
 }
