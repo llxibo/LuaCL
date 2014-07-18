@@ -10,6 +10,7 @@
 #define death_pct 0.0f
 #define iterations 50000
 #define deterministic_seed 5171
+#define power_max 100.0f
 
 /* Debug on CPU! */
 #if !defined(__OPENCL_VERSION__)
@@ -30,6 +31,8 @@
 #if defined(_DEBUG) && !defined(__OPENCL_VERSION__)
 int printf( const char* format, ... );
 void abort( void );
+void* malloc( unsigned long long );
+void free( void* );
 #define KRNL_STR2(v) #v
 #define KRNL_STR(v) KRNL_STR2(v)
 #define assert(expression) if(!(expression)){ \
@@ -65,6 +68,7 @@ void abort( void );
 #define k64u unsigned long long int
 #define K64S_C(num) (num##LL)
 #define K64U_C(num) (num##ULL)
+#define convert_ushort_sat(num) ((num) < 0 ? (k16u)0 : (num) > 0xffff ? (k16u)0xffff : (k16u)(num))
 #endif /* defined(__OPENCL_VERSION__) */
 
 /* Unified compile hint. */
@@ -186,6 +190,7 @@ double clamp( double val, double min, double max ) {
     return val < min ? min : val > max ? max : val;
 }
 #define max(a, b) ((a) > (b) ? (a) : (b))
+#define min(a, b) ((a) < (b) ? (a) : (b))
 #define mix(x, y, a) ((x) + (( (y) - (x) ) * (a)))
 #endif /* !defined(__OPENCL_VERSION__) */
 
@@ -198,11 +203,14 @@ typedef struct {
 /*
     Timestamp is defined as a 16-bit unsigned int.
     the atomic time unit is 10 milliseconds, thus the max representable timestamp is 10'55"350.
+    Add and substract of time_t should be done with TIME_OFFSET / TIME_DISTANT macro, to avoid overflow.
 */
 typedef k16u time_t;
 #define FROM_SECONDS( sec ) ((time_t)((float)(sec) * 100.0f))
 #define FROM_MILLISECONDS( msec ) ((time_t)((float)(msec) / 10.0f))
 #define TO_SECONDS( timestamp ) ((float)(timestamp) * 0.01f)
+#define TIME_OFFSET( time ) ((time_t)convert_ushort_sat((k32s)(rti->timestamp) + (k32s)time))
+#define TIME_DISTANT( time ) ((time_t)convert_ushort_sat((k32s)time) - (k32s)(rti->timestamp))
 
 /* Event queue. */
 #define EQ_SIZE (63)
@@ -217,22 +225,27 @@ typedef struct {
     event_t event[EQ_SIZE];
 } event_queue_t;
 
+/* Declarations from class modules. */
+#define LUACL_LOAD_DECLARATIONS
+#include "bling\bling.c"
+#undef LUACL_LOAD_DECLARATIONS
+
 /* Snapshot saves past states. */
 #define SNAPSHOT_SIZE (64)
 typedef struct {
-    k32u placeholder; /* ... */
+#define LUACL_LOAD_SNAPSHOT_T_MEMBERLIST
+#include "bling\bling.c"
+#undef LUACL_LOAD_SNAPSHOT_T_MEMBERLIST
 } snapshot_t;
 typedef struct {
     snapshot_t* buffer; /* Should be __global__ ! */
     k64u bitmap;
 } snapshot_manager_t;
 
-/* Declarations from class modules. */
-#define LUACL_LOAD_DECLARATIONS
-#include "bling\bling.c"
-#undef LUACL_LOAD_DECLARATIONS
-/* Player struct, filled by the front-end. */
-typedef struct {
+/* Player struct, filled by the class module. */
+typedef struct kdeclspec( packed ) {
+    float power;
+    float power_regen;
 #define LUACL_LOAD_PLAYER_T_MEMBERLIST
 #include "bling\bling.c"
 #undef LUACL_LOAD_PLAYER_T_MEMBERLIST
@@ -352,6 +365,24 @@ void eq_enqueue_ps( rtinfo_t* rti, time_t trigger ) {
         rti->eq.power_suffice = trigger;
 }
 
+/* Power gain. */
+void power_gain( rtinfo_t* rti, float power ) {
+    rti->player.power = min( power_max, rti->player.power + power );
+}
+
+/* Power check. */
+kbool power_check( rtinfo_t* rti, float cost ) {
+    if ( cost <= rti->player.power ) return 1;
+    eq_enqueue_ps( rti, TIME_OFFSET( FROM_SECONDS( ( cost - rti->player.power ) / rti->player.power_regen ) ) );
+    return 0;
+}
+
+/* Power consume. */
+void power_consume( rtinfo_t* rti, float cost ) {
+    assert( power_check( rti, cost ) ); /* Power should suffice. */
+    rti->player.power -= cost;
+}
+
 /* Execute the top priority. */
 int eq_execute( rtinfo_t* rti ) {
     k16u i, child;
@@ -364,13 +395,13 @@ int eq_execute( rtinfo_t* rti ) {
     assert( !rti->eq.power_suffice || rti->timestamp <= rti->eq.power_suffice ); /* Time won't go back. */
 
     /* If time jumps over 1 second, insert a check point (as a power suffice event). */
-    if ( FROM_SECONDS( 1 ) < p[1].time - rti->timestamp &&
-            ( !rti->eq.power_suffice || FROM_SECONDS( 1 ) < rti->eq.power_suffice - rti->timestamp ) )
-        rti->eq.power_suffice = rti->timestamp + FROM_SECONDS( 1 );
+    if ( FROM_SECONDS( 1 ) < TIME_DISTANT( p[1].time ) &&
+            ( !rti->eq.power_suffice || FROM_SECONDS( 1 ) < TIME_DISTANT( rti->eq.power_suffice ) ) )
+        rti->eq.power_suffice = TIME_OFFSET( FROM_SECONDS( 1 ) );
 
     /* When time elapse, trigger a full scanning at APL. */
-    if ( FROM_SECONDS( 0 ) < p[1].time - rti->timestamp &&
-            ( !rti->eq.power_suffice || FROM_SECONDS( 0 ) < rti->eq.power_suffice - rti->timestamp ) ) {
+    if ( rti->timestamp < p[1].time &&
+            ( !rti->eq.power_suffice || rti->timestamp < rti->eq.power_suffice ) ) {
         scan_apl( rti ); /* This may change p[1]. */
 
         /* Check again. */
@@ -398,6 +429,7 @@ int eq_execute( rtinfo_t* rti ) {
         p[i] = last;
 
         /* Now 'min' contains the top priority. Execute it. */
+        power_gain( rti, TO_SECONDS( min.time - rti->timestamp ) * rti->player.power_regen );
         rti->timestamp = min.time;
 
         if ( min.routine == EVENT_END_SIMULATION ) /* Finish the simulation here. */
@@ -409,9 +441,13 @@ int eq_execute( rtinfo_t* rti ) {
 
     } else {
         /* Invoke power suffice routine. */
+        power_gain( rti, TO_SECONDS( rti->eq.power_suffice - rti->timestamp ) * rti->player.power_regen );
         rti->timestamp = rti->eq.power_suffice;
         rti->eq.power_suffice = 0;
-        /* Power suffices would not make any impact, just a reserved APL scanning. */
+        /*
+            Power suffices would not make any impact, just a reserved APL scanning.
+            The scanning will occur when timestamp elapses next time, not immediately.
+         */
     }
 
     return 1;
@@ -424,12 +460,12 @@ int eq_execute( rtinfo_t* rti ) {
 */
 #define K64U_MSB ( K64U_C( 1 ) << (sizeof(k64u) * 8 - 1) )
 
-k8u snapshot_save( rtinfo_t* rti, snapshot_t snapshot ) {
+k8u snapshot_save( rtinfo_t* rti, snapshot_t** snapshot ) {
     k8u no;
     assert( rti->snapshot_manager.bitmap ); /* Full check. */
     no = clz( rti->snapshot_manager.bitmap ); /* Get first available place. */
     rti->snapshot_manager.bitmap &= ~( K64U_MSB >> no ); /* Mark as occupied. */
-    rti->snapshot_manager.buffer[ no ] = snapshot;
+    *snapshot = &rti->snapshot_manager.buffer[ no ];
     return no;
 }
 
@@ -474,13 +510,14 @@ void sim_init( rtinfo_t* rti, k32u seed, snapshot_t* ssbuf ) {
     rng_init( &rti->seed, seed );
     /* Snapshot manager. */
     snapshot_init( rti, ssbuf );
-    /* Class module initializer. */
-    module_init( rti );
 
     /* Combat length. */
     assert( vary_combat_length < max_length ); /* Vary can't be greater than max. */
     assert( vary_combat_length + max_length < 655.35f );
     rti->expected_combat_length = FROM_SECONDS( max_length + vary_combat_length * clamp( stdnor_rng( &rti->seed ) * ( 1.0f / 3.0f ), -1.0f, 1.0f ) );
+
+    /* Class module initializer. */
+    module_init( rti );
 
     eq_enqueue( rti, rti->expected_combat_length, EVENT_END_SIMULATION, 0 );
 
@@ -488,8 +525,9 @@ void sim_init( rtinfo_t* rti, k32u seed, snapshot_t* ssbuf ) {
 
 /* Single iteration logic. */
 void sim_iterate( float* dps_result ) {
-    deviceonly( __global ) snapshot_t snapshot_buffer[SNAPSHOT_SIZE * iterations];
-    deviceonly( __local  ) rtinfo_t _rti;
+    deviceonly( __global snapshot_t snapshot_buffer[SNAPSHOT_SIZE * iterations];)
+    hostonly( snapshot_t* snapshot_buffer = malloc(SNAPSHOT_SIZE * iterations * sizeof(snapshot_t)); )
+    deviceonly( __private ) rtinfo_t _rti;
 
     sim_init(
         &_rti,
@@ -500,6 +538,7 @@ void sim_iterate( float* dps_result ) {
     while( eq_execute( &_rti ) );
 
     dps_result[get_global_id( 0 )] = _rti.damage_collected / TO_SECONDS( _rti.expected_combat_length );
+    hostonly( free(snapshot_buffer) );
 }
 
 /* Load class module. */
@@ -509,18 +548,21 @@ void sim_iterate( float* dps_result ) {
 
 /* Delete this. */
 void scan_apl( rtinfo_t* rti ) {
+    SPELL( bsod );
+    if ( rti->player.livingbomb.expire < rti->timestamp )
+        SPELL( livingbomb );
+    SPELL( smackthat );
 }
 
-
 int main() {
-    rtinfo_t rti;
-    deviceonly( __global ) snapshot_t buffer[SNAPSHOT_SIZE];
+    float* result = malloc( 4 * iterations );
     int i, j;
-    for ( j = 0; j < 20; j++ ) {
-        for ( i = 0; i < 5; i++ ) {
-            sim_init( &rti, j * 5 + i, buffer );
-            printf( "%d\t", rti.expected_combat_length );
-        }
-        printf( "\n" );
+    for( i = 0; i < iterations; i++ ) {
+        sim_iterate( result );
     }
+    /*for( i = 0; i < iterations; i += 5 ) {
+        for( j = 0; j < 5; j++ )
+            printf( "%.3f\t", result[i + j] );
+        printf( "\n" );
+    }*/
 }
