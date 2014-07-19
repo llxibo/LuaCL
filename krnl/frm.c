@@ -8,7 +8,7 @@
 #define max_length 450.0f
 #define initial_health_percentage 100.0f
 #define death_pct 0.0f
-#define iterations 50000
+#define iterations 1
 #define deterministic_seed 5171
 #define power_max 100.0f
 
@@ -35,9 +35,14 @@ void* malloc( unsigned long long );
 void free( void* );
 #define KRNL_STR2(v) #v
 #define KRNL_STR(v) KRNL_STR2(v)
+#if defined(_MSC_VER)
+#define hfuncname __FUNCTION__
+#else
+#define hfuncname __func__
+#endif
 #define assert(expression) if(!(expression)){ \
         printf("Assertion failed: %s, function %s, file %s, line %d.\n", \
-                KRNL_STR(expression),   __func__ ,__FILE__, __LINE__); \
+                KRNL_STR(expression),  hfuncname ,__FILE__, __LINE__); \
                 abort(); }else
 #else
 #define assert(...)
@@ -68,7 +73,20 @@ void free( void* );
 #define k64u unsigned long long int
 #define K64S_C(num) (num##LL)
 #define K64U_C(num) (num##ULL)
+typedef union {
+	float f;
+	k32u i;
+} f2i_t;
 #define convert_ushort_sat(num) ((num) < 0 ? (k16u)0 : (num) > 0xffff ? (k16u)0xffff : (k16u)(num))
+#define convert_ushort_rtp(num) ((k16u)(num) + !!((float)(num) - (float)(k16u)(num)))
+float convert_float_rtp(k32u num){
+	f2i_t convert;
+	convert.f = (float)(num);
+	convert.i &= 0x3f800000U;
+	convert.i |= 0x1U;
+	convert.f += (float)(num);
+	return convert.f;
+}
 #endif /* defined(__OPENCL_VERSION__) */
 
 /* Unified compile hint. */
@@ -206,9 +224,9 @@ typedef struct {
     Add and substract of time_t should be done with TIME_OFFSET / TIME_DISTANT macro, to avoid overflow.
 */
 typedef k16u time_t;
-#define FROM_SECONDS( sec ) ((time_t)((float)(sec) * 100.0f))
+#define FROM_SECONDS( sec ) ((time_t)convert_ushort_rtp((float)(sec) * 100.0f))
 #define FROM_MILLISECONDS( msec ) ((time_t)((float)(msec) / 10.0f))
-#define TO_SECONDS( timestamp ) ((float)(timestamp) * 0.01f)
+#define TO_SECONDS( timestamp ) (convert_float_rtp(timestamp) * 0.01f)
 #define TIME_OFFSET( time ) ((time_t)convert_ushort_sat((k32s)(rti->timestamp) + (k32s)time))
 #define TIME_DISTANT( time ) ((time_t)convert_ushort_sat((k32s)time) - (k32s)(rti->timestamp))
 
@@ -302,7 +320,7 @@ float uni_rng( seed_t* seed ) {
     /* Concat lower-right and upper-left state bits. */
     y = ( seed->mt[seed->mti] & 0xfffffffeU ) | ( seed->mt[( seed->mti + 1 ) & 3] & 0x00000001U );
     /* Compute next state with the recurring equation. */
-    y = seed->mt[seed->mti] = seed->mt[( seed->mti + 2 ) & 3] ^ ( y >> 1 ) ^ ( 0xfa375374U & -( y & 0x1U ) );
+    y = seed->mt[seed->mti] = seed->mt[( seed->mti + 2 ) & 3] ^ ( y >> 1 ) ^ ( 0xfa375374U & -(k32s)( y & 0x1U ) );
     /* Increase the counter */
     seed->mti = ( seed->mti + 1 ) & 3;
     /* Tempering */
@@ -434,7 +452,7 @@ int eq_execute( rtinfo_t* rti ) {
 
         if ( min.routine == EVENT_END_SIMULATION ) /* Finish the simulation here. */
             return 0;
-
+        printf("%d: Event%d, event count %d\n", rti->timestamp, min.routine, rti->eq.count);
         /* TODO: Some preparations? */
         routine_entries( rti, min );
         /* TODO: Some finishing works? */
@@ -505,7 +523,7 @@ void sim_init( rtinfo_t* rti, k32u seed, snapshot_t* ssbuf ) {
         set_global_id( 0, gid++ );
     )
     /* Write zero to RTI. */
-    *rti = ( rtinfo_t ) {};
+    *rti = ( rtinfo_t ) {0};
     /* RNG. */
     rng_init( &rti->seed, seed );
     /* Snapshot manager. */
@@ -549,7 +567,7 @@ void sim_iterate( float* dps_result ) {
 /* Delete this. */
 void scan_apl( rtinfo_t* rti ) {
     SPELL( bsod );
-    if ( rti->player.livingbomb.expire < rti->timestamp )
+    //if ( rti->player.livingbomb.expire < rti->timestamp )
         SPELL( livingbomb );
     SPELL( smackthat );
 }

@@ -68,8 +68,8 @@ void deal_damage( rtinfo_t* rti, float dmg, k8u dmgtype ) {
         dmg *= ( 24835.0f / (24835.0f + 4037.5f * 90.0f - 317117.5f ) );
         break;
     case DMGTYPE_MAGIC:
-        if (rti->player.bsod.expire >= rti->timestamp) dmg *= 1.3;
-        dmg *= 1.04;
+        if (rti->player.bsod.expire >= rti->timestamp) dmg *= 1.3f;
+        dmg *= 1.04f;
         break;
     }
     rti->damage_collected += dmg;
