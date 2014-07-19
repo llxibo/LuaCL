@@ -65,13 +65,17 @@ void deal_damage( rtinfo_t* rti, float dmg, k8u dmgtype ) {
     case DMGTYPE_NORMAL:
         break;
     case DMGTYPE_PHISICAL:
-        dmg *= ( 24835.0f / (24835.0f + 4037.5f * 90.0f - 317117.5f ) );
+		dmg *= ( ( 4037.5f * 90.0f - 317117.5f ) / (24835.0f + 4037.5f * 90.0f - 317117.5f ) );
         break;
     case DMGTYPE_MAGIC:
         if (rti->player.bsod.expire >= rti->timestamp) dmg *= 1.3f;
         dmg *= 1.04f;
         break;
     }
+	hostonly(
+		tprint( rti );
+		printf(" damage %.0f\n", dmg);
+	)
     rti->damage_collected += dmg;
 }
 
@@ -112,7 +116,7 @@ DECL_EVENT( smackthat_land ) {
 }
 
 DECL_EVENT( livingbomb_execute ) {
-    snapshot_t* ss;
+    deviceonly( __global ) snapshot_t* ss;
     snapshot = snapshot_save( rti, &ss );
     rti->player.livingbomb.expire = TIME_OFFSET( FROM_SECONDS( 15 ) );
     ss->ip[0] = (k32u)rti->player.livingbomb.expire;
@@ -121,12 +125,16 @@ DECL_EVENT( livingbomb_execute ) {
 
 DECL_EVENT( livingbomb_tick ) {
     time_t next_tick;
-    snapshot_t* ss = snapshot_read( rti, snapshot );
+    deviceonly( __global ) snapshot_t* ss = snapshot_read( rti, snapshot );
     /* Livingbomb may be refreshed. */
     if ( ss->ip[0] != (k32u)rti->player.livingbomb.expire ){
         snapshot_kill( rti, snapshot );
         return;
     }
+	hostonly(
+		tprint( rti );
+		printf(" livingbomb tick\n");
+	)
     deal_damage( rti, 100.0f, DMGTYPE_MAGIC );
     next_tick = TIME_OFFSET( FROM_SECONDS( 3 ) );
     if ( next_tick <= rti->player.livingbomb.expire ) {
@@ -138,9 +146,14 @@ DECL_EVENT( livingbomb_tick ) {
 
 DECL_EVENT( livingbomb_expire ) {
     /* Livingbomb may be refreshed. Double check the expire time. */
-    snapshot_t* ss = snapshot_read( rti, snapshot );
-    if ( ss->ip[0] == (k32u)rti->player.livingbomb.expire )
-        deal_damage( rti, 600.0f, DMGTYPE_MAGIC );
+    deviceonly( __global ) snapshot_t* ss = snapshot_read( rti, snapshot );
+    if ( ss->ip[0] == (k32u)rti->player.livingbomb.expire ){
+		hostonly(
+			tprint( rti );
+			printf(" livingbomb expire\n");
+		)
+		deal_damage( rti, 600.0f, DMGTYPE_MAGIC );
+    }
     snapshot_kill( rti, snapshot );
 }
 
@@ -149,15 +162,23 @@ DECL_EVENT( bsod_execute ) {
     rti->player.bsod.cd = TIME_OFFSET( FROM_SECONDS( 8 ) );
     eq_enqueue( rti, rti->player.bsod.cd, routnum_bsod_cd, 0 );
     rti->player.bsod.expire = TIME_OFFSET( FROM_SECONDS( 5 ) );
-    eq_enqueue( rti, rti->player.bsod.expire, routnum_bsod_execute, 0 );
+    eq_enqueue( rti, rti->player.bsod.expire, routnum_bsod_expire, 0 );
 }
 
 DECL_EVENT( bsod_cd ) {
     /* Do nothing. */
+    hostonly(
+        tprint( rti );
+        printf(" bsod ready\n");
+    )
 }
 
 DECL_EVENT( bsod_expire ) {
     /* Do nothing. */
+    hostonly(
+        tprint( rti );
+        printf(" bsod expire\n");
+    )
 }
 
 DECL_SPELL( smackthat ) {
@@ -166,6 +187,10 @@ DECL_SPELL( smackthat ) {
     power_consume( rti, 5.0f );
     gcd_start( rti, FROM_SECONDS( 1.5 ) );
     eq_enqueue( rti, TIME_OFFSET( FROM_SECONDS( 1 ) ), routnum_smackthat_land, 0 );
+    hostonly(
+        tprint( rti );
+        printf(" cast smackthat\n");
+    )
 }
 DECL_SPELL( livingbomb ) {
     if ( rti->player.gcd > rti->timestamp ) return;
@@ -173,12 +198,20 @@ DECL_SPELL( livingbomb ) {
     power_consume( rti, 20.0f );
     gcd_start( rti, FROM_SECONDS( 1.5 ) );
     eq_enqueue( rti, rti->timestamp, routnum_livingbomb_execute, 0 );
+    hostonly(
+        tprint( rti );
+        printf(" cast livingbomb\n");
+    )
 }
 DECL_SPELL( bsod ) {
     if ( rti->player.gcd > rti->timestamp ) return;
     if ( rti->player.bsod.cd > rti->timestamp ) return;
     gcd_start( rti, FROM_SECONDS( 1.5 ) );
     eq_enqueue( rti, rti->timestamp, routnum_bsod_execute, 0 );
+    hostonly(
+        tprint( rti );
+        printf(" cast bsod\n");
+    )
 }
 
 void routine_entries( rtinfo_t* rti, event_t e ){
