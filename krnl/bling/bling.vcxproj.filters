@@ -15,10 +15,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\..\aeanswiftriver%40gmail.com\LuaCL\krnl\bling\bling.c">
+    <ClCompile Include="bling.c">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\aeanswiftriver%40gmail.com\LuaCL\krnl\frm.c">
+    <ClCompile Include="..\frm.c">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
