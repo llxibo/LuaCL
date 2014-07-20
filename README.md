@@ -45,9 +45,11 @@ ICD»áÊÔÍ¼¶ÁÈ¡×¢²á±íÏî`HKEY_LOCAL_MACHINE\SOFTWARE\Khronos\OpenCL\Vendors`ÖĞµÄËùÓ
 ```        C:\path\to\intel\intelocl32.dll  dword:00000000
 
 ICD»áÒÀ´Î¼ÓÔØnvopencl.dll¡¢intelocl32.dll£¬È»ºóµ÷ÓÃËüÃÇµÄÒÔÏÂÈı¸öº¯Êı£º
+
 ```        clIcdGetPlatformIDsKHR
 ```        clGetPlatformInfo
 ```        clGetExtensionFunctionAddress
+
 Èç¹ûÈÎÒ»º¯Êıµ÷ÓÃÊ§°Ü£¬ÔòÈÏÎªËü²»ÊÇÒ»¸öOpenCLÊµÏÖ£¬Å×ÆúËü¡£
 
 Linux:

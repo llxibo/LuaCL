@@ -1,10 +1,11 @@
 ### 可缩短的技能冷却时间
 用DoT式冷却处理。
 例如某技能A，冷却是60秒，但每次使用B技能，A技能冷却减少8秒：
+
 ```// A技能释放：
 ```rti->player.spell_A.expire = 60;
 ```eq_enqueue( rti, TIME_OFFSET( FROM_SECONDS( 5 ) ), routnum_spell_A_cd, 0 );
-```
+```    
 ```// spell_A_cd事件：
 ```if ( TIME_DISTANT( rti->player.spell_A.expire ) > FROM_SECONDS( 5 ) ) {
 ```    // 实际冷却远未结束，还需要5秒后再次检查
@@ -17,7 +18,7 @@
 ```} else {
 ```    // 被废弃的冷却结束事件，不需要任何动作。
 ```}
-```
+```    
 ```// B技能释放：
 ```rti->player.spell_A.expire -= 8;
 ```if ( !UP( spell_A.expire ) )
