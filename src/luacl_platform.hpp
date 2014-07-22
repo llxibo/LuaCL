@@ -34,10 +34,15 @@ struct luacl_platform {
 		lua_pushcfunction(L, GetDevices);
 		lua_setfield(L, -2, "GetDevices");
 		lua_setfield(L, -2, "__index");
-		lua_pushstring(L, "kv");
-		lua_setfield(L, -2, "__mode");
 		lua_pushcfunction(L, ToString);
 		lua_setfield(L, -2, "__tostring");
+
+		lua_newtable(L);
+		lua_newtable(L);
+		lua_pushstring(L, "kv");
+		lua_setfield(L, -2, "__mode");
+		lua_setmetatable(L, -2);
+		lua_setfield(L, LUA_REGISTRYINDEX, LUACL_PLATFORM_REGISTRY);
 
 		lua_pushcfunction(L, Get);
 		lua_setfield(L, LUA_GLOBALSINDEX, "GetPlatform");

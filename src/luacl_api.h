@@ -24,25 +24,25 @@ struct luacl_object_template {
 
 	static int Wrap(lua_State *L, cl_object object) {
 		lua_getfield(L, LUA_REGISTRYINDEX, traits::REGISTRY());
-		if (!lua_istable(L, -1)) {
-			printf("Wrap: Creating registry table\n");
-			lua_newtable(L);
-			lua_setfield(L, LUA_REGISTRYINDEX, traits::REGISTRY());
-			lua_getfield(L, LUA_REGISTRYINDEX, traits::REGISTRY());	/* setfield will pop the table from stack, so take it out */
-		}
 		/* Now the top of stack is registry table */
-		lua_pushlightuserdata(L, static_cast<void *>(object));
+		lua_pushlightuserdata(L, static_cast<void *>(object));								/* p, reg */
 		lua_gettable(L, -2);	/* Query the registry table with value of pointer */
-		void *p = lua_touserdata(L, -1);
+		void *p = lua_touserdata(L, -1);													/* udata/nil, reg */
 		if (p == NULL) {
-			printf("Wrap: Creating cache entry\n");
-			cl_object *p = static_cast<cl_object *>(lua_newuserdata(L, sizeof(cl_object)));
+			//printf("Wrap: Creating cache entry\n");
+			cl_object *p = static_cast<cl_object *>(lua_newuserdata(L, sizeof(cl_object)));	/* udata, nil, reg */
 			*p = object;
-			luaL_getmetatable(L, traits::METATABLE());
-			lua_setmetatable(L, -2);
+			luaL_getmetatable(L, traits::METATABLE());										/* mt, udata, nil, reg */
+			lua_setmetatable(L, -2);														/* udata(mt), nil, reg */
+			lua_pushlightuserdata(L, static_cast<void *>(object));							/* p, udata(mt), nil, reg */
+			lua_pushvalue(L, -2);															/* udata(mt), p, udata(mt), nil, reg */
+			lua_settable(L, -5);															/* udata(mt), nil, reg */
+			lua_remove(L, -3);
+			lua_remove(L, -2);
 		}
 		else {
-			luaL_checkudata(L, -1, traits::METATABLE());
+			luaL_checkudata(L, -1, traits::METATABLE());									/* udata, reg */
+			lua_remove(L, -2);																/* udata */
 		}
 		return 1;
 	}

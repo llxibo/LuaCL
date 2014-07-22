@@ -34,10 +34,16 @@ struct luacl_device {
 		//lua_pushcfunction(L, GetDevices);
 		//lua_setfield(L, -1, "GetDevices");
 		lua_setfield(L, -2, "__index");
-		lua_pushstring(L, "kv");
-		lua_setfield(L, -2, "__mode");
 		lua_pushcfunction(L, ToString);
 		lua_setfield(L, -2, "__tostring");
+
+		/* Create device userdata registry */
+		lua_newtable(L);	/* reg */
+		lua_newtable(L);	/* mt, reg */
+		lua_pushstring(L, "kv");	/* "kv", mt, reg */
+		lua_setfield(L, -2, "__mode");	/* mt(__mode="kv), reg */
+		lua_setmetatable(L, -2);		/* reg(mt) */
+		lua_setfield(L, LUA_REGISTRYINDEX, LUACL_DEVICE_REGISTRY);	/* REG(reg) */
 	}
 
 	static int Get(lua_State *L) {
@@ -53,7 +59,7 @@ struct luacl_device {
 		CheckCLError(L, err, "Failed requesting platform list.", devices);
 
 		for (cl_uint index = 0; index < numDevices; index++) {
-			printf("Wrapping device: %p\n", devices[index]);
+			//printf("Wrapping device: %p\n", devices[index]);
 			Wrap(L, devices[index]);
 		}
 		return static_cast<int>(numDevices);
