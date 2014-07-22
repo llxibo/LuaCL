@@ -27,9 +27,6 @@
     <ClInclude Include="src\luacl_api.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="src\luacl_info.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="lua-5.1.4\src\lapi.h">
       <Filter>头文件\lua</Filter>
     </ClInclude>
@@ -99,15 +96,21 @@
     <ClInclude Include="lua-5.1.4\src\lzio.h">
       <Filter>头文件\lua</Filter>
     </ClInclude>
+    <ClInclude Include="src\luacl_object.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="src\luacl_platform.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="src\luacl_context.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="src\luacl_device.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\LuaCL.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="src\luacl_api.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="src\luacl_info.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="lua-5.1.4\src\lapi.c">
