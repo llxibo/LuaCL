@@ -26,6 +26,11 @@
 #define hostonly(...) __VA_ARGS__
 #define deviceonly(...)
 #endif /* defined(__OPENCL_VERSION__) */
+#if defined(_MSC_VER)
+#define msvconly(...) __VA_ARGS__
+#else
+#define msvconly(...)
+#endif /* defined(_MSC_VER) */
 
 /* Diagnostic. */
 #if defined(_DEBUG) && !defined(__OPENCL_VERSION__)
@@ -564,7 +569,7 @@ void sim_init( rtinfo_t* rti, k32u seed, deviceonly( __global ) snapshot_t* ssbu
     )
     /* Write zero to RTI. */
     *rti = ( rtinfo_t ) {
-        0
+        msvconly( 0 )
     };
     /* RNG. */
     rng_init( &rti->seed, seed );
@@ -623,7 +628,7 @@ int main() {
     float* result = malloc( 4 * iterations );
     int i, j;
     for( i = 0; i < iterations; i++ ) {
-        sim_iterate( result );
+        sim_iterate( result, 0 );
     }
     printf( "result:\n" );
     for( i = 0; i < iterations; i += 5 ) {
