@@ -5,10 +5,6 @@
 #include <string>
 #include <assert.h>
 
-void CheckAllocError(lua_State *L, void *p, const char * msg);
-
-void CheckCLError(lua_State *L, cl_uint err, const char * msg, void *p = NULL);
-
 void PushPlatformInfo(lua_State *L, cl_platform_id platform, cl_platform_info param, std::string key);
 
 cl_uint GetNumPlatforms();

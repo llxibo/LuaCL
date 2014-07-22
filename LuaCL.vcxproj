@@ -50,8 +50,6 @@
     <ClCompile Include="lua-5.1.4\src\lzio.c" />
     <ClCompile Include="lua-5.1.4\src\print.c" />
     <ClCompile Include="src\LuaCL.cpp" />
-    <ClCompile Include="src\luacl_api.cpp" />
-    <ClCompile Include="src\luacl_info.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="lua-5.1.4\src\lapi.h" />
@@ -79,7 +77,10 @@
     <ClInclude Include="lua-5.1.4\src\lzio.h" />
     <ClInclude Include="src\LuaCL.h" />
     <ClInclude Include="src\luacl_api.h" />
-    <ClInclude Include="src\luacl_info.h" />
+    <ClInclude Include="src\luacl_context.hpp" />
+    <ClInclude Include="src\luacl_device.hpp" />
+    <ClInclude Include="src\luacl_object.h" />
+    <ClInclude Include="src\luacl_platform.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{EBC87DA4-7BD5-4898-B739-CEF515F41728}</ProjectGuid>
