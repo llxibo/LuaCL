@@ -80,7 +80,7 @@
     <ClInclude Include="src\luacl_api.h" />
     <ClInclude Include="src\luacl_context.hpp" />
     <ClInclude Include="src\luacl_device.hpp" />
-    <ClInclude Include="src\luacl_object.h" />
+    <ClInclude Include="src\luacl_object.hpp" />
     <ClInclude Include="src\luacl_platform.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

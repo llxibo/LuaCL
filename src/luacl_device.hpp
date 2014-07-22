@@ -2,8 +2,9 @@
 #define __LUACL_DEVICE_HPP
 
 #include "LuaCL.h"
-#include "luacl_api.h"
-#include "luacl_object.h"
+#include "luacl_object.hpp"
+#include <assert.h>
+#include <string>
 
 static const char LUACL_DEVICE_REGISTRY[] = "LuaCL.Registry.Device";
 static const char LUACL_DEVICE_METATABLE[] = "LuaCL.Metatable.Device";
@@ -133,6 +134,84 @@ struct luacl_device {
 
 	static int ToString(lua_State *L) {
 		return traits::ToString(L);
+	}
+
+	static void PushDeviceInfoStr(lua_State *L, cl_device_id device, cl_device_info param, std::string key) {
+		if (device == NULL) {
+			return;
+		}
+		size_t size = 0;
+		cl_int err = clGetDeviceInfo(device, param, 0, NULL, &size);
+		if (err != CL_SUCCESS || size == 0) {
+			return;
+		}
+
+		char * value = static_cast<char *>(malloc(sizeof(char) * size));
+		if (value == NULL) {
+			return;
+		}
+		err = clGetDeviceInfo(device, param, size, value, NULL);
+		if (err != CL_SUCCESS) {
+			free(value);
+			return;
+		}
+
+		std::string value_s(value, size);
+		free(value);
+		lua_pushstring(L, key.c_str());
+		lua_pushstring(L, value_s.c_str());
+		lua_settable(L, -3);
+	}
+
+	template <typename T> static T GetDeviceInfo(cl_device_id device, cl_device_info param) {
+#if _DEBUG
+		size_t size = 0;
+		cl_int errDebug = clGetDeviceInfo(device, param, 0, NULL, &size);
+		//printf("%d: %d - %d\n", param, size, sizeof(T));
+		assert(size == sizeof(T));
+#endif
+		T value = 0;
+		cl_int err = clGetDeviceInfo(device, param, sizeof(T), &value, NULL);
+		if (err != CL_SUCCESS) {
+			value = 0;
+		}
+		return value;
+	}
+
+	template <typename T> static void PushDeviceInfo(lua_State *L, cl_device_id device, cl_device_info param, std::string key) {
+		T value = GetDeviceInfo<T>(device, param);
+		lua_pushstring(L, key.c_str());
+		lua_pushnumber(L, static_cast<lua_Number>(value));
+		lua_settable(L, -3);
+	}
+
+	template <typename T> static void PushDeviceInfoArray(lua_State *L, cl_device_id device, cl_device_info param, std::string key) {
+		size_t size = 0;
+		cl_int err = clGetDeviceInfo(device, param, 0, NULL, &size);
+		if (err != CL_SUCCESS) {
+			return;
+		}
+		//#if _DEBUG && _MSC_VER
+		//	printf("Device Array: %Iu - %Iu\n", size, sizeof(T));
+		//#endif
+		assert(size % sizeof(T) == 0);
+		T * value = static_cast<T *>(malloc(size));
+		if (value == NULL) {
+			return;
+		}
+		err = clGetDeviceInfo(device, param, size, value, NULL);
+		if (err != CL_SUCCESS) {
+			free(value);
+			return;
+		}
+		lua_pushstring(L, key.c_str());
+		lua_newtable(L);
+		for (unsigned int index = 0; index < (size / sizeof(T)); index++) {
+			lua_pushnumber(L, static_cast<lua_Number>(value[index]));
+			lua_rawseti(L, -2, index + 1);
+		}
+		free(value);
+		lua_settable(L, -3);
 	}
 };
 

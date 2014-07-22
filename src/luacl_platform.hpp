@@ -2,7 +2,7 @@
 #define __LUACL_PLATFORM_HPP
 
 #include "LuaCL.h"
-#include "luacl_api.h"
+#include "luacl_object.hpp"
 #include "luacl_device.hpp"
 
 static const char LUACL_PLATFORM_REGISTRY[] = "LuaCL.Registry.Platform";

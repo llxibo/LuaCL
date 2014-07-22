@@ -1,7 +1,5 @@
 #include "LuaCL.h"
 
-#include "luacl_api.h"
-//#include "luacl_info.h"
 #include "luacl_platform.hpp"
 #include "luacl_device.hpp"
 
