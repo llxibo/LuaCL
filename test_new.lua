@@ -12,6 +12,15 @@ for index, platform in ipairs(platforms) do
 
 	local devices = {platform:GetDevices()}
 	dump_table(devices, ("(%s):GetDevices() "):format(tostring(platform)))
+	devices = nil
+
+	local devices = {platform:GetDevices()}
+	dump_table(devices, ("(%s):GetDevices() "):format(tostring(platform)))
+
+	print("Collecting garbage")
+	devices = nil
+	collectgarbage()
+
 	local devices = {platform:GetDevices()}
 	dump_table(devices, ("(%s):GetDevices() "):format(tostring(platform)))
 end

@@ -36,14 +36,7 @@ struct luacl_device {
 		lua_setfield(L, -2, "__index");
 		lua_pushcfunction(L, ToString);
 		lua_setfield(L, -2, "__tostring");
-
-		/* Create device userdata registry */
-		lua_newtable(L);	/* reg */
-		lua_newtable(L);	/* mt, reg */
-		lua_pushstring(L, "kv");	/* "kv", mt, reg */
-		lua_setfield(L, -2, "__mode");	/* mt(__mode="kv), reg */
-		lua_setmetatable(L, -2);		/* reg(mt) */
-		lua_setfield(L, LUA_REGISTRYINDEX, LUACL_DEVICE_REGISTRY);	/* REG(reg) */
+		traits::CreateRegistry(L);
 	}
 
 	static int Get(lua_State *L) {
