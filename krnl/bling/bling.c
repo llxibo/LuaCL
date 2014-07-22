@@ -48,7 +48,7 @@
 *           Put initialization codes here.
 *           When a thread is launched the simulator initializer will invoke this function.
 *
-*       void routine_entries ( rtinfo_t* rti, event_t e )
+*       void routine_entries ( rtinfo_t* rti, _event_t e )
 *           Define the behaviors for all kinds of events.
 *           When an event 'e' is executed the EQ framework will invoke this function.
 *
@@ -214,7 +214,7 @@ DECL_SPELL( bsod ) {
     )
 }
 
-void routine_entries( rtinfo_t* rti, event_t e ){
+void routine_entries( rtinfo_t* rti, _event_t e ){
     switch(e.routine){
         HOOK_EVENT( gcd_expire );
         HOOK_EVENT( smackthat_land );
