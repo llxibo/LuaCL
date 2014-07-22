@@ -203,5 +203,8 @@
     <ClCompile Include="lua-5.1.4\src\print.c">
       <Filter>源文件\lua</Filter>
     </ClCompile>
+    <ClCompile Include="src\luacl_info.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

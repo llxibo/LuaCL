@@ -23,4 +23,9 @@ for index, platform in ipairs(platforms) do
 
 	local devices = {platform:GetDevices()}
 	dump_table(devices, ("(%s):GetDevices() "):format(tostring(platform)))
+
+	for index, device in ipairs(devices) do
+		local info = device:GetInfo()
+		dump_table(info, ("(%s):GetInfo() "):format(tostring(device)))
+	end
 end

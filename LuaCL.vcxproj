@@ -50,6 +50,7 @@
     <ClCompile Include="lua-5.1.4\src\lzio.c" />
     <ClCompile Include="lua-5.1.4\src\print.c" />
     <ClCompile Include="src\LuaCL.cpp" />
+    <ClCompile Include="src\luacl_info.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="lua-5.1.4\src\lapi.h" />
