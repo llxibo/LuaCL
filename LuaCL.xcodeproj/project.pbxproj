@@ -7,11 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		8D51E27819761EAA00C5F80C /* OpenCL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8D51E27719761EAA00C5F80C /* OpenCL.framework */; };
-		8DADEFA219763E1D00FCB9E8 /* test.lua in CopyFiles */ = {isa = PBXBuildFile; fileRef = 8DADEFA119763E1100FCB9E8 /* test.lua */; };
+		8D98B3A1197F41E9003C95C5 /* OpenCL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8D98B3A0197F41E9003C95C5 /* OpenCL.framework */; };
+		8D98B3A8197F427D003C95C5 /* test_new.lua in Copy Files */ = {isa = PBXBuildFile; fileRef = 8D98B3A7197F4245003C95C5 /* test_new.lua */; };
+		8D98B3A9197F427D003C95C5 /* dump_table.lua in Copy Files */ = {isa = PBXBuildFile; fileRef = 8D98B3A6197F4245003C95C5 /* dump_table.lua */; };
+		8DADEFA219763E1D00FCB9E8 /* test.lua in Copy Files */ = {isa = PBXBuildFile; fileRef = 8DADEFA119763E1100FCB9E8 /* test.lua */; };
 		8DDF122B19761629001AD698 /* LuaCL.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8DDF122519761629001AD698 /* LuaCL.cpp */; };
-		8DDF122C19761629001AD698 /* luacl_api.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8DDF122719761629001AD698 /* luacl_api.cpp */; };
-		8DDF122D19761629001AD698 /* luacl_info.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8DDF122919761629001AD698 /* luacl_info.cpp */; };
 		8DDF12651976163C001AD698 /* lapi.c in Sources */ = {isa = PBXBuildFile; fileRef = 8DDF122E1976163C001AD698 /* lapi.c */; };
 		8DDF12661976163C001AD698 /* lauxlib.c in Sources */ = {isa = PBXBuildFile; fileRef = 8DDF12301976163C001AD698 /* lauxlib.c */; };
 		8DDF12671976163C001AD698 /* lbaselib.c in Sources */ = {isa = PBXBuildFile; fileRef = 8DDF12321976163C001AD698 /* lbaselib.c */; };
@@ -45,28 +45,33 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		8DB74FC1197615AE0021F366 /* CopyFiles */ = {
+		8DB74FC1197615AE0021F366 /* Copy Files */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 12;
 			dstPath = "";
 			dstSubfolderSpec = 16;
 			files = (
-				8DADEFA219763E1D00FCB9E8 /* test.lua in CopyFiles */,
+				8D98B3A8197F427D003C95C5 /* test_new.lua in Copy Files */,
+				8D98B3A9197F427D003C95C5 /* dump_table.lua in Copy Files */,
+				8DADEFA219763E1D00FCB9E8 /* test.lua in Copy Files */,
 			);
+			name = "Copy Files";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		8D51E27719761EAA00C5F80C /* OpenCL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenCL.framework; path = ../../../System/Library/Frameworks/OpenCL.framework; sourceTree = "<group>"; };
+		8D98B3A0197F41E9003C95C5 /* OpenCL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenCL.framework; path = /System/Library/Frameworks/OpenCL.framework; sourceTree = "<absolute>"; };
+		8D98B3A2197F4228003C95C5 /* luacl_context.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = luacl_context.hpp; sourceTree = "<group>"; };
+		8D98B3A3197F4228003C95C5 /* luacl_device.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = luacl_device.hpp; sourceTree = "<group>"; };
+		8D98B3A4197F4228003C95C5 /* luacl_object.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = luacl_object.hpp; sourceTree = "<group>"; };
+		8D98B3A5197F4228003C95C5 /* luacl_platform.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = luacl_platform.hpp; sourceTree = "<group>"; };
+		8D98B3A6197F4245003C95C5 /* dump_table.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = dump_table.lua; sourceTree = "<group>"; };
+		8D98B3A7197F4245003C95C5 /* test_new.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = test_new.lua; sourceTree = "<group>"; };
 		8DADEFA119763E1100FCB9E8 /* test.lua */ = {isa = PBXFileReference; lastKnownFileType = text; path = test.lua; sourceTree = "<group>"; };
 		8DB74FC3197615AE0021F366 /* LuaCL */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = LuaCL; sourceTree = BUILT_PRODUCTS_DIR; };
 		8DDF122519761629001AD698 /* LuaCL.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LuaCL.cpp; sourceTree = "<group>"; };
 		8DDF122619761629001AD698 /* LuaCL.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LuaCL.h; sourceTree = "<group>"; };
-		8DDF122719761629001AD698 /* luacl_api.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = luacl_api.cpp; sourceTree = "<group>"; };
-		8DDF122819761629001AD698 /* luacl_api.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = luacl_api.h; sourceTree = "<group>"; };
-		8DDF122919761629001AD698 /* luacl_info.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = luacl_info.cpp; sourceTree = "<group>"; };
-		8DDF122A19761629001AD698 /* luacl_info.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = luacl_info.h; sourceTree = "<group>"; };
 		8DDF122E1976163C001AD698 /* lapi.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = lapi.c; path = "lua-5.1.4/src/lapi.c"; sourceTree = "<group>"; };
 		8DDF122F1976163C001AD698 /* lapi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = lapi.h; path = "lua-5.1.4/src/lapi.h"; sourceTree = "<group>"; };
 		8DDF12301976163C001AD698 /* lauxlib.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = lauxlib.c; path = "lua-5.1.4/src/lauxlib.c"; sourceTree = "<group>"; };
@@ -127,7 +132,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				8D51E27819761EAA00C5F80C /* OpenCL.framework in Frameworks */,
+				8D98B3A1197F41E9003C95C5 /* OpenCL.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -137,11 +142,13 @@
 		8DB74FBA197615AE0021F366 = {
 			isa = PBXGroup;
 			children = (
-				8D51E27719761EAA00C5F80C /* OpenCL.framework */,
+				8D98B3A0197F41E9003C95C5 /* OpenCL.framework */,
 				8DDF12851976164E001AD698 /* lua-5.1.4 */,
 				8DDF122419761629001AD698 /* src */,
 				8DB74FC4197615AE0021F366 /* Products */,
 				8DADEFA119763E1100FCB9E8 /* test.lua */,
+				8D98B3A7197F4245003C95C5 /* test_new.lua */,
+				8D98B3A6197F4245003C95C5 /* dump_table.lua */,
 			);
 			sourceTree = "<group>";
 		};
@@ -156,12 +163,12 @@
 		8DDF122419761629001AD698 /* src */ = {
 			isa = PBXGroup;
 			children = (
+				8D98B3A2197F4228003C95C5 /* luacl_context.hpp */,
+				8D98B3A3197F4228003C95C5 /* luacl_device.hpp */,
+				8D98B3A4197F4228003C95C5 /* luacl_object.hpp */,
+				8D98B3A5197F4228003C95C5 /* luacl_platform.hpp */,
 				8DDF122519761629001AD698 /* LuaCL.cpp */,
 				8DDF122619761629001AD698 /* LuaCL.h */,
-				8DDF122719761629001AD698 /* luacl_api.cpp */,
-				8DDF122819761629001AD698 /* luacl_api.h */,
-				8DDF122919761629001AD698 /* luacl_info.cpp */,
-				8DDF122A19761629001AD698 /* luacl_info.h */,
 			);
 			path = src;
 			sourceTree = "<group>";
@@ -235,7 +242,7 @@
 			buildPhases = (
 				8DB74FBF197615AE0021F366 /* Sources */,
 				8DB74FC0197615AE0021F366 /* Frameworks */,
-				8DB74FC1197615AE0021F366 /* CopyFiles */,
+				8DB74FC1197615AE0021F366 /* Copy Files */,
 			);
 			buildRules = (
 			);
@@ -281,7 +288,6 @@
 				8DDF127C1976163C001AD698 /* ltable.c in Sources */,
 				8DDF126D1976163C001AD698 /* lfunc.c in Sources */,
 				8DDF12681976163C001AD698 /* lcode.c in Sources */,
-				8DDF122C19761629001AD698 /* luacl_api.cpp in Sources */,
 				8DDF126E1976163C001AD698 /* lgc.c in Sources */,
 				8DDF12721976163C001AD698 /* lmathlib.c in Sources */,
 				8DDF12781976163C001AD698 /* lparser.c in Sources */,
@@ -290,7 +296,6 @@
 				8DDF127E1976163C001AD698 /* ltm.c in Sources */,
 				8DDF12741976163C001AD698 /* loadlib.c in Sources */,
 				8DDF12651976163C001AD698 /* lapi.c in Sources */,
-				8DDF122D19761629001AD698 /* luacl_info.cpp in Sources */,
 				8DDF12661976163C001AD698 /* lauxlib.c in Sources */,
 				8DDF12771976163C001AD698 /* loslib.c in Sources */,
 				8DDF122B19761629001AD698 /* LuaCL.cpp in Sources */,

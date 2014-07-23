@@ -15,6 +15,7 @@ struct luacl_object_template {
 	typedef luacl_object_template_constants<cl_object> traits;
 
 	static int Wrap(lua_State *L, cl_object object) {
+        printf("Wrapping object %p\n", object);
 		lua_getfield(L, LUA_REGISTRYINDEX, traits::REGISTRY());
 		/* Now the top of stack is registry table */
 		lua_pushlightuserdata(L, static_cast<void *>(object));								/* p, reg */
