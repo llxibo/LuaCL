@@ -43,7 +43,7 @@ struct luacl_platform {
 		lua_setfield(L, LUA_GLOBALSINDEX, "GetPlatform");
 	}
 
-	static void PushInfo(lua_State *L, cl_platform_id platform, cl_platform_info param, std::string key) {
+	static int PushInfo(lua_State *L, cl_platform_id platform, cl_platform_info param, std::string key) {
 		/* Check size of value */
 		size_t size = 0;
 		cl_int err = clGetPlatformInfo(platform, param, 0, NULL, &size);
@@ -51,7 +51,7 @@ struct luacl_platform {
 
 		/* Request platform parameter */
 		char * value = (char *)malloc(sizeof(char) * size);
-		CheckAllocError(L, value, "Insufficient memory.");
+		CheckAllocError(L, value);
 		err = clGetPlatformInfo(platform, param, size, value, NULL);
 		CheckCLError(L, err, "Failed requesting platform info.", value);
 
@@ -61,6 +61,7 @@ struct luacl_platform {
 		lua_pushstring(L, key.c_str());
 		lua_pushstring(L, value_s.c_str());
 		lua_settable(L, -3);
+		return 0;
 	}
 
 	static int GetInfo(lua_State *L) {
@@ -80,7 +81,7 @@ struct luacl_platform {
 		CheckCLError(L, err, "Failed requesting number of platforms.", NULL);
 
 		cl_platform_id * platforms = static_cast<cl_platform_id *>(malloc(sizeof(cl_platform_id) * numPlatforms));
-		CheckAllocError(L, platforms, "Insufficient memory.");
+		CheckAllocError(L, platforms);
 		err = clGetPlatformIDs(numPlatforms, platforms, NULL);
 		CheckCLError(L, err, "Failed requesting platform list.", platforms);
 

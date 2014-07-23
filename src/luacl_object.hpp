@@ -49,10 +49,13 @@ struct luacl_object_template {
 		lua_setfield(L, LUA_REGISTRYINDEX, traits::REGISTRY());	/* (empty stack) */
 	}
 
+	/* Check and return OpenCL object wrapped in a userdata.
+	   This function always return a non-NULL value, or it will throw a Lua error. */
 	static cl_object CheckObject(lua_State *L) {
 		cl_object *p = static_cast<cl_object *>(luaL_checkudata(L, 1, traits::METATABLE()));
 		if (p == NULL) {
 			luaL_error(L, "Failed resolving object from userdata.");	/* This function never returns */
+			return NULL;
 		}
 		return *p;
 	}
@@ -63,11 +66,16 @@ struct luacl_object_template {
 	}
 };
 
+#define CHECK_ALLOC_ERROR_MACRO 1
+#if (CHECK_ALLOC_ERROR_MACRO)
+#define CheckAllocError(L, p) {if (p == NULL) {luaL_error(L, LUACL_ERR_MALLOC); return 0;}};
+#else
 void CheckAllocError(lua_State *L, void *p, const char * msg = LUACL_ERR_MALLOC) {
 	if (p == NULL) {
 		luaL_error(L, msg);
 	}
 }
+#endif
 
 void CheckCLError(lua_State *L, cl_uint err, const char * msg, void *p = NULL) {
 	if (err != CL_SUCCESS) {
