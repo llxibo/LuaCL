@@ -1,32 +1,5 @@
 #include "luacl_info.h"
 
-void PushPlatformInfo(lua_State *L, cl_platform_id platform, cl_platform_info param, std::string key) {
-	/* Check size of value */
-	size_t size = 0;
-	cl_int err = clGetPlatformInfo(platform, param, 0, NULL, &size);
-	if (err != CL_SUCCESS) {
-		return;
-	}
-
-	/* Request platform parameter */
-	char * value = (char *)malloc(sizeof(char) * size);
-	if (value == NULL) {
-		return;
-	}
-	err = clGetPlatformInfo(platform, param, size, value, NULL);
-	if (err != CL_SUCCESS) {
-		free(value);
-		return;
-	}
-
-	/* Push key and value to table */
-	std::string value_s(value, size);	/* Construct string with max length for safety constraint */
-	free(value);
-    lua_pushstring(L, key.c_str());
-	lua_pushstring(L, value_s.c_str());
-	lua_settable(L, -3);
-}
-
 cl_uint GetNumPlatforms() {
 	cl_uint numPlatforms = 0;
 	cl_int err = clGetPlatformIDs(0, NULL, &numPlatforms);
@@ -82,33 +55,6 @@ cl_device_id GetDeviceId(cl_platform_id platform, cl_uint index) {
 	}
 	free(deviceIds);
 	return deviceId;
-}
-
-void PushDeviceInfoStr(lua_State *L, cl_device_id device, cl_device_info param, std::string key) {
-	if (device == NULL) {
-		return;
-	}
-	size_t size = 0;
-	cl_int err = clGetDeviceInfo(device, param, 0, NULL, &size);
-	if (err != CL_SUCCESS || size == 0) {
-		return;
-	}
-
-	char * value = static_cast<char *>(malloc(sizeof(char) * size));
-	if (value == NULL) {
-		return;
-	}
-	err = clGetDeviceInfo(device, param, size, value, NULL);
-	if (err != CL_SUCCESS) {
-        free(value);
-		return;
-	}
-
-	std::string value_s(value, size);
-    free(value);
-	lua_pushstring(L, key.c_str());
-	lua_pushstring(L, value_s.c_str());
-	lua_settable(L, -3);
 }
 
 cl_uint GetContextReferenceCount(cl_context context) {

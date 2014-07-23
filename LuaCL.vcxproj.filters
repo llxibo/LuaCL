@@ -96,9 +96,6 @@
     <ClInclude Include="lua-5.1.4\src\lzio.h">
       <Filter>头文件\lua</Filter>
     </ClInclude>
-    <ClInclude Include="src\luacl_object.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="src\luacl_platform.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -106,6 +103,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="src\luacl_device.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="src\luacl_object.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -202,6 +202,9 @@
     </ClCompile>
     <ClCompile Include="lua-5.1.4\src\print.c">
       <Filter>源文件\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="src\luacl_info.cpp">
+      <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
