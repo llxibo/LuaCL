@@ -69,7 +69,7 @@ struct luacl_object_template {
 
 #define CHECK_ALLOC_ERROR_MACRO 1
 #if (CHECK_ALLOC_ERROR_MACRO)
-#define CheckAllocError(L, p) {if (p == NULL) {luaL_error(L, LUACL_ERR_MALLOC); return 0;}};
+    #define CheckAllocError(L, p) {if (p == NULL) {luaL_error(L, LUACL_ERR_MALLOC); return 0;}};
 #else
 void CheckAllocError(lua_State *L, void *p, const char * msg = LUACL_ERR_MALLOC) {
 	if (p == NULL) {
