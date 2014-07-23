@@ -7,12 +7,12 @@ static const char LUACL_ERR_MALLOC[] = "Insufficient memory";
 
 /* template trait class holding constants */
 template <class cl_object_const_type>
-struct luacl_object_template_constants {};
+struct luacl_object_constants {};
 
 /* Template class for all kinds of OpenCL objects */
 template <typename cl_object>
-struct luacl_object_template {
-	typedef luacl_object_template_constants<cl_object> traits;
+struct luacl_object {
+	typedef luacl_object_constants<cl_object> traits;
 
 	static int Wrap(lua_State *L, cl_object object) {
         printf("Wrapping object %p\n", object);
@@ -47,14 +47,15 @@ struct luacl_object_template {
 		lua_pushstring(L, "kv");									/* "kv", mt, reg */
 		lua_setfield(L, -2, "__mode");								/* mt(__mode="kv), reg */
 		lua_setmetatable(L, -2);									/* reg(mt) */
-		lua_setfield(L, LUA_REGISTRYINDEX, traits::REGISTRY());	/* (empty stack) */
+		lua_setfield(L, LUA_REGISTRYINDEX, traits::REGISTRY());		/* (empty stack) */
 	}
 
 	/* Check and return OpenCL object wrapped in a userdata.
 	   This function always return a non-NULL value, or it will throw a Lua error. */
-	static cl_object CheckObject(lua_State *L) {
+	static cl_object CheckObject(lua_State *L, cl_object *resource = NULL) {
 		cl_object *p = static_cast<cl_object *>(luaL_checkudata(L, 1, traits::METATABLE()));
 		if (p == NULL) {
+			free(resource);
 			luaL_error(L, "Failed resolving object from userdata.");	/* This function never returns */
 			return NULL;
 		}
@@ -81,7 +82,7 @@ void CheckAllocError(lua_State *L, void *p, const char * msg = LUACL_ERR_MALLOC)
 void CheckCLError(lua_State *L, cl_uint err, const char * msg, void *p = NULL) {
 	if (err != CL_SUCCESS) {
 		free(p);
-		luaL_error(L, msg);
+		luaL_error(L, msg, err);
 	}
 }
 

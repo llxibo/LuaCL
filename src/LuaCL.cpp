@@ -2,6 +2,7 @@
 
 #include "luacl_platform.hpp"
 #include "luacl_device.hpp"
+#include "luacl_context.hpp"
 
 LUA_API int panic(lua_State *L) {
 	printf("Panic error:\n");
@@ -24,6 +25,7 @@ int main(int argc, char **argv) {
 
 	luacl_platform::Init(L);
 	luacl_device::Init(L);
+	luacl_context::Init(L);
 	//luaopen_LuaCL(L);
 
 	int error = luaL_dofile(L, "test_new.lua");

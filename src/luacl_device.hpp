@@ -11,7 +11,7 @@ static const char LUACL_DEVICE_METATABLE[] = "LuaCL.Metatable.Device";
 static const char LUACL_DEVICE_TOSTRING[] = "LuaCL_Device";
 
 template <>
-struct luacl_object_template_constants<cl_device_id> {
+struct luacl_object_constants<cl_device_id> {
 	static const char * REGISTRY() {
 		return LUACL_DEVICE_REGISTRY;
 	}
@@ -25,7 +25,7 @@ struct luacl_object_template_constants<cl_device_id> {
 
 struct luacl_device {
 
-	typedef luacl_object_template<cl_device_id> traits;
+	typedef luacl_object<cl_device_id> traits;
 
 	static void Init(lua_State *L) {
 		luaL_newmetatable(L, LUACL_DEVICE_METATABLE);
@@ -41,7 +41,7 @@ struct luacl_device {
 	}
 
 	static int Get(lua_State *L) {
-		cl_platform_id platform = luacl_object_template<cl_platform_id>::CheckObject(L);
+		cl_platform_id platform = luacl_object<cl_platform_id>::CheckObject(L);
 
 		cl_uint numDevices = 0;
 		cl_int err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 0, NULL, &numDevices);

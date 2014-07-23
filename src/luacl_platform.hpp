@@ -10,7 +10,7 @@ static const char LUACL_PLATFORM_METATABLE[] = "LuaCL.Metatable.Platform";
 static const char LUACL_PLATFORM_TOSTRING[] = "LuaCL_Platform";
 
 template <>
-struct luacl_object_template_constants < cl_platform_id > {
+struct luacl_object_constants < cl_platform_id > {
 	static const char * REGISTRY() {
 		return LUACL_PLATFORM_REGISTRY;
 	}
@@ -24,7 +24,7 @@ struct luacl_object_template_constants < cl_platform_id > {
 
 struct luacl_platform {
 
-	typedef luacl_object_template<cl_platform_id> traits;
+	typedef luacl_object<cl_platform_id> traits;
 
 	static void Init(lua_State *L) {
 		luaL_newmetatable(L, LUACL_PLATFORM_METATABLE);	/* new metatable */
