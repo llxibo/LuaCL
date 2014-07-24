@@ -2,6 +2,7 @@
 #define __LUACL_OBJECT_HPP
 
 #include "LuaCL.h"
+#include <assert.h>
 
 static const char LUACL_ERR_MALLOC[] = "Insufficient memory";
 
@@ -17,6 +18,7 @@ struct luacl_object {
 	static int Wrap(lua_State *L, cl_object object) {
         printf("Wrapping object %p\n", object);
 		lua_getfield(L, LUA_REGISTRYINDEX, traits::REGISTRY());
+		assert(lua_istable(L, -1));
 		/* Now the top of stack is registry table */
 		lua_pushlightuserdata(L, static_cast<void *>(object));								/* p, reg */
 		lua_gettable(L, -2);	/* Query the registry table with value of pointer */

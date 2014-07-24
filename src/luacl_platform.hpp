@@ -11,7 +11,7 @@ static const char LUACL_PLATFORM_METATABLE[] = "LuaCL.Metatable.Platform";
 static const char LUACL_PLATFORM_TOSTRING[] = "LuaCL_Platform";
 
 template <>
-struct luacl_object_constants < cl_platform_id > {
+struct luacl_object_constants <cl_platform_id> {
 	static const char * REGISTRY() {
 		return LUACL_PLATFORM_REGISTRY;
 	}

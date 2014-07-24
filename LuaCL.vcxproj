@@ -80,6 +80,7 @@
     <ClInclude Include="src\luacl_device.hpp" />
     <ClInclude Include="src\luacl_object.hpp" />
     <ClInclude Include="src\luacl_platform.hpp" />
+    <ClInclude Include="src\luacl_program.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{EBC87DA4-7BD5-4898-B739-CEF515F41728}</ProjectGuid>

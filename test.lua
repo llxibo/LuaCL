@@ -21,8 +21,16 @@ for index, platform in ipairs(platforms) do
 	devices = nil
 	collectgarbage()
 
-	print("\nCreating context with list of devices...")
 	local devices = {platform:GetDevices()}
+	print("\nCreating context with single device...")
+	context = platform:CreateContext(devices[1], print)
+	print("Created", context)
+
+	print("\nCollecting garbage...")
+	context = nil
+	collectgarbage()
+
+	print("\nCreating context with list of devices...")
 	dump_table(devices, ("(%s):GetDevices() "):format(tostring(platform)))
 
 	-- for index, device in ipairs(devices) do
@@ -36,13 +44,14 @@ for index, platform in ipairs(platforms) do
 	print("Got devices:", context:GetDevices())
 	print("Got platform:", context:GetPlatform())
 
-	print("\nCollecting garbage...")
-	context = nil
+	local program = context:CreateProgram("__kernel void myfunc() {};")
+	print("Created", program)
+	program:Build()
+	print(program:GetBuildStatus(devices[1]))
+	print(program:GetBuildLog(devices[1]))
+	print(program:GetBuildStatus(devices[2]))
+	print(program:GetBuildLog(devices[2]))
+	program = nil
 	collectgarbage()
-
-	print("\nCreating context with single device...")
-	context = platform:CreateContext(devices[1], print)
-	print("Created", context)
-
 	-- context = platform:CreateContext(device)
 end

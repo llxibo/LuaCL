@@ -26,6 +26,7 @@ int main(int argc, char **argv) {
 	luacl_platform::Init(L);
 	luacl_device::Init(L);
 	luacl_context::Init(L);
+	luacl_program::Init(L);
 
 	int error = luaL_dofile(L, "test.lua");
 	if (error) {

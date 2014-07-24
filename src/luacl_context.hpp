@@ -3,6 +3,7 @@
 
 #include "LuaCL.h"
 #include "luacl_object.hpp"
+#include "luacl_program.hpp"
 
 static const char LUACL_CONTEXT_REGISTRY[] = "LuaCL.Registry.Context";
 static const char LUACL_CONTEXT_METATABLE[] = "LuaCL.Metatable.Context";
@@ -32,6 +33,8 @@ struct luacl_context {
 		lua_setfield(L, -2, "GetDevices");
 		lua_pushcfunction(L, GetPlatform);
 		lua_setfield(L, -2, "GetPlatform");
+		lua_pushcfunction(L, luacl_program::Create);
+		lua_setfield(L, -2, "CreateProgram");
 		lua_setfield(L, -2, "__index");
 		lua_pushcfunction(L, ToString);
 		lua_setfield(L, -2, "__tostring");
