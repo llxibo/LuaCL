@@ -26,9 +26,8 @@ int main(int argc, char **argv) {
 	luacl_platform::Init(L);
 	luacl_device::Init(L);
 	luacl_context::Init(L);
-	//luaopen_LuaCL(L);
 
-	int error = luaL_dofile(L, "test_new.lua");
+	int error = luaL_dofile(L, "test.lua");
 	if (error) {
 		fprintf(stderr, "%s\n", lua_tostring(L, -1));
 	}

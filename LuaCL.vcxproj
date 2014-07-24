@@ -50,7 +50,6 @@
     <ClCompile Include="lua-5.1.4\src\lzio.c" />
     <ClCompile Include="lua-5.1.4\src\print.c" />
     <ClCompile Include="src\LuaCL.cpp" />
-    <ClCompile Include="src\luacl_info.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="lua-5.1.4\src\lapi.h" />
@@ -77,7 +76,6 @@
     <ClInclude Include="lua-5.1.4\src\lvm.h" />
     <ClInclude Include="lua-5.1.4\src\lzio.h" />
     <ClInclude Include="src\LuaCL.h" />
-    <ClInclude Include="src\luacl_api.h" />
     <ClInclude Include="src\luacl_context.hpp" />
     <ClInclude Include="src\luacl_device.hpp" />
     <ClInclude Include="src\luacl_object.hpp" />
@@ -181,7 +179,7 @@
       <UndefinePreprocessorDefinitions>
       </UndefinePreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(AMDAPPSDKROOT)/include</AdditionalIncludeDirectories>
-      <TreatWarningAsError>true</TreatWarningAsError>
+      <TreatWarningAsError>false</TreatWarningAsError>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
