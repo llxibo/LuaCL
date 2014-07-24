@@ -33,6 +33,8 @@ for index, platform in ipairs(platforms) do
 	-- print(platform.CreateContext(platform, devices))
 	local context = platform:CreateContext(devices)
 	print("Created", context)
+	print("Got devices:", context:GetDevices())
+	print("Got platform:", context:GetPlatform())
 
 	print("\nCollecting garbage...")
 	context = nil

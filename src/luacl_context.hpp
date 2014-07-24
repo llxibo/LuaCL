@@ -28,8 +28,10 @@ struct luacl_context {
 	static void Init(lua_State *L) {
 		luaL_newmetatable(L, LUACL_CONTEXT_METATABLE);
 		lua_newtable(L);
-		// lua_pushcfunction(L, Create);
-		// lua_setfield(L, -2, "Create");
+		lua_pushcfunction(L, GetDevices);
+		lua_setfield(L, -2, "GetDevices");
+		lua_pushcfunction(L, GetPlatform);
+		lua_setfield(L, -2, "GetPlatform");
 		lua_setfield(L, -2, "__index");
 		lua_pushcfunction(L, ToString);
 		lua_setfield(L, -2, "__tostring");
@@ -46,15 +48,15 @@ struct luacl_context {
 		cl_platform_id platform = luacl_object<cl_platform_id>::CheckObject(L);
 		
 		/* Get arg2: device | {devices} */
-		size_t numDevices = 0;
+		cl_uint numDevices = 0;
 		cl_device_id * devices = NULL;
 		if (lua_istable(L, 2)) {
 			//printf("CreateContext: Checking table as device list...\n");
-			numDevices = lua_objlen(L, 2);
+			numDevices = static_cast<cl_uint>(lua_objlen(L, 2));
 			//printf("CreateContext: table length %d\n", numDevices);
 			devices = static_cast<cl_device_id *>(malloc(sizeof(cl_device_id) * numDevices));
 			CheckAllocError(L, devices);
-			for (size_t index = 0; index < numDevices; index++) {
+			for (unsigned int index = 0; index < numDevices; index++) {
 				lua_rawgeti(L, 2, index + 1);	/* Remember that Lua array is 1-index based */
 				//printf("CreateContext: got #%d: %s\n", index, luaL_typename(L, -1));
 				devices[index] = luacl_object<cl_device_id>::CheckObject(L, -1, devices);
@@ -87,8 +89,9 @@ struct luacl_context {
 		cl_int err;
 		cl_context context = clCreateContext(prop, numDevices, devices, Callback, static_cast<void *>(callbackThread), &err);
 		CheckCLError(L, err, "Failed creating context: %d", devices);
+		free(devices);
 
-		/* Use context pointer as key, to register callback func */
+		/* Use context pointer as a key, to register callback func */
 		if (callbackThread != NULL) {	/* we have a callback func */
 			lua_pushlightuserdata(L, static_cast<void *>(context));					/* p, thread, reg */
 			lua_insert(L, -2);														/* thread, p, reg */
@@ -120,6 +123,41 @@ struct luacl_context {
 			assert(lua_type(callbackThread, -4) == LUA_TFUNCTION);
 			lua_resume(callbackThread, 3);
 		}
+	}
+	
+	static int GetDevices(lua_State *L) {
+		cl_context context = traits::CheckObject(L);
+		cl_uint size = 0;
+		cl_int err = clGetContextInfo(context, CL_CONTEXT_NUM_DEVICES, sizeof(cl_uint), &size, NULL);
+		CheckCLError(L, err, "Failed requesting number of devices.");
+
+		cl_device_id * devices = static_cast<cl_device_id *>(malloc(sizeof(cl_device_id) * size));
+		CheckAllocError(L, devices);
+		err = clGetContextInfo(context, CL_CONTEXT_DEVICES, size * sizeof(cl_device_id), devices, NULL);
+		CheckCLError(L, err, "Failed requesting device list: %d.", devices);
+		for (unsigned int index = 0; index < size; index++) {
+			luacl_object<cl_device_id>::Wrap(L, devices[index]);
+		}
+		free(devices);
+		return size;
+	}
+
+	static int GetPlatform(lua_State *L) {
+		cl_context context = traits::CheckObject(L);
+		size_t size = 0;
+		cl_int err = clGetContextInfo(context, CL_CONTEXT_PROPERTIES, 0, NULL, &size);
+		CheckCLError(L, err, "Failed requesting length of property table.");
+		assert(size == 3 * sizeof(cl_context_properties));
+
+		cl_context_properties * prop = static_cast<cl_context_properties *>(malloc(size));
+		CheckAllocError(L, prop);
+		err = clGetContextInfo(context, CL_CONTEXT_PROPERTIES, size, prop, NULL);
+		CheckCLError(L, err, "Failed requesting property table.", prop);
+		assert(prop[0] == CL_CONTEXT_PLATFORM);
+		cl_platform_id platform = reinterpret_cast<cl_platform_id>(prop[1]);
+		luacl_object<cl_platform_id>::Wrap(L, platform);
+		free(prop);
+		return 1;
 	}
 
 	static int Release(lua_State *L) {
