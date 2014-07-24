@@ -28,4 +28,6 @@ for index, platform in ipairs(platforms) do
 		local info = device:GetInfo()
 		dump_table(info, ("(%s):GetInfo() "):format(tostring(device)))
 	end
+
+	local context = platform:CreateContext(devices);
 end

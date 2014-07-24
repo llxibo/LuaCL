@@ -4,6 +4,7 @@
 #include "LuaCL.h"
 #include "luacl_object.hpp"
 #include "luacl_device.hpp"
+#include "luacl_context.hpp"
 
 static const char LUACL_PLATFORM_REGISTRY[] = "LuaCL.Registry.Platform";
 static const char LUACL_PLATFORM_METATABLE[] = "LuaCL.Metatable.Platform";
@@ -33,6 +34,8 @@ struct luacl_platform {
 		lua_setfield(L, -2, "GetInfo");
 		lua_pushcfunction(L, GetDevices);
 		lua_setfield(L, -2, "GetDevices");
+		lua_pushcfunction(L, CreateContext);
+		lua_setfield(L, -2, "CreateContext");
 		lua_setfield(L, -2, "__index");
 		lua_pushcfunction(L, ToString);
 		lua_setfield(L, -2, "__tostring");
@@ -93,6 +96,10 @@ struct luacl_platform {
 
 	static int GetDevices(lua_State *L) {
 		return luacl_device::Get(L);
+	}
+
+	static int CreateContext(lua_State *L) {
+		return luacl_context::Create(L);
 	}
 
 	static int Wrap(lua_State *L, cl_platform_id platform) {
