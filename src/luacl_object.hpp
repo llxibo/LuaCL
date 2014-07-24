@@ -15,14 +15,14 @@ struct luacl_object {
 	typedef luacl_object_constants<cl_object> traits;
 
 	static int Wrap(lua_State *L, cl_object object) {
-        printf("Wrapping object %p\n", object);
+        //printf("Wrapping object %p\n", object);
 		lua_getfield(L, LUA_REGISTRYINDEX, traits::REGISTRY());
 		/* Now the top of stack is registry table */
 		lua_pushlightuserdata(L, static_cast<void *>(object));								/* p, reg */
 		lua_gettable(L, -2);	/* Query the registry table with value of pointer */
 		void *p = lua_touserdata(L, -1);													/* udata/nil, reg */
 		if (p == NULL) {
-			printf("Wrap: Creating cache entry\n");
+			//printf("Wrap: Creating cache entry\n");
 			cl_object *p = static_cast<cl_object *>(lua_newuserdata(L, sizeof(cl_object)));	/* udata, nil, reg */
 			*p = object;
 			luaL_getmetatable(L, traits::METATABLE());										/* mt, udata, nil, reg */
@@ -45,15 +45,15 @@ struct luacl_object {
 		lua_newtable(L);											/* reg */
 		lua_newtable(L);											/* mt, reg */
 		lua_pushstring(L, "kv");									/* "kv", mt, reg */
-		lua_setfield(L, -2, "__mode");								/* mt(__mode="kv), reg */
+		lua_setfield(L, -2, "__mode");								/* mt(__mode="kv"), reg */
 		lua_setmetatable(L, -2);									/* reg(mt) */
 		lua_setfield(L, LUA_REGISTRYINDEX, traits::REGISTRY());		/* (empty stack) */
 	}
 
 	/* Check and return OpenCL object wrapped in a userdata.
 	   This function always return a non-NULL value, or it will throw a Lua error. */
-	static cl_object CheckObject(lua_State *L, cl_object *resource = NULL) {
-		cl_object *p = static_cast<cl_object *>(luaL_checkudata(L, 1, traits::METATABLE()));
+	static cl_object CheckObject(lua_State *L, int index = 1, cl_object *resource = NULL) {
+		cl_object *p = static_cast<cl_object *>(luaL_checkudata(L, index, traits::METATABLE()));
 		if (p == NULL) {
 			free(resource);
 			luaL_error(L, "Failed resolving object from userdata.");	/* This function never returns */
