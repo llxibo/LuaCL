@@ -78,8 +78,7 @@ for index, platform in ipairs(platforms) do
 	end
 	print("===End of Binaries===")
 
-	print("\nCollecting garbage...")
-	program = nil
-	collectgarbage()
-	-- context = platform:CreateContext(device)
+	print("\nCreating kernel...")
+	local kernel = program:CreateKernel("myfunc")
+	print(kernel)
 end

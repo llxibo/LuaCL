@@ -78,6 +78,7 @@
     <ClInclude Include="src\LuaCL.h" />
     <ClInclude Include="src\luacl_context.hpp" />
     <ClInclude Include="src\luacl_device.hpp" />
+    <ClInclude Include="src\luacl_kernel.hpp" />
     <ClInclude Include="src\luacl_object.hpp" />
     <ClInclude Include="src\luacl_platform.hpp" />
     <ClInclude Include="src\luacl_program.hpp" />

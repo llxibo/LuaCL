@@ -5,6 +5,7 @@
 #include "luacl_object.hpp"
 #include "luacl_device.hpp"
 #include "luacl_context.hpp"
+#include "luacl_kernel.hpp"
 #include <assert.h>
 
 static const char LUACL_PROGRAM_REGISTRY[] = "LuaCL.Registry.Program";
@@ -39,6 +40,8 @@ struct luacl_program {
 		lua_setfield(L, -2, "GetBuildLog");
 		lua_pushcfunction(L, GetBinary);
 		lua_setfield(L, -2, "GetBinary");
+		lua_pushcfunction(L, luacl_kernel::Create);
+		lua_setfield(L, -2, "CreateKernel");
 		lua_setfield(L, -2, "__index");
 		lua_pushcfunction(L, ToString);
 		lua_setfield(L, -2, "__tostring");
@@ -183,7 +186,7 @@ struct luacl_program {
 		cl_program program = CheckObject(L);
 		printf("__gc Releasing program %p\n", program);
 		LUACL_TRYCALL(clReleaseProgram(program));
-		LUACL_TRYCALL(clReleaseProgram(program));
+		// LUACL_TRYCALL(clReleaseProgram(program));	/* Release second time should always raise a system exception */
 		return 0;
 	}
 
