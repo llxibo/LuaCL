@@ -81,19 +81,17 @@ void free( void* );
 #define k64u unsigned long long int
 #define K64S_C(num) (num##LL)
 #define K64U_C(num) (num##ULL)
-typedef union {
-    float f;
-    k32u i;
-} f2i_t;
 #define convert_ushort_sat(num) ((num) < 0 ? (k16u)0 : (num) > 0xffff ? (k16u)0xffff : (k16u)(num))
 #define convert_ushort_rtp(num) ((k16u)(num) + !!((float)(num) - (float)(k16u)(num)))
-float convert_float_rtp( k32u num ) {
-    f2i_t convert;
-    convert.f = ( float )( num );
-    convert.i &= 0x3f800000U;
-    convert.i |= 0x1U;
-    convert.f += ( float )( num );
-    return convert.f;
+float convert_float_rtp( k64u x ) {
+    union {
+        k32u u;
+        float f;
+    } u;
+    u.f = ( float )x;
+    if( ( k64u )u.f < x && x < K64U_C( 0xffffff8000000000 ) )
+        u.u++;
+    return u.f;
 }
 #endif /* defined(__OPENCL_VERSION__) */
 
