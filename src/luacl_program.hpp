@@ -65,6 +65,16 @@ struct luacl_program {
 		return 1;
 	}
 
+	static int CreateFromBinary(lua_State *L) {
+		cl_context context = luacl_object<cl_context>::CheckObject(L);
+		size_t size = 0;
+		const char * source = luaL_checklstring(L, 2, &size);
+		//cl_int err;
+		//cl_program program = clCreateProgramWithBinary();
+
+		return 0;
+	}
+
 	static int Build(lua_State *L) {
 		cl_program program = CheckObject(L);
 		const char * options = lua_tostring(L, 2);
@@ -85,52 +95,50 @@ struct luacl_program {
 	static int GetBinary(lua_State *L) {
 		cl_program program = CheckObject(L);
         
+		/* Get size of binary size list */
 		size_t sizeOfSizes = 0;
 		cl_int err = clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES, 0, NULL, &sizeOfSizes);
 		CheckCLError(L, err, "Failed requesting length of binaries sizes from program: %d.");
 
+		/* Get size of string array */
 		size_t sizeOfStrings = 0;
 		err = clGetProgramInfo(program, CL_PROGRAM_BINARIES, 0, NULL, &sizeOfStrings);
 		CheckCLError(L, err, "Failed requesting length of binaries from program: %d.");
         
+		/* Assertion check */
 		int numBinaries = static_cast<int>(sizeOfStrings / sizeof(intptr_t));
         if (sizeOfSizes / sizeof(size_t) != numBinaries) {
             return luaL_error(L, "Length of binaries mismatch.");
         }
         
-		printf("Length of sizes: %d; Length of strings: %d\n", sizeOfSizes, sizeOfStrings);
-
+		/* Allocate and request binary size list */
 		size_t * sizes = static_cast<size_t *>(malloc(sizeOfSizes));
 		CheckAllocError(L, sizes);
 		err = clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES, sizeOfSizes, sizes, NULL);
         CheckCLError(L, err, "Failed requesting sizes of binaries from program: %d.", sizes);
 		
-        for (int index = 0; index < numBinaries; index++) {
-            printf("Size of binaries #%d: %p\n", index, sizes[index]);
-        }
-        
+		/* Allocate binary arrays */
         char ** binaries = static_cast<char **>(malloc(sizeOfStrings * sizeof(char *)));
 		if (binaries == NULL) {
 			CleanupGetBinary(sizes, binaries, 0);
 			return luaL_error(L, LUACL_ERR_MALLOC);
 		}
-		memset(binaries, 0, sizeOfStrings);
-		if (binaries == NULL) {
-			CleanupGetBinary(sizes, binaries, numBinaries);
-			return luaL_error(L, LUACL_ERR_MALLOC);
-		}
 		for (int index = 0; index < numBinaries; index++) {
-			printf("Allocating memory for #%d: length %p\n", index, sizes[index]);
-			binaries[index] = static_cast<char *>(malloc(sizes[index])); /* This allocation is safe */
-			printf("Allocated %p\n", binaries[index]);
+			binaries[index] = static_cast<char *>(malloc(sizes[index]));
+			if (binaries[index] == NULL) {	/* Failed allocation could crash clGetProgramInfo */
+				CleanupGetBinary(sizes, binaries, numBinaries);
+				return luaL_error(L, LUACL_ERR_MALLOC);
+			}
 		}
 
+		/* Request copy of binaries */
 		err = clGetProgramInfo(program, CL_PROGRAM_BINARIES, sizeOfStrings, binaries, NULL);
 		if (err != CL_SUCCESS) {
 			CleanupGetBinary(sizes, binaries, numBinaries);
 			return luaL_error(L, "Failed requesting binaries from program: %d.", err);
 		}
 		
+		/* Push binaries to Lua */
         for (int index = 0; index < numBinaries; index++) {
             lua_pushlstring(L, binaries[index], sizes[index]);
         }
@@ -173,9 +181,9 @@ struct luacl_program {
 
 	static int Release(lua_State *L) {
 		cl_program program = CheckObject(L);
-		clReleaseProgram(program);
 		printf("__gc Releasing program %p\n", program);
-        
+		LUACL_TRYCALL(clReleaseProgram(program));
+		LUACL_TRYCALL(clReleaseProgram(program));
 		return 0;
 	}
 

@@ -45,17 +45,19 @@ for index, platform in ipairs(platforms) do
 	print("Got platform:", context:GetPlatform())
 
 	local source = [[
+		__constant uint WhereIsIt[] = { 0x33333333, 0x55555555, 0xCCCCCCCC, 0xCDCDCDCD };
 		__kernel void myfunc(	__global const float *a,
 								__global const float *b,
 								__global float *result) {
 			int gid = get_global_id(0);
 			// int i = 1;
-			result[gid] = a[gid] + b[gid];
+			result[gid] = a[gid] + b[gid] + WhereIsIt[gid];
 		};
 	]]
 	local program = context:CreateProgram(source)
 	print("Created", program)
 	program:Build()
+	print("\nCollecting garbage...")
 	program = nil
 	collectgarbage()
 
@@ -75,6 +77,8 @@ for index, platform in ipairs(platforms) do
 		file:close()
 	end
 	print("===End of Binaries===")
+
+	print("\nCollecting garbage...")
 	program = nil
 	collectgarbage()
 	-- context = platform:CreateContext(device)
