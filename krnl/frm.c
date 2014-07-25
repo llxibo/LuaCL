@@ -95,6 +95,13 @@ float convert_float_rtp( k64u x ) {
 }
 #endif /* defined(__OPENCL_VERSION__) */
 
+/*
+    Assumed char is exactly 8 bit.
+    Most std headers will pollute the namespace, thus we do not use CHAR_BIT,
+    which is defined in <limits.h>.
+*/
+#define K64U_MSB ( K64U_C( 1 ) << (sizeof(k64u) * 8 - 1) )
+
 /* Unified compile hint. */
 #if defined(__OPENCL_VERSION__)
 #define kdeclspec(...) __attribute__((__VA_ARGS__))
@@ -209,7 +216,7 @@ k8u clz( k64u mask ) {
 /* Math utilities on CPU. */
 #if !defined(__OPENCL_VERSION__)
 double cos( double x );
-#define cospi(x) cos(x * M_PI)
+#define cospi(x) cos( (double)(x) * M_PI )
 double sqrt( double x );
 double log( double x );
 double clamp( double val, double min, double max ) {
@@ -233,10 +240,12 @@ typedef struct {
 */
 typedef k16u time_t;
 #define FROM_SECONDS( sec ) ((time_t)convert_ushort_rtp((float)(sec) * 100.0f))
-#define FROM_MILLISECONDS( msec ) ((time_t)((float)(msec) / 10.0f))
+#define FROM_MILLISECONDS( msec ) ((time_t)((float)(msec) * (1.0f / 10.0f)))
 #define TO_SECONDS( timestamp ) (convert_float_rtp(timestamp) * 0.01f)
 #define TIME_OFFSET( time ) ((time_t)convert_ushort_sat((k32s)(rti->timestamp) + (k32s)time))
 #define TIME_DISTANT( time ) ((time_t)convert_ushort_sat((k32s)time) - (k32s)(rti->timestamp))
+#define UP( time_to_check ) ( rti->player.time_to_check && rti->player.time_to_check > rti->timestamp )
+#define REMAIN( time_to_check ) TIME_DISTANT( rti->player.time_to_check )
 
 /* Event queue. */
 #define EQ_SIZE_EXP (6)
@@ -523,13 +532,6 @@ void eq_delete( rtinfo_t* rti, time_t time, k8u routnum ) {
 
 }
 
-/*
-    Assumed char is exactly 8 bit.
-    Most std headers will pollute the namespace, thus we do not use CHAR_BIT,
-    which is defined in <limits.h>.
-*/
-#define K64U_MSB ( K64U_C( 1 ) << (sizeof(k64u) * 8 - 1) )
-
 k8u snapshot_save( rtinfo_t* rti, psnapshot_t* snapshot ) {
     k8u no;
     assert( rti->snapshot_manager.bitmap ); /* Full check. */
@@ -614,9 +616,6 @@ deviceonly(__kernel) void sim_iterate(
     dps_result[get_global_id( 0 )] = _rti.damage_collected / TO_SECONDS( _rti.expected_combat_length );
     hostonly( free( snapshot_buffer ) );
 }
-
-#define UP( time_to_check ) ( rti->player.time_to_check && rti->player.time_to_check > rti->timestamp )
-#define REMAIN( time_to_check ) TIME_DISTANT( rti->player.time_to_check )
 
 /* Load class module. */
 #define LUACL_LOAD_MODULE_BODY
