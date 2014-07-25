@@ -87,7 +87,7 @@ struct luacl_program {
         
 		size_t sizeOfSizes = 0;
 		cl_int err = clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES, 0, NULL, &sizeOfSizes);
-		CheckCLError(L, err, "Failed requesting length of binary sizes from program: %d.");
+		CheckCLError(L, err, "Failed requesting length of binaries sizes from program: %d.");
 
 		size_t sizeOfStrings = 0;
 		err = clGetProgramInfo(program, CL_PROGRAM_BINARIES, 0, NULL, &sizeOfStrings);
@@ -106,28 +106,44 @@ struct luacl_program {
         CheckCLError(L, err, "Failed requesting sizes of binaries from program: %d.", sizes);
 		
         for (int index = 0; index < numBinaries; index++) {
-            printf("Size of binary #%d: %p\n", index, sizes[index]);
+            printf("Size of binaries #%d: %p\n", index, sizes[index]);
         }
         
-        char ** binary = static_cast<char **>(malloc(sizeOfStrings * sizeof(char *)));
-		if (binary == NULL) {
-			free(sizes);
+        char ** binaries = static_cast<char **>(malloc(sizeOfStrings * sizeof(char *)));
+		if (binaries == NULL) {
+			CleanupGetBinary(sizes, binaries, 0);
 			return luaL_error(L, LUACL_ERR_MALLOC);
 		}
+		memset(binaries, 0, sizeOfStrings);
+		if (binaries == NULL) {
+			CleanupGetBinary(sizes, binaries, numBinaries);
+			return luaL_error(L, LUACL_ERR_MALLOC);
+		}
+		for (int index = 0; index < numBinaries; index++) {
+			printf("Allocating memory for #%d: length %p\n", index, sizes[index]);
+			binaries[index] = static_cast<char *>(malloc(sizes[index])); /* This allocation is safe */
+			printf("Allocated %p\n", binaries[index]);
+		}
 
-		err = clGetProgramInfo(program, CL_PROGRAM_BINARIES, sizeOfStrings, binary, NULL);
+		err = clGetProgramInfo(program, CL_PROGRAM_BINARIES, sizeOfStrings, binaries, NULL);
 		if (err != CL_SUCCESS) {
-			free(sizes);
-			free(binary);
+			CleanupGetBinary(sizes, binaries, numBinaries);
 			return luaL_error(L, "Failed requesting binaries from program: %d.", err);
 		}
 		
         for (int index = 0; index < numBinaries; index++) {
-            lua_pushlstring(L, binary[index], sizes[index]);
+            lua_pushlstring(L, binaries[index], sizes[index]);
         }
-		free(sizes);
-		free(binary);
+		CleanupGetBinary(sizes, binaries, numBinaries);
 		return numBinaries;
+	}
+
+	static void CleanupGetBinary(size_t * sizes, char ** binaries, int numBinaries) { 
+		free(sizes);
+		for (int index = 0; index < numBinaries; index++) {
+			free(binaries[index]);
+		}
+		free(binaries);
 	}
 
 	static int GetBuildStatus(lua_State *L) {

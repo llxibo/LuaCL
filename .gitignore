@@ -18,3 +18,5 @@ Debug/
 
 *.xcodeproj/project.xcworkspace
 *.xcodeproj/xcuserdata
+
+*.bin

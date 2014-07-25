@@ -67,7 +67,13 @@ for index, platform in ipairs(platforms) do
 	print(program:GetBuildLog(devices[2]))
 
 	print("=======Binaries======")
-	print(program:GetBinary())
+	local binaries = {program:GetBinary()}
+	for index, binary in ipairs(binaries) do
+		print(("Lua: Length of binary #%d: %08X"):format(index, binary:len()))
+		local file = io.open(index .. ".bin", "w")
+		file:write(binary)
+		file:close()
+	end
 	print("===End of Binaries===")
 	program = nil
 	collectgarbage()
