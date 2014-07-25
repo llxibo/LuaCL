@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		8D98B3A1197F41E9003C95C5 /* OpenCL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8D98B3A0197F41E9003C95C5 /* OpenCL.framework */; };
-		8D98B3A8197F427D003C95C5 /* test_new.lua in Copy Files */ = {isa = PBXBuildFile; fileRef = 8D98B3A7197F4245003C95C5 /* test_new.lua */; };
 		8D98B3A9197F427D003C95C5 /* dump_table.lua in Copy Files */ = {isa = PBXBuildFile; fileRef = 8D98B3A6197F4245003C95C5 /* dump_table.lua */; };
 		8DADEFA219763E1D00FCB9E8 /* test.lua in Copy Files */ = {isa = PBXBuildFile; fileRef = 8DADEFA119763E1100FCB9E8 /* test.lua */; };
 		8DDF122B19761629001AD698 /* LuaCL.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8DDF122519761629001AD698 /* LuaCL.cpp */; };
@@ -51,7 +50,6 @@
 			dstPath = "";
 			dstSubfolderSpec = 16;
 			files = (
-				8D98B3A8197F427D003C95C5 /* test_new.lua in Copy Files */,
 				8D98B3A9197F427D003C95C5 /* dump_table.lua in Copy Files */,
 				8DADEFA219763E1D00FCB9E8 /* test.lua in Copy Files */,
 			);
@@ -61,13 +59,13 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		8D6C702D1981E521003A1CAD /* luacl_program.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = luacl_program.hpp; sourceTree = "<group>"; };
 		8D98B3A0197F41E9003C95C5 /* OpenCL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenCL.framework; path = /System/Library/Frameworks/OpenCL.framework; sourceTree = "<absolute>"; };
 		8D98B3A2197F4228003C95C5 /* luacl_context.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = luacl_context.hpp; sourceTree = "<group>"; };
 		8D98B3A3197F4228003C95C5 /* luacl_device.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = luacl_device.hpp; sourceTree = "<group>"; };
 		8D98B3A4197F4228003C95C5 /* luacl_object.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = luacl_object.hpp; sourceTree = "<group>"; };
 		8D98B3A5197F4228003C95C5 /* luacl_platform.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = luacl_platform.hpp; sourceTree = "<group>"; };
 		8D98B3A6197F4245003C95C5 /* dump_table.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = dump_table.lua; sourceTree = "<group>"; };
-		8D98B3A7197F4245003C95C5 /* test_new.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = test_new.lua; sourceTree = "<group>"; };
 		8DADEFA119763E1100FCB9E8 /* test.lua */ = {isa = PBXFileReference; lastKnownFileType = text; path = test.lua; sourceTree = "<group>"; };
 		8DB74FC3197615AE0021F366 /* LuaCL */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = LuaCL; sourceTree = BUILT_PRODUCTS_DIR; };
 		8DDF122519761629001AD698 /* LuaCL.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LuaCL.cpp; sourceTree = "<group>"; };
@@ -147,7 +145,6 @@
 				8DDF122419761629001AD698 /* src */,
 				8DB74FC4197615AE0021F366 /* Products */,
 				8DADEFA119763E1100FCB9E8 /* test.lua */,
-				8D98B3A7197F4245003C95C5 /* test_new.lua */,
 				8D98B3A6197F4245003C95C5 /* dump_table.lua */,
 			);
 			sourceTree = "<group>";
@@ -163,6 +160,7 @@
 		8DDF122419761629001AD698 /* src */ = {
 			isa = PBXGroup;
 			children = (
+				8D6C702D1981E521003A1CAD /* luacl_program.hpp */,
 				8D98B3A2197F4228003C95C5 /* luacl_context.hpp */,
 				8D98B3A3197F4228003C95C5 /* luacl_device.hpp */,
 				8D98B3A4197F4228003C95C5 /* luacl_object.hpp */,

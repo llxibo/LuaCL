@@ -37,6 +37,8 @@ struct luacl_program {
 		lua_setfield(L, -2, "GetBuildStatus");
 		lua_pushcfunction(L, GetBuildLog);
 		lua_setfield(L, -2, "GetBuildLog");
+		lua_pushcfunction(L, GetBinary);
+		lua_setfield(L, -2, "GetBinary");
 		lua_setfield(L, -2, "__index");
 		lua_pushcfunction(L, ToString);
 		lua_setfield(L, -2, "__tostring");
@@ -82,22 +84,38 @@ struct luacl_program {
 
 	static int GetBinary(lua_State *L) {
 		cl_program program = CheckObject(L);
+        
 		size_t sizeOfSizes = 0;
 		cl_int err = clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES, 0, NULL, &sizeOfSizes);
-		CheckCLError(L, err, "Failed requesting length of binary from program: %d.");
+		CheckCLError(L, err, "Failed requesting length of binary sizes from program: %d.");
 
 		size_t sizeOfStrings = 0;
 		err = clGetProgramInfo(program, CL_PROGRAM_BINARIES, 0, NULL, &sizeOfStrings);
-		CheckCLError(L, err, "Failed requesting length of binary from program: %d.");
-		assert(sizeOfSizes / sizeof(size_t) == sizeOfStrings / sizeof(intptr_t));
-
+		CheckCLError(L, err, "Failed requesting length of binaries from program: %d.");
+        
+		int numBinaries = static_cast<int>(sizeOfStrings / sizeof(intptr_t));
+        if (sizeOfSizes / sizeof(size_t) != numBinaries) {
+            return luaL_error(L, "Length of binaries mismatch.");
+        }
+        
 		size_t * sizes = static_cast<size_t *>(malloc(sizeOfSizes));
 		CheckAllocError(L, sizes);
 		err = clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES, sizeOfSizes, sizes, NULL);
-
-		char ** binary = NULL;
-		lua_pushlstring(L, binary[0], sizes[0]);
-		return 1;
+        CheckCLError(L, err, "Failed requesting sizes of binaries from program: %d.");
+		
+        for (unsigned int index = 0; index < numBinaries; index++) {
+            printf("Size of binary #%d: %zu\n", index, sizes[index]);
+        }
+        
+        char ** binary = static_cast<char **>(malloc(sizeOfStrings));
+        CheckAllocError(L, binary);
+        err = clGetProgramInfo(program, CL_PROGRAM_BINARIES, sizeOfStrings, binary, NULL);
+        CheckCLError(L, err, "Failed requesting binaries from program: %d.");
+		
+        for (unsigned int index = 0; index < numBinaries; index++) {
+            lua_pushlstring(L, binary[index], sizes[index]);
+        }
+		return numBinaries;
 	}
 
 	static int GetBuildStatus(lua_State *L) {
@@ -128,7 +146,13 @@ struct luacl_program {
 	static int Release(lua_State *L) {
 		cl_program program = CheckObject(L);
 		clReleaseProgram(program);
+        try {
+            clReleaseProgram(program);
+        } catch (...) {
+            return luaL_error(L, "Error with gc");
+        }
 		printf("__gc Releasing program %p\n", program);
+        
 		return 0;
 	}
 

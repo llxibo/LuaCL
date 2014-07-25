@@ -44,7 +44,15 @@ for index, platform in ipairs(platforms) do
 	print("Got devices:", context:GetDevices())
 	print("Got platform:", context:GetPlatform())
 
-	local program = context:CreateProgram("__kernel void myfunc() {};")
+	local program = context:CreateProgram([[
+		__kernel void myfunc(	__global const float *a,
+								__global const float *b,
+								__global float *result) {
+			int gid = get_global_id(0);
+			int i = 1;
+			result[gid] = a[gid] + b[gid];
+		};
+		]])
 	print("Created", program)
 	program:Build()
 	program:Build("-cl-opt-disable")
@@ -52,6 +60,10 @@ for index, platform in ipairs(platforms) do
 	print(program:GetBuildLog(devices[1]))
 	print(program:GetBuildStatus(devices[2]))
 	print(program:GetBuildLog(devices[2]))
+
+	print("=======Binaries======")
+	print(program:GetBinary())
+	print("===End of Binaries===")
 	program = nil
 	collectgarbage()
 	-- context = platform:CreateContext(device)
