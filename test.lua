@@ -44,17 +44,22 @@ for index, platform in ipairs(platforms) do
 	print("Got devices:", context:GetDevices())
 	print("Got platform:", context:GetPlatform())
 
-	local program = context:CreateProgram([[
+	local source = [[
 		__kernel void myfunc(	__global const float *a,
 								__global const float *b,
 								__global float *result) {
 			int gid = get_global_id(0);
-			int i = 1;
+			// int i = 1;
 			result[gid] = a[gid] + b[gid];
 		};
-		]])
+	]]
+	local program = context:CreateProgram(source)
 	print("Created", program)
 	program:Build()
+	program = nil
+	collectgarbage()
+
+	program = context:CreateProgram(source)
 	program:Build("-cl-opt-disable")
 	print(program:GetBuildStatus(devices[1]))
 	print(program:GetBuildLog(devices[1]))
@@ -62,7 +67,13 @@ for index, platform in ipairs(platforms) do
 	print(program:GetBuildLog(devices[2]))
 
 	print("=======Binaries======")
-	print(program:GetBinary())
+	local binaries = {program:GetBinary()}
+	for index, binary in ipairs(binaries) do
+		print(("Lua: Length of binary #%d: %08X"):format(index, binary:len()))
+		local file = io.open(index .. ".bin", "w")
+		file:write(binary)
+		file:close()
+	end
 	print("===End of Binaries===")
 	program = nil
 	collectgarbage()
