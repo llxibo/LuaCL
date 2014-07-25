@@ -177,7 +177,7 @@
 
     缩写宏。从`rti->player`结构中抽取名为`time_to_check`的成员，并检查其表示的时刻是否在当前时刻之后，是则返回真，否则返回假。
 
-    _所检查时刻与当前时刻相等时，返回假_。
+    **所检查时刻与当前时刻相等时，返回假**。
 
     *例*
 
@@ -209,7 +209,7 @@
 
 > 此时可以大胆地使用hack的方式，将效果持续时间增加`(time_t)1`，使它们的`UP`条件在边界处取得真值。
 
-> 这样处理_不会_导致效果的持续时间被延长，因为增加的`(time_t)1`是原子时间，造成的影响只有在边界处的取值由假改为真，而其他任何时刻的取值都没有发生变化。
+> 这样处理**不会**导致效果的持续时间被延长，因为增加的`(time_t)1`是原子时间，造成的影响只有在边界处的取值由假改为真，而其他任何时刻的取值都没有发生变化。
 
 
 ------
@@ -218,7 +218,7 @@
 例如某技能A，冷却是60秒，但每次使用B技能，A技能冷却减少8秒：
 
     // A技能释放：
-    rti->player.spell_A.cd = 60;
+    rti->player.spell_A.cd = TIME_OFFSET( FROM_SECONDS( 60 );
     eq_enqueue( rti, TIME_OFFSET( FROM_SECONDS( 5 ) ), routnum_spell_A_cd, 0 );
         
     // spell_A_cd事件：
@@ -235,12 +235,14 @@
     }
         
     // B技能释放：
-    rti->player.spell_A.cd -= 8;
-    if ( !UP( spell_A.cd ) )
-        eq_enqueue( rti, rti->timestamp, routnum_spell_A_cd, 0 );
+    if ( UP( spell_A.cd ) ){
+        rti->player.spell_A.cd -= FROM_SECONDS( 8 );
+        if ( !UP( spell_A.cd ) )
+            eq_enqueue( rti, rti->timestamp, routnum_spell_A_cd, 0 );
+    }
 
 ###### 可刷新的技能冷却时间
-直接使用堆查找将老事件删除。使用旧的冷却位置信息作为提示，可以将堆查找删除复杂度降低许多。
+直接使用堆查找将老事件删除。
 
 ###### 即可缩短又可刷新的技能？
 使用DoT式冷却处理。
