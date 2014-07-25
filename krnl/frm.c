@@ -240,10 +240,10 @@ typedef struct {
 */
 typedef k16u time_t;
 #define FROM_SECONDS( sec ) ((time_t)convert_ushort_rtp((float)(sec) * 100.0f))
-#define FROM_MILLISECONDS( msec ) ((time_t)((float)(msec) * (1.0f / 10.0f)))
-#define TO_SECONDS( timestamp ) (convert_float_rtp(timestamp) * 0.01f)
+#define FROM_MILLISECONDS( msec ) ((time_t)((float)(msec) * 0.1f))
+#define TO_SECONDS( timestamp ) (convert_float_rtp((k16u)timestamp) * 0.01f)
 #define TIME_OFFSET( time ) ((time_t)convert_ushort_sat((k32s)(rti->timestamp) + (k32s)time))
-#define TIME_DISTANT( time ) ((time_t)convert_ushort_sat((k32s)time) - (k32s)(rti->timestamp))
+#define TIME_DISTANT( time ) ((time_t)convert_ushort_sat((k32s)(time) - (k32s)(rti->timestamp)))
 #define UP( time_to_check ) ( rti->player.time_to_check && rti->player.time_to_check > rti->timestamp )
 #define REMAIN( time_to_check ) TIME_DISTANT( rti->player.time_to_check )
 
