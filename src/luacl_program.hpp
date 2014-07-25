@@ -5,6 +5,7 @@
 #include "luacl_object.hpp"
 #include "luacl_device.hpp"
 #include "luacl_context.hpp"
+#include <assert.h>
 
 static const char LUACL_PROGRAM_REGISTRY[] = "LuaCL.Registry.Program";
 static const char LUACL_PROGRAM_METATABLE[] = "LuaCL.Metatable.Program";
@@ -67,6 +68,35 @@ struct luacl_program {
 		const char * options = lua_tostring(L, 2);
 		cl_int err = clBuildProgram(program, 0, NULL, options, NULL, NULL);
 		lua_pushnumber(L, err);
+		return 1;
+	}
+
+	static int GetContext(lua_State *L) {
+		cl_program program = CheckObject(L);
+		cl_context context = NULL;
+		cl_int err = clGetProgramInfo(program, CL_PROGRAM_CONTEXT, sizeof(cl_context), &context, NULL);
+		CheckCLError(L, err, "Failed requesting context from program: %d.");
+		luacl_object<cl_context>::Wrap(L, context);
+		return 1;
+	}
+
+	static int GetBinary(lua_State *L) {
+		cl_program program = CheckObject(L);
+		size_t sizeOfSizes = 0;
+		cl_int err = clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES, 0, NULL, &sizeOfSizes);
+		CheckCLError(L, err, "Failed requesting length of binary from program: %d.");
+
+		size_t sizeOfStrings = 0;
+		err = clGetProgramInfo(program, CL_PROGRAM_BINARIES, 0, NULL, &sizeOfStrings);
+		CheckCLError(L, err, "Failed requesting length of binary from program: %d.");
+		assert(sizeOfSizes / sizeof(size_t) == sizeOfStrings / sizeof(intptr_t));
+
+		size_t * sizes = static_cast<size_t *>(malloc(sizeOfSizes));
+		CheckAllocError(L, sizes);
+		err = clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES, sizeOfSizes, sizes, NULL);
+
+		char ** binary = NULL;
+		lua_pushlstring(L, binary[0], sizes[0]);
 		return 1;
 	}
 

@@ -47,6 +47,7 @@ for index, platform in ipairs(platforms) do
 	local program = context:CreateProgram("__kernel void myfunc() {};")
 	print("Created", program)
 	program:Build()
+	program:Build("-cl-opt-disable")
 	print(program:GetBuildStatus(devices[1]))
 	print(program:GetBuildLog(devices[1]))
 	print(program:GetBuildStatus(devices[2]))
