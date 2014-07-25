@@ -98,23 +98,35 @@ struct luacl_program {
             return luaL_error(L, "Length of binaries mismatch.");
         }
         
+		printf("Length of sizes: %d; Length of strings: %d\n", sizeOfSizes, sizeOfStrings);
+
 		size_t * sizes = static_cast<size_t *>(malloc(sizeOfSizes));
 		CheckAllocError(L, sizes);
 		err = clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES, sizeOfSizes, sizes, NULL);
-        CheckCLError(L, err, "Failed requesting sizes of binaries from program: %d.");
+        CheckCLError(L, err, "Failed requesting sizes of binaries from program: %d.", sizes);
 		
-        for (unsigned int index = 0; index < numBinaries; index++) {
-            printf("Size of binary #%d: %zu\n", index, sizes[index]);
+        for (int index = 0; index < numBinaries; index++) {
+            printf("Size of binary #%d: %p\n", index, sizes[index]);
         }
         
-        char ** binary = static_cast<char **>(malloc(sizeOfStrings));
-        CheckAllocError(L, binary);
-        err = clGetProgramInfo(program, CL_PROGRAM_BINARIES, sizeOfStrings, binary, NULL);
-        CheckCLError(L, err, "Failed requesting binaries from program: %d.");
+        char ** binary = static_cast<char **>(malloc(sizeOfStrings * sizeof(char *)));
+		if (binary == NULL) {
+			free(sizes);
+			return luaL_error(L, LUACL_ERR_MALLOC);
+		}
+
+		err = clGetProgramInfo(program, CL_PROGRAM_BINARIES, sizeOfStrings, binary, NULL);
+		if (err != CL_SUCCESS) {
+			free(sizes);
+			free(binary);
+			return luaL_error(L, "Failed requesting binaries from program: %d.", err);
+		}
 		
-        for (unsigned int index = 0; index < numBinaries; index++) {
+        for (int index = 0; index < numBinaries; index++) {
             lua_pushlstring(L, binary[index], sizes[index]);
         }
+		free(sizes);
+		free(binary);
 		return numBinaries;
 	}
 
@@ -146,11 +158,6 @@ struct luacl_program {
 	static int Release(lua_State *L) {
 		cl_program program = CheckObject(L);
 		clReleaseProgram(program);
-        try {
-            clReleaseProgram(program);
-        } catch (...) {
-            return luaL_error(L, "Error with gc");
-        }
 		printf("__gc Releasing program %p\n", program);
         
 		return 0;
