@@ -68,16 +68,19 @@ for index, platform in ipairs(platforms) do
 	print(program:GetBuildStatus(devices[2]))
 	print(program:GetBuildLog(devices[2]))
 
-	print("=======Binaries======")
-	local binaries = {program:GetBinary()}
-	for index, binary in ipairs(binaries) do
-		print(("Lua: Length of binary #%d: %08X"):format(index, binary:len()))
-		local file = io.open(index .. ".bin", "w")
-		file:write(binary)
-		file:close()
-	end
-	print("===End of Binaries===")
-
+    if program:GetBuildStatus(devices[1]) == 0 then
+    	print("=======Binaries======")
+    	local binaries = {program:GetBinary()}
+    	for index, binary in ipairs(binaries) do
+    		print(("Lua: Length of binary #%d: %08X"):format(index, binary:len()))
+    		local file = io.open(index .. ".bin", "w")
+    		file:write(binary)
+    		file:close()
+    	end
+    	print("===End of Binaries===")
+    else
+        print("Cannot dump binaries for unsuccessful build")
+    end
 	print("\nCreating kernel...")
 	local kernel = program:CreateKernel("myfunc")
 	print(kernel)
