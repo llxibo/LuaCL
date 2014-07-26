@@ -8,14 +8,14 @@ dump_table(platforms, "platforms")
 
 for index, platform in ipairs(platforms) do
 	local info = platform:GetInfo()
-	dump_table(info, ("(%s):GetInfo() "):format(tostring(platform)))
+	dump_table(info, ("(%s):GetInfo()"):format(tostring(platform)))
 
 	local devices = {platform:GetDevices()}
-	dump_table(devices, ("(%s):GetDevices() "):format(tostring(platform)))
+	dump_table(devices, ("(%s):GetDevices()"):format(tostring(platform)))
 	devices = nil
 
 	local devices = {platform:GetDevices()}
-	dump_table(devices, ("(%s):GetDevices() "):format(tostring(platform)))
+	dump_table(devices, ("(%s):GetDevices()"):format(tostring(platform)))
 
 	print("\nCollecting garbage...")
 	devices = nil
@@ -31,12 +31,12 @@ for index, platform in ipairs(platforms) do
 	collectgarbage()
 
 	print("\nCreating context with list of devices...")
-	dump_table(devices, ("(%s):GetDevices() "):format(tostring(platform)))
+	dump_table(devices, ("(%s):GetDevices()"):format(tostring(platform)))
 
-	-- for index, device in ipairs(devices) do
-	-- 	local info = device:GetInfo()
-	-- 	dump_table(info, ("(%s):GetInfo() "):format(tostring(device)))
-	-- end
+	for index, device in ipairs(devices) do
+		local info = device:GetInfo()
+		dump_table(info, ("(%s):GetInfo()"):format(tostring(device)))
+	end
 
 	-- print(platform.CreateContext(platform, devices))
 	local context = platform:CreateContext(devices)
@@ -92,11 +92,18 @@ for index, platform in ipairs(platforms) do
 	print("GetNumArgs", kernel:GetNumArgs())
 	print("GetFunctionName", kernel:GetFunctionName())
 
+    for index, device in ipairs(devices) do
+        local info = kernel:GetWorkGroupInfo(device)
+        -- print("WorkGroupInfo: ", tostring(device))
+        dump_table(info, ("(%s):GetWorkGroupInfo(%s)"):format(tostring(kernel), tostring(device)))
+    end
 	-- for index = 1, kernel:GetNumArgs() do
 	-- 	kernel:SetArgFloat(index, index)
 	-- end
 
+    program = nil
 	print("\nCollecting garbage...")
+    collectgarbage()
 	kernel = nil
 	collectgarbage()
 end

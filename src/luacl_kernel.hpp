@@ -37,6 +37,8 @@ struct luacl_kernel {
 		lua_setfield(L, -2, "GetNumArgs");
 		lua_pushcfunction(L, GetFunctionName);
 		lua_setfield(L, -2, "GetFunctionName");
+		lua_pushcfunction(L, GetWorkGroupInfo);
+		lua_setfield(L, -2, "GetWorkGroupInfo");
 		lua_pushcfunction(L, SetArg<float>);
 		lua_setfield(L, -2, "SetArgFloat");
 		lua_pushcfunction(L, SetArg<cl_int>);
@@ -103,6 +105,17 @@ struct luacl_kernel {
 		return 1;
 	}
     
+    static int GetWorkGroupInfo(lua_State *L) {
+        cl_kernel krnl = CheckObject(L);
+        cl_device_id device = luacl_object<cl_device_id>::CheckObject(L, 2);
+        lua_newtable(L);
+        PushWorkGroupInfo<size_t>(L, krnl, device, CL_KERNEL_WORK_GROUP_SIZE, "WORK_GROUP_SIZE");
+        PushWorkGroupInfo<cl_ulong>(L, krnl, device, CL_KERNEL_LOCAL_MEM_SIZE, "LOCAL_MEM_SIZE");
+        PushWorkGroupInfo<size_t>(L, krnl, device, CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE, "PREFERRED_WORK_GROUP_SIZE_MULTIPLE");
+        PushWorkGroupInfo<cl_ulong>(L, krnl, device, CL_KERNEL_PRIVATE_MEM_SIZE, "PRIVATE_MEM_SIZE");
+        return 1;
+    }
+    
     template <typename T>
     static int SetArg(lua_State *L) {
         cl_kernel krnl = CheckObject(L);
@@ -111,6 +124,20 @@ struct luacl_kernel {
         cl_int err = clSetKernelArg(krnl, index - 1, sizeof(value), &value);
         CheckCLError(L, err, "Failed setting kernel arg: %d.");
         return 0;
+    }
+    
+    template <typename T>
+    static void PushWorkGroupInfo(lua_State *L, cl_kernel krnl, cl_device_id device, cl_kernel_work_group_info param, const char * paramName) {
+        size_t size = 0;
+        cl_int err = clGetKernelWorkGroupInfo(krnl, device, param, 0, NULL, &size);
+        CheckCLError(L, err, "Failed requesting size of workgroup info: %d.");
+        assert(size == sizeof(T));
+        
+        T value = 0;
+        err = clGetKernelWorkGroupInfo(krnl, device, param, sizeof(T), &value, NULL);
+        CheckCLError(L, err, "Failed requesting workgroup info: %d.");
+        lua_pushnumber(L, static_cast<lua_Number>(value));
+        lua_setfield(L, -2, paramName);
     }
     
 	static int Release(lua_State *L) {
