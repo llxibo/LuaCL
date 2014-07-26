@@ -86,6 +86,11 @@ for index, platform in ipairs(platforms) do
 	print("GetProgram", kernel:GetProgram())
 	print("GetNumArgs", kernel:GetNumArgs())
 	print("GetFunctionName", kernel:GetFunctionName())
+
+	-- for index = 1, kernel:GetNumArgs() do
+	-- 	kernel:SetArgFloat(index, index)
+	-- end
+
 	print("\nCollecting garbage...")
 	kernel = nil
 	collectgarbage()
