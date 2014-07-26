@@ -34,6 +34,9 @@ struct luacl_kernel {
 		lua_setfield(L, -2, "__index");
 		lua_pushcfunction(L, ToString);
 		lua_setfield(L, -2, "__tostring");
+		lua_pushcfunction(L, Release);
+		lua_setfield(L, -2, "__gc");
+
 		traits::CreateRegistry(L);
 	}
 
@@ -45,6 +48,13 @@ struct luacl_kernel {
 		CheckCLError(L, err, "Failed creating kernel: %d.");
 		Wrap(L, krnl);
 		return 1;
+	}
+
+	static int Release(lua_State *L) {
+		cl_kernel krnl = CheckObject(L);
+		printf("__gc Releasing kernel %p\n", krnl);
+		LUACL_TRYCALL(clReleaseKernel(krnl));
+		return 0;
 	}
 
 	static int Wrap(lua_State *L, cl_kernel krnl) {

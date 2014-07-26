@@ -81,4 +81,8 @@ for index, platform in ipairs(platforms) do
 	print("\nCreating kernel...")
 	local kernel = program:CreateKernel("myfunc")
 	print(kernel)
+
+	print("\nCollecting garbage...")
+	kernel = nil
+	collectgarbage()
 end
