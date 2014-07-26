@@ -398,7 +398,7 @@
 
     向快照系统申请一个快照。原型如下
 
-        k8u snapshot_save(
+        k8u snapshot_alloc(
             rtinfo_t* rti,
             psnapshot_t* snapshot
         );
@@ -412,7 +412,7 @@
         k8u no;
         psnapshot_t pss;
         
-        no = snapshot_save( rti, &pss ); /* 申请快照 */
+        no = snapshot_alloc( rti, &pss ); /* 申请快照 */
         pss->fieldA = foo;  /* 填写快照 */
         pss->fieldB = bar;
         eq_enqueue( rti, TIME_OFFSET( 300 ), rout, no ); /* 将快照传递给事件rout */
