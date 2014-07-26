@@ -107,7 +107,7 @@ DECL_EVENT( smackthat_land ) {
 
 DECL_EVENT( livingbomb_execute ) {
     psnapshot_t ss;
-    snapshot = snapshot_save( rti, &ss );
+    snapshot = snapshot_alloc( rti, &ss );
     rti->player.livingbomb.expire = TIME_OFFSET( FROM_SECONDS( 15 ) );
     ss->ip[0] = (k32u)rti->player.livingbomb.expire;
     eq_enqueue( rti, TIME_OFFSET( FROM_SECONDS( 3 ) ), routnum_livingbomb_tick, snapshot );

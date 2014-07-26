@@ -229,6 +229,40 @@
 > 这样处理**不会**导致效果的持续时间被延长，因为增加的`(time_t)1`是原子时间，造成的影响只有在边界处的取值由假改为真，而其他任何时刻的取值都没有发生变化。
 
 
+随机数发生器
+----
+
+框架内置了MT127作为随机数发生器。MT127具有(2^127 - 1)的周期，4维均匀分布。除均匀分布以外，框架还提供了基于Box-Muller变换的标准正态分布。
+
+* `rng_init`
+
+    初始化随机数发生器。这个函数会在启动时被框架自动调用。
+
+
+* `uni_rng`
+
+    生成一个均匀分布在[.0f, 1.0f)之间的单精度浮点随机数。原型如下
+
+        float uni_rng(
+            rtinfo_t* rti
+        );
+
+    rti原样传递即可。
+
+
+* `stdnor_rng`
+
+    生成一个标准正态分布（mean = 0, dev = 1）的单精度浮点随机数。原型如下
+
+        float stdnor_rng(
+            rtinfo_t* rti
+        );
+
+    rti原样传递即可。
+
+    由于寄存器字长限制，此随机数不能分布在整个实数域内，可能产生的随机数范围约为[-5.64666, 5.64666]。
+
+
 事件队列（EQ）
 ----
 
@@ -336,6 +370,79 @@
 
     `eq_delete`的时间复杂度为O(n)，所以出于性能考虑，应该尽可能避免使用它。
 
+
+快照系统
+----
+
+* `snapshot_t`
+
+    快照需要存储的信息由职业模块确定。`snapshot_t`结构体的成员列表在职业模块源文件内，由`LUACL_LOAD_SNAPSHOT_T_MEMBERLIST`作为标志包含进来。
+
+
+* `SNAPSHOT_SIZE`
+
+    指明了快照系统最大可以容纳的快照数量。
+
+
+* `psnapshot_t`
+
+    指向快照的指针类型应使用`psnapshot_t`而不是`snapshot_t *`，因为在OpenCL中需要指明其存储限定符。
+
+
+* `snapshot_init`
+
+    初始化快照系统，在启动时由框架自动调用。
+
+
+* `snapshot_alloc`
+
+    向快照系统申请一个快照。原型如下
+
+        k8u snapshot_save(
+            rtinfo_t* rti,
+            psnapshot_t* snapshot
+        );
+
+    rti原样传递。函数将snapshot所指的`psnapshot_t`设置为指向可用快照空间的指针，然后返回此快照的编号。
+
+    快照编号被用于读取和销毁快照，也是`_event_t`的成员之一。
+
+    *例*
+
+        k8u no;
+        psnapshot_t pss;
+        
+        no = snapshot_save( rti, &pss ); /* 申请快照 */
+        pss->fieldA = foo;  /* 填写快照 */
+        pss->fieldB = bar;
+        eq_enqueue( rti, TIME_OFFSET( 300 ), rout, no ); /* 将快照传递给事件rout */
+
+    在OpenCL运行时不会检查快照系统是否已满。如果快照系统已满，尝试使用`snapshot_alloc`会导致未定义行为。模块实现时应在CPU上测试快照系统空间是否充足。
+
+
+* `snapshot_read`
+
+    读取一个快照。原型如下
+
+        psnapshot_t snapshot_read(
+            rtinfo_t* rti,
+            k8u no
+        );
+
+    rti原样传递。no指定了一个快照编号，函数返回指向该快照的指针。
+
+
+* `snapshot_kill`
+
+    读取一个快照，并将其所占有的空间释放。原型如下
+
+        psnapshot_t snapshot_kill(
+            rtinfo_t* rti,
+            k8u no
+        );
+
+    rti原样传递。no指定了一个快照编号，函数返回指向该快照的指针。
+    
 
 ------
 ###### 可缩短的技能冷却时间
