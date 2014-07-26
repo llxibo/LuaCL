@@ -59,6 +59,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		8D0D2D041982C42C00F77691 /* luacl_kernel.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = luacl_kernel.hpp; sourceTree = "<group>"; };
 		8D6C702D1981E521003A1CAD /* luacl_program.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = luacl_program.hpp; sourceTree = "<group>"; };
 		8D98B3A0197F41E9003C95C5 /* OpenCL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenCL.framework; path = /System/Library/Frameworks/OpenCL.framework; sourceTree = "<absolute>"; };
 		8D98B3A2197F4228003C95C5 /* luacl_context.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = luacl_context.hpp; sourceTree = "<group>"; };
@@ -160,6 +161,7 @@
 		8DDF122419761629001AD698 /* src */ = {
 			isa = PBXGroup;
 			children = (
+				8D0D2D041982C42C00F77691 /* luacl_kernel.hpp */,
 				8D6C702D1981E521003A1CAD /* luacl_program.hpp */,
 				8D98B3A2197F4228003C95C5 /* luacl_context.hpp */,
 				8D98B3A3197F4228003C95C5 /* luacl_device.hpp */,
