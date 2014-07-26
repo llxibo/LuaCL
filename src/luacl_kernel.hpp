@@ -29,8 +29,14 @@ struct luacl_kernel {
 	static void Init(lua_State *L) {
 		luaL_newmetatable(L, LUACL_KERNEL_METATABLE);
 		lua_newtable(L);
-		//lua_pushcfunction(L, GetDevices);
-		//lua_setfield(L, -1, "GetDevices");
+		lua_pushcfunction(L, GetContext);
+		lua_setfield(L, -2, "GetContext");
+		lua_pushcfunction(L, GetProgram);
+		lua_setfield(L, -2, "GetProgram");
+		lua_pushcfunction(L, GetNumArgs);
+		lua_setfield(L, -2, "GetNumArgs");
+		lua_pushcfunction(L, GetFunctionName);
+		lua_setfield(L, -2, "GetFunctionName");
 		lua_setfield(L, -2, "__index");
 		lua_pushcfunction(L, ToString);
 		lua_setfield(L, -2, "__tostring");
@@ -47,6 +53,47 @@ struct luacl_kernel {
 		cl_kernel krnl = clCreateKernel(program, kernelName, &err);
 		CheckCLError(L, err, "Failed creating kernel: %d.");
 		Wrap(L, krnl);
+		return 1;
+	}
+
+	static int GetContext(lua_State *L) {
+		cl_kernel krnl = CheckObject(L);
+		cl_context context = NULL;
+		cl_int err = clGetKernelInfo(krnl, CL_KERNEL_CONTEXT, sizeof(cl_context), &context, NULL);
+		CheckCLError(L, err, "Failed requesting context info from kernel: %d.");
+		luacl_object<cl_context>::Wrap(L, context);
+		return 1;
+	}
+
+	static int GetProgram(lua_State *L) {
+		cl_kernel krnl = CheckObject(L);
+		cl_program program = NULL;
+		cl_int err = clGetKernelInfo(krnl, CL_KERNEL_PROGRAM, sizeof(cl_program), &program, NULL);
+		CheckCLError(L, err, "Failed requesting program info from kernel: %d.");
+		luacl_object<cl_program>::Wrap(L, program);
+		return 1;
+	}
+
+	static int GetNumArgs(lua_State *L) {
+		cl_kernel krnl = CheckObject(L);
+		cl_uint numArgs = 0;
+		cl_int err = clGetKernelInfo(krnl, CL_KERNEL_NUM_ARGS, sizeof(cl_uint), &numArgs, NULL);
+		CheckCLError(L, err, "Failed requesting number of args info from kernel: %d.");
+		lua_pushnumber(L, numArgs);
+		return 1;
+	}
+
+	static int GetFunctionName(lua_State *L) {
+		cl_kernel krnl = CheckObject(L);
+		size_t size = 0;
+		cl_int err = clGetKernelInfo(krnl, CL_KERNEL_FUNCTION_NAME, 0, NULL, &size);
+		CheckCLError(L, err, "Failed requesting size of function name from kernel: %d.");
+
+		char * funcName = static_cast<char *>(malloc(size));
+		CheckAllocError(L, funcName);
+		err = clGetKernelInfo(krnl, CL_KERNEL_FUNCTION_NAME, size, funcName, NULL);
+		CheckCLError(L, err, "Failed requesting number of args info from kernel: %d.");
+		lua_pushlstring(L, funcName, size);
 		return 1;
 	}
 

@@ -82,6 +82,10 @@ for index, platform in ipairs(platforms) do
 	local kernel = program:CreateKernel("myfunc")
 	print(kernel)
 
+	print("GetContext", kernel:GetContext())
+	print("GetProgram", kernel:GetProgram())
+	print("GetNumArgs", kernel:GetNumArgs())
+	print("GetFunctionName", kernel:GetFunctionName())
 	print("\nCollecting garbage...")
 	kernel = nil
 	collectgarbage()
