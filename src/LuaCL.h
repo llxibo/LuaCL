@@ -17,9 +17,20 @@ extern "C" {
 
 /* OpenCL.h has built-in extern C protection */
 #ifdef __APPLE__
-	#include <OpenCL/cl.h>
+#include <OpenCL/cl.h>
 #else
-	#include "CL/OpenCL.h"
+#include "CL/OpenCL.h"
+#endif
+
+#ifdef _MSC_VER
+#define LUACL_TRYCALL(call) __try {	\
+		call;						\
+	}								\
+	__except (1) {					\
+		luaL_error(L, "Fatal error: error executing OpenCL API %s", #call);	\
+	}
+#else
+#define LUACL_TRYCALL(call) call;
 #endif
 
 #endif
