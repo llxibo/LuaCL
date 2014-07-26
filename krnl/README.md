@@ -25,16 +25,16 @@
 
     浮点类型使用源生。
 
-    `K64S_C` 为一个数字常量添加后缀，使其成为`k64s`类型。
+    `K64S_C( num )` 为一个数字常量添加后缀，使其成为`k64s`类型。
 
-    `K64U_C` 为一个数字常量添加后缀，使其成为`k64u`类型。
+    `K64U_C( num )` 为一个数字常量添加后缀，使其成为`k64u`类型。
 
     `K64U_MSB`为常量`0x1000000000000000`
 
 
 * C标准库
 
-    框架允许有限地使用C标准库，但相应代码不能带入OpenCL编译器中（参考`hostonly()`）。可以使用的函数包括`printf`、`abort`、`malloc`和`free`。
+    框架允许有限地使用C标准库，但相应代码不能带入OpenCL编译器中（参考`hostonly`）。可以使用的函数包括`printf`、`abort`、`malloc`和`free`。
 
     支持断言`assert`，在OpenCL编译时，所有`assert`语句会被忽略。
 
@@ -56,7 +56,7 @@
     其中，`clz`首先将操作数转型为`k64u`类型；`cos`、`cospi`、`sqrt`、`log`、`clamp`首先将操作数转型为`double`类型；`max`、`min`、`mix`要求输入表达式不能含有任何边界效应。
 
 
-* `hostonly()`、`deviceonly()`和`msvconly()`
+* `hostonly`、`deviceonly`和`msvconly`
 
     包含在`hostonly()`括号中的代码在OpenCL编译时将被忽略；相反地，包含在`deviceonly()`括号中的代码在非OpenCL编译时将被忽略。包含在`msvconly()`括号中的代码在除MSVC以外的编译器编译时将被忽略。
 
@@ -74,9 +74,9 @@
 
     在MSVC中，以一对空的大括号`{}`作为结构体初值时，会得到编译错误，需要添加一个`0`。在GCC中，大括号中添加的`0`与`c`的类型不符，会得到编译警告。使用`msvconly( 0 )`将此处的零对GCC隐藏，使得代码在两种环境中均可正常工作。
 
-* `KRNL_STR()`
+* `KRNL_STR`
 
-    包含在`KRNL_STR()`括号中的代码将被转换为字符串常量，但使用`KRNL_STR`的代码不能带入OpenCL编译器中（参考`hostonly()`）。
+    包含在`KRNL_STR()`括号中的代码将被转换为字符串常量，但使用`KRNL_STR`的代码不能带入OpenCL编译器中（参考`hostonly`）。
 
     *例*
 
@@ -86,14 +86,29 @@
     将得到输出`abc = 4262`。
 
 
-* `kdeclspec()`和`hdeclspec()`
+* `kdeclspec`和`hdeclspec`
 
-    `kdeclspec()`指定展示给OpenCL编译器的特性限定符，相当于`__attribute__((...))`；`hdeclspec()`指定展示给普通C语言编译器的特性限定符，在MSVC中为`__declspec(...)`，在其他编译器中为`__attribute__((...))`。
+    `kdeclspec(...)`指定展示给OpenCL编译器的特性限定符，相当于`__attribute__((...))`；`hdeclspec(...)`指定展示给普通C语言编译器的特性限定符，在MSVC中为`__declspec(...)`，在其他编译器中为`__attribute__((...))`。
 
 
 * `htlsvar`
 
-    `htlsvar`是TLS（线程本地存储）标识，在MSVC中为`__declspec(thread)`，在其他编译器中为`__thread`。但使用`htlsvar`的代码不能带入OpenCL编译器中（参考`hostonly()`）。
+    `htlsvar`是TLS（线程本地存储）标识，在MSVC中为`__declspec(thread)`，在其他编译器中为`__thread`。但使用`htlsvar`的代码不能带入OpenCL编译器中（参考`hostonly`）。
+
+* `lprintf`
+
+    `lprintf`会在标准输出上打印日志记录，帮助调试。在OpenCL中会被忽略。
+
+    调试时将iterations设置为1，将标准输出导出到文件，例如`kernel.exe > log.txt`。
+
+    *例*
+
+        lprintf( "deal damage %d", dmg );
+        lprintf( "another log" );
+        /*
+            05:36.420 deal damage 1635
+            05:36.420 another log
+        */
 
 
 时间戳
@@ -107,7 +122,7 @@
 
     如果`time_t`用于表达超过10:55.350的时间戳，其行为未定义。如果`time_t`用于表达早于0:00.000的时间戳，其行为未定义。
 
-    由于需要面对单位转换、溢出、舍入方向等多种问题，直接对`time_t`类型进行运算操作是不予提倡的，应优先使用框架提供的各种操作方法。
+    由于需要面对单位转换、溢出、舍入方向等多种问题，**直接对`time_t`类型进行运算操作是不予提倡的**，应优先使用框架提供的各种操作方法。
 
 
 * `FROM_SECONDS( sec )`
@@ -129,7 +144,7 @@
 
 * `FROM_MILLISECONDS( msec )`
 
-    与`FROM_SECONDS`相似，由毫秒转换为`time_t`。
+    与`FROM_SECONDS`相似，由毫秒转换为`time_t`。参见`FROM_SECONDS( sec )`。
 
 
 * `TO_SECONDS( timestamp )`
@@ -148,6 +163,8 @@
     以当前时刻`rti->timestamp`为基准，向未来方向偏移长度为`delta`的时间。返回值和`delta`均为`time_t`类型。如果`delta`不是`time_t`类型，则会被强制转型为`k32s`类型，但不能保证量纲与`time_t`相当。
 
     如果结果超过了`time_t`的表示范围，则会得到饱和值。
+
+    `TIME_OFFSET`只允许向未来方向偏移，任何尝试向过去方向进行偏移的行为都是未定义的。
 
     *例*
 
@@ -212,6 +229,114 @@
 > 这样处理**不会**导致效果的持续时间被延长，因为增加的`(time_t)1`是原子时间，造成的影响只有在边界处的取值由假改为真，而其他任何时刻的取值都没有发生变化。
 
 
+事件队列（EQ）
+----
+
+* `EQ_SIZE_EXP`和`EQ_SIZE`
+
+    在实现上，事件队列是一个固定尺寸的最小堆。`EQ_SIZE_EXP`指明了堆的层数，`EQ_SIZE`则是堆可容纳的事件数量。
+
+
+* `_event_t`
+
+    `_event_t`事件类型（**注意前缀的下划线**），包含三个成员
+
+        time_t time; /* 事件发生的时刻 */
+        k8u routine; /* 事件的处理程序编号 */
+        k8u snapshot; /* 事件所需携带的快照 */
+
+    time是事件触发的时间。EQ系统会迭代执行触发时间最早的事件，直至执行到`EVENT_END_SIMULATION`后收工。
+
+    事件执行时，会依据routine的值决定进入哪一个事件处理函数。具体编号由模块定义，但255被定义为`EVENT_END_SIMULATION`，表示模拟结束。
+
+    snapshot参见快照系统。
+
+
+* `eq_enqueue`
+
+    创建一个新事件插入EQ待执行。原型如下
+
+        _event_t* eq_enqueue(
+            rtinfo_t* rti,
+            time_t trigger,
+            k8u routine,
+            k8u snapshot
+        );
+
+    `rti`原样传递，`trigger`、`routine`、`snapshot`即`_event_t`的三个成员。如果成功，返回值是指向新事件的指针；否则为0。
+
+    允许通过返回的指针对事件进行修改，但仅限于在当前事件的处理过程内使用。如果携带入其他事件的处理过程内使用，会发生不可预期的行为。
+
+    当时间戳即将但仍未发生上溢时，向未来注册事件可能会导致此事件的触发时间上溢。`eq_enqueue`对所有时间上溢采取简单的抛弃策略，并返回0。
+
+    注册在过去时刻的事件会被当作上溢而抛弃。
+
+        rti->timestamp = 65000; /* 还未上溢，剩余5.35秒 */
+        
+        eq_enqueue( rti, TIME_OFFSET( FROM_SECONDS( 6 ) ), rout, snap );
+        /* TIME_OFFSET会将上溢进行饱和处理，事件被注册到(time_t)65535处而非(time_t)64处。 */
+        
+        eq_enqueue( rti, rti->timestamp + FROM_SECONDS( 6 ), rout, snap );
+        /* 直接操作时间类型是危险的，尝试在(time_t)64处注册事件，eq_enqueue会忽略此行为，返回0表示失败。 */
+
+    虽然直接操作时间类型时的疏忽导致了溢出，但`eq_enqueue`能够识别出后一种情况并予以忽略，使上述两种处理方式均能正常工作。
+
+    在OpenCL设备上执行时，出于效率考虑，`eq_enqueue`不会检查堆是否已满。如果堆已满，插入事件会导致不可预期的行为，实现模块时，需要在CPU上预先测试堆空间是否充足。
+
+
+* `eq_enqueue_ps`
+
+    插入一个“能量充足”事件。原型如下
+
+        void eq_enqueue_ps(
+            rtinfo_t* rti,
+            time_t trigger
+        );
+
+    `rti`原样传递，`trigger`是触发的时刻。
+
+    模拟遇到能量无法满足某条件而无法执行某动作时，会依据当前的能量恢复速度估算“能量充足”的时刻，并记录一个傀儡事件，使得“能量充足”时刻进行一次完整的APL扫描。
+
+    所有需要插入傀儡事件触发APL扫描的情况都可以使用`eq_enqueue_ps`按“能量充足”事件处理。“能量充足”事件是一个空事件，而且不会真正插入事件堆中。
+
+    一个触发时刻较早的“能量充足”事件会覆写触发时刻较晚的“能量充足”事件。这种类型的事件是不稳定的，应该具有能够在APL扫描过程中得到重建的能力，否则被覆写后可能会丢失信息。
+
+    `eq_enqueue_ps`能发现并抛弃上溢情况和安排在过去时刻的事件。
+
+    *例*
+
+        /* 在APL处理例程中 */
+        eq_enqueue_ps( rti, FROM_SECONDS( 50 ) ); /* 在第50秒处可能有动作要执行，安排扫描APL。 */
+
+
+* `eq_execute`
+
+    执行事件队列中排列在最早的事件，设置当前时间，处理能量自动恢复。
+
+    在离开某个时刻之前，触发完整的APL扫描。
+
+    如果时间变化超过1秒，则插入检查点强制安排一次APL扫描。
+
+    此函数只能由框架调用，在职业模块中调用此函数会导致编译失败或无限递归。
+
+
+* `eq_delete`
+
+    从事件队列中删除一个事件。原型如下
+
+        void eq_delete(
+            rtinfo_t* rti,
+            time_t time,
+            k8u routnum
+        );
+
+    在EQ中查找触发在时刻`time`、事件处理程序编号为`routnum`的事件。如果找到，则删除它；否则忽略。
+
+    当EQ中有多个事件均满足此条件时，一次`eq_delete`只会删除其中一个，但不能确保删除的是哪一个。
+
+    `eq_delete`的时间复杂度为O(n)，所以出于性能考虑，应该尽可能避免使用它。
+
+
 ------
 ###### 可缩短的技能冷却时间
 用DoT式冷却处理。
@@ -235,7 +360,7 @@
     }
         
     // B技能释放：
-    if ( UP( spell_A.cd ) ){
+    if ( UP( spell_A.cd ) ){ /* 如果spell_A不在CD中，对其减8可能会导致下溢。应避免。 */
         rti->player.spell_A.cd -= FROM_SECONDS( 8 );
         if ( !UP( spell_A.cd ) )
             eq_enqueue( rti, rti->timestamp, routnum_spell_A_cd, 0 );

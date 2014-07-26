@@ -257,7 +257,7 @@ typedef struct {
 } _event_t;
 typedef struct {
     k16u count;
-    k16u power_suffice;
+    time_t power_suffice;
     _event_t event[EQ_SIZE];
 } event_queue_t;
 
@@ -410,8 +410,9 @@ _event_t* eq_enqueue( rtinfo_t* rti, time_t trigger, k8u routine, k8u snapshot )
 
 /* Enqueue a power suffice event into EQ. */
 void eq_enqueue_ps( rtinfo_t* rti, time_t trigger ) {
-    if ( !rti->eq.power_suffice || rti->eq.power_suffice > trigger )
-        rti->eq.power_suffice = trigger;
+    if ( trigger > rti->timestamp )
+        if ( !rti->eq.power_suffice || rti->eq.power_suffice > trigger )
+            rti->eq.power_suffice = trigger;
 }
 
 /* Power gain. */
