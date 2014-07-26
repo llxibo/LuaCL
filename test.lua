@@ -56,6 +56,8 @@ for index, platform in ipairs(platforms) do
 	]]
 	local program = context:CreateProgram(source)
 	print("Created", program)
+    print("Context of program:", program:GetContext())
+    print("Devices of program:", program:GetDevices())
 	program:Build()
 	print("\nCollecting garbage...")
 	program = nil

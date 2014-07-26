@@ -40,6 +40,10 @@ struct luacl_program {
 		lua_setfield(L, -2, "GetBuildLog");
 		lua_pushcfunction(L, GetBinary);
 		lua_setfield(L, -2, "GetBinary");
+		lua_pushcfunction(L, GetContext);
+		lua_setfield(L, -2, "GetContext");
+		lua_pushcfunction(L, GetDevices);
+		lua_setfield(L, -2, "GetDevices");
 		lua_pushcfunction(L, luacl_kernel::Create);
 		lua_setfield(L, -2, "CreateKernel");
 		lua_setfield(L, -2, "__index");
@@ -49,12 +53,6 @@ struct luacl_program {
 		lua_setfield(L, -2, "__gc");
 
 		traits::CreateRegistry(L);
-	}
-
-	static int GetInfo(lua_State *L) {
-		cl_program platform = CheckObject(L);
-		
-		return 0;
 	}
 
 	static int Create(lua_State *L) {
@@ -67,7 +65,7 @@ struct luacl_program {
 		Wrap(L, program);
 		return 1;
 	}
-
+/*
 	static int CreateFromBinary(lua_State *L) {
 		cl_context context = luacl_object<cl_context>::CheckObject(L);
 		size_t size = 0;
@@ -77,7 +75,7 @@ struct luacl_program {
 
 		return 0;
 	}
-
+//*/
 	static int Build(lua_State *L) {
 		cl_program program = CheckObject(L);
 		const char * options = lua_tostring(L, 2);
@@ -94,7 +92,24 @@ struct luacl_program {
 		luacl_object<cl_context>::Wrap(L, context);
 		return 1;
 	}
-
+    
+    static int GetDevices(lua_State *L) {
+        cl_program program = luacl_object<cl_program>::CheckObject(L);
+        cl_uint numDevices = 0;
+        cl_int err = clGetProgramInfo(program, CL_PROGRAM_NUM_DEVICES, sizeof(numDevices), &numDevices, NULL);
+        CheckCLError(L, err, "Failed requesting number of devices in program: %d.");
+        
+        cl_device_id * devices = static_cast<cl_device_id *>(malloc(numDevices * sizeof(cl_device_id)));
+        CheckAllocError(L, devices);
+        err = clGetProgramInfo(program, CL_PROGRAM_DEVICES, numDevices * sizeof(cl_device_id), devices, NULL);
+        CheckCLError(L, err, "Failed requesting device list in progtam: %d.");
+        
+        for (cl_uint index = 0; index < numDevices; index++) {
+            luacl_object<cl_device_id>::Wrap(L, devices[index]);
+        }
+        return static_cast<int>(numDevices);
+    }
+    
 	static int GetBinary(lua_State *L) {
 		cl_program program = CheckObject(L);
         
