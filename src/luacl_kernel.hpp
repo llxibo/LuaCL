@@ -37,6 +37,12 @@ struct luacl_kernel {
 		lua_setfield(L, -2, "GetNumArgs");
 		lua_pushcfunction(L, GetFunctionName);
 		lua_setfield(L, -2, "GetFunctionName");
+		lua_pushcfunction(L, SetArg<float>);
+		lua_setfield(L, -2, "SetArgFloat");
+		lua_pushcfunction(L, SetArg<cl_int>);
+		lua_setfield(L, -2, "SetArgInt");
+		lua_pushcfunction(L, SetArg<cl_uint>);
+		lua_setfield(L, -2, "SetArgUInt");
 		lua_setfield(L, -2, "__index");
 		lua_pushcfunction(L, ToString);
 		lua_setfield(L, -2, "__tostring");
@@ -96,7 +102,17 @@ struct luacl_kernel {
 		lua_pushlstring(L, funcName, size);
 		return 1;
 	}
-
+    
+    template <typename T>
+    static int SetArg(lua_State *L) {
+        cl_kernel krnl = CheckObject(L);
+        cl_uint index = static_cast<cl_uint>(luaL_checknumber(L, 2));
+        T value = static_cast<T>(luaL_checknumber(L, 3));
+        cl_int err = clSetKernelArg(krnl, index - 1, sizeof(value), &value);
+        CheckCLError(L, err, "Failed setting kernel arg: %d.");
+        return 0;
+    }
+    
 	static int Release(lua_State *L) {
 		cl_kernel krnl = CheckObject(L);
 		printf("__gc Releasing kernel %p\n", krnl);
