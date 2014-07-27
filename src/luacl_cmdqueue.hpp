@@ -21,7 +21,7 @@ struct luacl_object_constants<cl_command_queue> {
 	}
 };
 
-struct luacl_command_queue {
+struct luacl_cmdqueue {
     typedef luacl_object<cl_command_queue> traits;
 
 	static void Init(lua_State *L) {
@@ -45,14 +45,33 @@ struct luacl_command_queue {
 	}
 
     static int Create(lua_State *L) {
+		cl_context context = luacl_object<cl_context>::CheckObject(L);
+		cl_device_id device = luacl_object<cl_device_id>::CheckObject(L, 2);
+		lua_checkstack(L, 4);
+		int outOfOrder = lua_toboolean(L, 3);
+		int profiling = lua_toboolean(L, 4);
+		cl_command_queue_properties prop = outOfOrder ? CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE : 0x0;
+		prop |= profiling ? CL_QUEUE_PROFILING_ENABLE : 0x0;
+
+		cl_int err = 0;
+		cl_command_queue cmdqueue = clCreateCommandQueue(context, device, prop, &err);
+		CheckCLError(L, err, "Failed creating command queue: %d.");
+		Wrap(L, cmdqueue);
     	return 1;
     }
 
+	static int Finish(lua_State *L) {
+		cl_command_queue cmdqueue = CheckObject(L);
+		cl_int err = clFinish(cmdqueue);
+		CheckCLError(L, err, "Failed finishing command queue: %d.");
+		return 0;
+	}
+
 	static int Release(lua_State *L) {
 		cl_command_queue cmdqueue = CheckObject(L);
-		//printf("__gc Releasing cmdqueue %p\n", cmdqueue);
+		printf("__gc Releasing cmdqueue %p\n", cmdqueue);
 
-		LUACL_TRYCALL(clReleaseContext(cmdqueue));
+		LUACL_TRYCALL(clReleaseCommandQueue(cmdqueue));
 		return 0;
 	}
 

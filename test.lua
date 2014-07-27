@@ -96,6 +96,9 @@ for index, platform in ipairs(platforms) do
         local info = kernel:GetWorkGroupInfo(device)
         -- print("WorkGroupInfo: ", tostring(device))
         dump_table(info, ("(%s):GetWorkGroupInfo(%s)"):format(tostring(kernel), tostring(device)))
+
+        local cmdqueue = context:CreateCommandQueue(device)
+        print("\nCreated command queue:", tostring(cmdqueue))
     end
 	-- for index = 1, kernel:GetNumArgs() do
 	-- 	kernel:SetArgFloat(index, index)
