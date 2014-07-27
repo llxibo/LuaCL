@@ -110,6 +110,7 @@ struct luacl_kernel {
         cl_device_id device = luacl_object<cl_device_id>::CheckObject(L, 2);
         lua_newtable(L);
         PushWorkGroupInfo<size_t>(L, krnl, device, CL_KERNEL_WORK_GROUP_SIZE, "WORK_GROUP_SIZE");
+        PushWorkGroupInfo<size_t>(L, krnl, device, CL_KERNEL_COMPILE_WORK_GROUP_SIZE, "COMPILE_WORK_GROUP_SIZE", 3);
         PushWorkGroupInfo<cl_ulong>(L, krnl, device, CL_KERNEL_LOCAL_MEM_SIZE, "LOCAL_MEM_SIZE");
         PushWorkGroupInfo<size_t>(L, krnl, device, CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE, "PREFERRED_WORK_GROUP_SIZE_MULTIPLE");
         PushWorkGroupInfo<cl_ulong>(L, krnl, device, CL_KERNEL_PRIVATE_MEM_SIZE, "PRIVATE_MEM_SIZE");
@@ -127,17 +128,28 @@ struct luacl_kernel {
     }
     
     template <typename T>
-    static void PushWorkGroupInfo(lua_State *L, cl_kernel krnl, cl_device_id device, cl_kernel_work_group_info param, const char * paramName) {
+    static int PushWorkGroupInfo(lua_State *L, cl_kernel krnl, cl_device_id device, cl_kernel_work_group_info param, const char * paramName, int length = 1) {
         size_t size = 0;
         cl_int err = clGetKernelWorkGroupInfo(krnl, device, param, 0, NULL, &size);
         CheckCLError(L, err, "Failed requesting size of workgroup info: %d.");
-        assert(size == sizeof(T));
+        assert(size == sizeof(T) * length);
         
-        T value = 0;
-        err = clGetKernelWorkGroupInfo(krnl, device, param, sizeof(T), &value, NULL);
+        T * value = static_cast<T *>(malloc(size));
+        CheckAllocError(L, value);
+        err = clGetKernelWorkGroupInfo(krnl, device, param, size, value, NULL);
         CheckCLError(L, err, "Failed requesting workgroup info: %d.");
-        lua_pushnumber(L, static_cast<lua_Number>(value));
+        if (length > 1) {
+            lua_newtable(L);
+            for (int index = 0; index < length; index++) {
+                lua_pushnumber(L, static_cast<lua_Number>(value[index]));
+                lua_rawseti(L, -2, index);
+            }
+        }
+        else {
+            lua_pushnumber(L, static_cast<lua_Number>(value[0]));
+        }
         lua_setfield(L, -2, paramName);
+        return 1;
     }
     
 	static int Release(lua_State *L) {
