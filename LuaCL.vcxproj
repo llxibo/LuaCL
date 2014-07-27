@@ -76,6 +76,8 @@
     <ClInclude Include="lua-5.1.4\src\lvm.h" />
     <ClInclude Include="lua-5.1.4\src\lzio.h" />
     <ClInclude Include="src\LuaCL.h" />
+    <ClInclude Include="src\luacl_buffer.hpp" />
+    <ClInclude Include="src\luacl_cmdqueue.hpp" />
     <ClInclude Include="src\luacl_context.hpp" />
     <ClInclude Include="src\luacl_device.hpp" />
     <ClInclude Include="src\luacl_kernel.hpp" />

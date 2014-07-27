@@ -142,7 +142,7 @@ struct luacl_kernel {
             lua_newtable(L);
             for (int index = 0; index < length; index++) {
                 lua_pushnumber(L, static_cast<lua_Number>(value[index]));
-                lua_rawseti(L, -2, index);
+                lua_rawseti(L, -2, index + 1);
             }
         }
         else {

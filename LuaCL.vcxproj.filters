@@ -111,6 +111,12 @@
     <ClInclude Include="src\luacl_kernel.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="src\luacl_buffer.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="src\luacl_cmdqueue.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\LuaCL.cpp">

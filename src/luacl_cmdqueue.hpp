@@ -2,6 +2,7 @@
 #define __LUACL_CMDQUEUE_HPP
 
 #include "LuaCL.h"
+#include "luacl_object.hpp"
 
 static const char LUACL_CMDQUEUE_REGISTRY[] = "LuaCL.Registry.CmdQueue";
 static const char LUACL_CMDQUEUE_METATABLE[] = "LuaCL.Metatable.CmdQueue";
