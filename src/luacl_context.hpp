@@ -39,7 +39,7 @@ struct luacl_context {
 		lua_pushcfunction(L, luacl_cmdqueue::Create);
 		lua_setfield(L, -2, "CreateCommandQueue");
 		lua_setfield(L, -2, "__index");
-		lua_pushcfunction(L, ToString);
+		lua_pushcfunction(L, traits::ToString);
 		lua_setfield(L, -2, "__tostring");
 		lua_pushcfunction(L, Release);
 		lua_setfield(L, -2, "__gc");
@@ -105,7 +105,7 @@ struct luacl_context {
 		}
 
 		/* Wrap it and return */
-		Wrap(L, context);
+		traits::Wrap(L, context);
 		if (callbackThread != NULL) {
 			lua_pushvalue(L, -3);
 			lua_pushvalue(L, -2);				/* Copy wrapped context object */
@@ -186,10 +186,6 @@ struct luacl_context {
 
 	static cl_context CheckObject(lua_State *L) {
 		return traits::CheckObject(L);
-	}
-
-	static int ToString(lua_State *L) {
-		return traits::ToString(L);
 	}
 };
 

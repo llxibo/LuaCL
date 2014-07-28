@@ -46,7 +46,7 @@ struct luacl_kernel {
 		lua_pushcfunction(L, SetArg<cl_uint>);
 		lua_setfield(L, -2, "SetArgUInt");
 		lua_setfield(L, -2, "__index");
-		lua_pushcfunction(L, ToString);
+		lua_pushcfunction(L, traits::ToString);
 		lua_setfield(L, -2, "__tostring");
 		lua_pushcfunction(L, Release);
 		lua_setfield(L, -2, "__gc");
@@ -60,12 +60,12 @@ struct luacl_kernel {
 		cl_int err;
 		cl_kernel krnl = clCreateKernel(program, kernelName, &err);
 		CheckCLError(L, err, "Failed creating kernel: %d.");
-		Wrap(L, krnl);
+		traits::Wrap(L, krnl);
 		return 1;
 	}
 
 	static int GetContext(lua_State *L) {
-		cl_kernel krnl = CheckObject(L);
+		cl_kernel krnl = traits::CheckObject(L);
 		cl_context context = NULL;
 		cl_int err = clGetKernelInfo(krnl, CL_KERNEL_CONTEXT, sizeof(cl_context), &context, NULL);
 		CheckCLError(L, err, "Failed requesting context info from kernel: %d.");
@@ -74,7 +74,7 @@ struct luacl_kernel {
 	}
 
 	static int GetProgram(lua_State *L) {
-		cl_kernel krnl = CheckObject(L);
+		cl_kernel krnl = traits::CheckObject(L);
 		cl_program program = NULL;
 		cl_int err = clGetKernelInfo(krnl, CL_KERNEL_PROGRAM, sizeof(cl_program), &program, NULL);
 		CheckCLError(L, err, "Failed requesting program info from kernel: %d.");
@@ -83,7 +83,7 @@ struct luacl_kernel {
 	}
 
 	static int GetNumArgs(lua_State *L) {
-		cl_kernel krnl = CheckObject(L);
+		cl_kernel krnl = traits::CheckObject(L);
 		cl_uint numArgs = 0;
 		cl_int err = clGetKernelInfo(krnl, CL_KERNEL_NUM_ARGS, sizeof(cl_uint), &numArgs, NULL);
 		CheckCLError(L, err, "Failed requesting number of args info from kernel: %d.");
@@ -92,7 +92,7 @@ struct luacl_kernel {
 	}
 
 	static int GetFunctionName(lua_State *L) {
-		cl_kernel krnl = CheckObject(L);
+		cl_kernel krnl = traits::CheckObject(L);
 		size_t size = 0;
 		cl_int err = clGetKernelInfo(krnl, CL_KERNEL_FUNCTION_NAME, 0, NULL, &size);
 		CheckCLError(L, err, "Failed requesting size of function name from kernel: %d.");
@@ -106,7 +106,7 @@ struct luacl_kernel {
 	}
     
     static int GetWorkGroupInfo(lua_State *L) {
-        cl_kernel krnl = CheckObject(L);
+        cl_kernel krnl = traits::CheckObject(L);
         cl_device_id device = luacl_object<cl_device_id>::CheckObject(L, 2);
         lua_newtable(L);
         PushWorkGroupInfo<size_t>(L, krnl, device, CL_KERNEL_WORK_GROUP_SIZE, "WORK_GROUP_SIZE");
@@ -119,7 +119,7 @@ struct luacl_kernel {
     
     template <typename T>
     static int SetArg(lua_State *L) {
-        cl_kernel krnl = CheckObject(L);
+        cl_kernel krnl = traits::CheckObject(L);
         cl_uint index = static_cast<cl_uint>(luaL_checknumber(L, 2));
         T value = static_cast<T>(luaL_checknumber(L, 3));
         cl_int err = clSetKernelArg(krnl, index - 1, sizeof(value), &value);
@@ -153,22 +153,10 @@ struct luacl_kernel {
     }
     
 	static int Release(lua_State *L) {
-		cl_kernel krnl = CheckObject(L);
+		cl_kernel krnl = traits::CheckObject(L);
 		printf("__gc Releasing kernel %p\n", krnl);
 		LUACL_TRYCALL(clReleaseKernel(krnl));
 		return 0;
-	}
-
-	static int Wrap(lua_State *L, cl_kernel krnl) {
-		return traits::Wrap(L, krnl);
-	}
-
-	static cl_kernel CheckObject(lua_State *L) {
-		return traits::CheckObject(L);
-	}
-
-	static int ToString(lua_State *L) {
-		return traits::ToString(L);
 	}
 };
 

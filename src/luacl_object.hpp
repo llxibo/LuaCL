@@ -2,6 +2,7 @@
 #define __LUACL_OBJECT_HPP
 
 #include "LuaCL.h"
+#include <vector>
 #include <assert.h>
 
 static const char LUACL_ERR_MALLOC[] = "Insufficient memory";
@@ -67,6 +68,36 @@ struct luacl_object {
 	static int ToString(lua_State *L) {
 		lua_pushfstring(L, "%s: %p", traits::TOSTRING(), CheckObject(L));
 		return 1;
+	}
+
+	static std::vector<cl_object> CheckObjectTable(lua_State *L, int index) {
+		if (!lua_istable(L, index)) {
+			luaL_error(L, "Bad argument #%d, table of %s expected, got %s.", index, traits::TOSTRING(), luaL_typename(L, index));
+			return std::vector<cl_object>();
+		}
+		std::vector<cl_object> objects;
+		lua_pushnil(L);
+		while (lua_next(L, index)) {
+			cl_object object = CheckObject(L, -1);
+			objects.push_back(object);
+			lua_pop(L, 1);
+		}
+		return objects;
+	}
+
+	static std::vector<cl_object> CheckNumberTable(lua_State *L, int index) {
+		if (!lua_istable(L, index)) {
+			luaL_error(L, "Bad argument #%d, table of number expected, got %s.", index, luaL_typename(L, index));
+			return std::vector<cl_object>();
+		}
+		std::vector<cl_object> numbers;
+		lua_pushnil(L);
+		while (lua_next(L, index)) {
+			cl_object num = static_cast<cl_object>(luaL_checknumber(L, -1));
+			numbers.push_back(num);
+			lua_pop(L, 1);
+		}
+		return numbers;
 	}
 };
 

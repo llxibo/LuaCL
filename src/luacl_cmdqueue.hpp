@@ -34,7 +34,7 @@ struct luacl_cmdqueue {
 		// lua_pushcfunction(L, luacl_program::Create);
 		// lua_setfield(L, -2, "CreateProgram");
 		lua_setfield(L, -2, "__index");
-		lua_pushcfunction(L, ToString);
+		lua_pushcfunction(L, traits::ToString);
 		lua_setfield(L, -2, "__tostring");
 		lua_pushcfunction(L, Release);
 		lua_setfield(L, -2, "__gc");
@@ -56,35 +56,29 @@ struct luacl_cmdqueue {
 		cl_int err = 0;
 		cl_command_queue cmdqueue = clCreateCommandQueue(context, device, prop, &err);
 		CheckCLError(L, err, "Failed creating command queue: %d.");
-		Wrap(L, cmdqueue);
+		traits::Wrap(L, cmdqueue);
     	return 1;
     }
 
+	static int EnqueueNDRangeKernel(lua_State *L) {
+		cl_command_queue cmdqueue = traits::CheckObject(L);
+		cl_kernel krnl = luacl_object<cl_kernel>::CheckObject(L, 2);
+
+	}
+
 	static int Finish(lua_State *L) {
-		cl_command_queue cmdqueue = CheckObject(L);
+		cl_command_queue cmdqueue = traits::CheckObject(L);
 		cl_int err = clFinish(cmdqueue);
 		CheckCLError(L, err, "Failed finishing command queue: %d.");
 		return 0;
 	}
 
 	static int Release(lua_State *L) {
-		cl_command_queue cmdqueue = CheckObject(L);
+		cl_command_queue cmdqueue = traits::CheckObject(L);
 		printf("__gc Releasing cmdqueue %p\n", cmdqueue);
 
 		LUACL_TRYCALL(clReleaseCommandQueue(cmdqueue));
 		return 0;
-	}
-
-	static int Wrap(lua_State *L, cl_command_queue cmdqueue) {
-		return traits::Wrap(L, cmdqueue);
-	}
-
-	static cl_command_queue CheckObject(lua_State *L) {
-		return traits::CheckObject(L);
-	}
-
-	static int ToString(lua_State *L) {
-		return traits::ToString(L);
 	}
 };
 

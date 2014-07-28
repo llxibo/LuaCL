@@ -47,7 +47,7 @@ struct luacl_program {
 		lua_pushcfunction(L, luacl_kernel::Create);
 		lua_setfield(L, -2, "CreateKernel");
 		lua_setfield(L, -2, "__index");
-		lua_pushcfunction(L, ToString);
+		lua_pushcfunction(L, traits::ToString);
 		lua_setfield(L, -2, "__tostring");
 		lua_pushcfunction(L, Release);
 		lua_setfield(L, -2, "__gc");
@@ -62,7 +62,7 @@ struct luacl_program {
 		cl_int err;
 		cl_program program = clCreateProgramWithSource(context, 1, &source, &size, &err);
 		CheckCLError(L, err, "Failed building program from source: %d.");
-		Wrap(L, program);
+		traits::Wrap(L, program);
 		return 1;
 	}
 /*
@@ -77,7 +77,7 @@ struct luacl_program {
 	}
 //*/
 	static int Build(lua_State *L) {
-		cl_program program = CheckObject(L);
+		cl_program program = traits::CheckObject(L);
 		const char * options = lua_tostring(L, 2);
 		cl_int err = clBuildProgram(program, 0, NULL, options, NULL, NULL);
 		lua_pushnumber(L, err);
@@ -85,7 +85,7 @@ struct luacl_program {
 	}
 
 	static int GetContext(lua_State *L) {
-		cl_program program = CheckObject(L);
+		cl_program program = traits::CheckObject(L);
 		cl_context context = NULL;
 		cl_int err = clGetProgramInfo(program, CL_PROGRAM_CONTEXT, sizeof(cl_context), &context, NULL);
 		CheckCLError(L, err, "Failed requesting context from program: %d.");
@@ -111,7 +111,7 @@ struct luacl_program {
     }
     
 	static int GetBinary(lua_State *L) {
-		cl_program program = CheckObject(L);
+		cl_program program = traits::CheckObject(L);
         
 		/* Get size of binary size list */
 		size_t sizeOfSizes = 0;
@@ -173,7 +173,7 @@ struct luacl_program {
 	}
 
 	static int GetBuildStatus(lua_State *L) {
-		cl_program program = CheckObject(L);
+		cl_program program = traits::CheckObject(L);
 		cl_device_id device = luacl_object<cl_device_id>::CheckObject(L, 2);
 		cl_build_status status = CL_BUILD_NONE;
 		cl_int err = clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_STATUS, sizeof(cl_build_status), &status, NULL);
@@ -183,7 +183,7 @@ struct luacl_program {
 	}
 
 	static int GetBuildLog(lua_State *L) {
-		cl_program program = CheckObject(L);
+		cl_program program = traits::CheckObject(L);
 		cl_device_id device = luacl_object<cl_device_id>::CheckObject(L, 2);
 		size_t size = 0;
 		cl_int err = clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, 0, NULL, &size);
@@ -198,23 +198,11 @@ struct luacl_program {
 	}
 
 	static int Release(lua_State *L) {
-		cl_program program = CheckObject(L);
+		cl_program program = traits::CheckObject(L);
 		printf("__gc Releasing program %p\n", program);
 		LUACL_TRYCALL(clReleaseProgram(program));
 		// LUACL_TRYCALL(clReleaseProgram(program));	/* Release second time should always raise a system exception */
 		return 0;
-	}
-
-	static int Wrap(lua_State *L, cl_program program) {
-		return traits::Wrap(L, program);
-	}
-
-	static cl_program CheckObject(lua_State *L) {
-		return traits::CheckObject(L);
-	}
-
-	static int ToString(lua_State *L) {
-		return traits::ToString(L);
 	}
 };
 

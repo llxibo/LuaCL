@@ -35,7 +35,7 @@ struct luacl_device {
 		//lua_pushcfunction(L, GetDevices);
 		//lua_setfield(L, -1, "GetDevices");
 		lua_setfield(L, -2, "__index");
-		lua_pushcfunction(L, ToString);
+		lua_pushcfunction(L, traits::ToString);
 		lua_setfield(L, -2, "__tostring");
 		traits::CreateRegistry(L);
 	}
@@ -54,7 +54,7 @@ struct luacl_device {
 
 		for (cl_uint index = 0; index < numDevices; index++) {
 			//printf("Wrapping device: %p\n", devices[index]);
-			Wrap(L, devices[index]);
+			traits::Wrap(L, devices[index]);
 		}
 		return static_cast<int>(numDevices);
 	}
@@ -122,18 +122,6 @@ struct luacl_device {
 		PushDeviceInfo<cl_uint>						(L, device, CL_DEVICE_NATIVE_VECTOR_WIDTH_DOUBLE,		"NATIVE_VECTOR_WIDTH_DOUBLE");
 		PushDeviceInfo<cl_uint>						(L, device, CL_DEVICE_NATIVE_VECTOR_WIDTH_HALF,			"NATIVE_VECTOR_WIDTH_HALF");
 		return 1;
-	}
-
-	static int Wrap(lua_State *L, cl_device_id device) {
-		return traits::Wrap(L, device);
-	}
-
-	static cl_device_id CheckObject(lua_State *L) {
-		return traits::CheckObject(L);
-	}
-
-	static int ToString(lua_State *L) {
-		return traits::ToString(L);
 	}
 
 	static int PushDeviceInfoStr(lua_State *L, cl_device_id device, cl_device_info param, std::string key) {

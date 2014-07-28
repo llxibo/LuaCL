@@ -29,19 +29,13 @@ struct luacl_mem {
 		lua_newtable(L);
 		// lua_pushcfunction(L, GetDevices);
 		// lua_setfield(L, -2, "GetDevices");
-		// lua_pushcfunction(L, GetPlatform);
-		// lua_setfield(L, -2, "GetPlatform");
-		// lua_pushcfunction(L, luacl_program::Create);
-		// lua_setfield(L, -2, "CreateProgram");
 		lua_setfield(L, -2, "__index");
-		lua_pushcfunction(L, ToString);
+		lua_pushcfunction(L, traits::ToString);
 		lua_setfield(L, -2, "__tostring");
 		lua_pushcfunction(L, Release);
 		lua_setfield(L, -2, "__gc");
 
 		traits::CreateRegistry(L);
-		// lua_newtable(L);
-		// lua_setfield(L, LUA_REGISTRYINDEX, LUACL_MEM_REGISTRY_CALLBACK);
 	}
 
 	static int Create(lua_State *L) {
@@ -50,23 +44,11 @@ struct luacl_mem {
 	}
 
 	static int Release(lua_State *L) {
-		cl_mem mem = CheckObject(L);
+		cl_mem mem = traits::CheckObject(L);
 		//printf("__gc Releasing mem %p\n", mem);
 
 		LUACL_TRYCALL(clReleaseMemObject(mem));
 		return 0;
-	}
-
-	static int Wrap(lua_State *L, cl_mem mem) {
-		return traits::Wrap(L, mem);
-	}
-
-	static cl_mem CheckObject(lua_State *L) {
-		return traits::CheckObject(L);
-	}
-
-	static int ToString(lua_State *L) {
-		return traits::ToString(L);
 	}
 };
 

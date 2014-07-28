@@ -27,7 +27,7 @@ struct luacl_event {
 
 	static void Init(lua_State *L) {
 		luaL_newmetatable(L, LUACL_EVENT_METATABLE);
-		lua_pushcfunction(L, ToString);
+		lua_pushcfunction(L, traits::ToString);
 		lua_setfield(L, -2, "__tostring");
 
 		traits::CreateRegistry(L);
@@ -37,40 +37,13 @@ struct luacl_event {
 	}
 
 	static int WaitForEvents(lua_State *L) {
-		std::vector<cl_event> events;
-		if (lua_istable(L, 1)) {
-			lua_pushnil(L);
-			while (lua_next(L, 1)) {
-				cl_event e = CheckObject(L, -1);
-				lua_pop(L, 1);
-				events.push_back(e);
-			}
-		}
-		else {
-			cl_uint index = 1;
-			while (lua_isuserdata(L, index)) {
-				cl_event e = CheckObject(L, index++);
-				events.push_back(e);
-			}
-		}
+		std::vector<cl_event> events = traits::CheckObjectTable(L, 1);
 		if (events.size() == 0) {
 			return luaL_error(L, "Bad arguments: expecting LuaCL_Event objects or table of LuaCL_Event objects.");
 		}
 		cl_int err = clWaitForEvents(events.size(), events.data());
 		CheckCLError(L, err, "Failed requesting wait event: %d.");
 		return 0;
-	}
-
-	static int Wrap(lua_State *L, cl_event event) {
-		return traits::Wrap(L, event);
-	}
-
-	static cl_event CheckObject(lua_State *L, int index) {
-		return traits::CheckObject(L, index);
-	}
-
-	static int ToString(lua_State *L) {
-		return traits::ToString(L);
 	}
 };
 

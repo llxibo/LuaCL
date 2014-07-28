@@ -32,12 +32,12 @@ struct luacl_platform {
 		lua_newtable(L);								/* mt = {} */
 		lua_pushcfunction(L, GetInfo);
 		lua_setfield(L, -2, "GetInfo");
-		lua_pushcfunction(L, GetDevices);
+		lua_pushcfunction(L, luacl_device::Get);
 		lua_setfield(L, -2, "GetDevices");
-		lua_pushcfunction(L, CreateContext);
+		lua_pushcfunction(L, luacl_context::Create);
 		lua_setfield(L, -2, "CreateContext");
 		lua_setfield(L, -2, "__index");
-		lua_pushcfunction(L, ToString);
+		lua_pushcfunction(L, traits::ToString);
 		lua_setfield(L, -2, "__tostring");
 
 		traits::CreateRegistry(L);
@@ -68,7 +68,7 @@ struct luacl_platform {
 	}
 
 	static int GetInfo(lua_State *L) {
-		cl_platform_id platform = CheckObject(L);
+		cl_platform_id platform = traits::CheckObject(L);
 		lua_newtable(L);	/* Create a table */
 		PushInfo(L, platform, CL_PLATFORM_PROFILE, "profile");
 		PushInfo(L, platform, CL_PLATFORM_VERSION, "version");
@@ -89,29 +89,9 @@ struct luacl_platform {
 		CheckCLError(L, err, "Failed requesting platform list.", platforms);
 
 		for (cl_uint index = 0; index < numPlatforms; index++) {
-			Wrap(L, platforms[index]);
+			traits::Wrap(L, platforms[index]);
 		}
 		return static_cast<int>(numPlatforms);
-	}
-
-	static int GetDevices(lua_State *L) {
-		return luacl_device::Get(L);
-	}
-
-	static int CreateContext(lua_State *L) {
-		return luacl_context::Create(L);
-	}
-
-	static int Wrap(lua_State *L, cl_platform_id platform) {
-		return traits::Wrap(L, platform);
-	}
-
-	static cl_platform_id CheckObject(lua_State *L) {
-		return traits::CheckObject(L);
-	}
-
-	static int ToString(lua_State *L) {
-		return traits::ToString(L);
 	}
 };
 
