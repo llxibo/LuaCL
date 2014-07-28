@@ -97,11 +97,10 @@ struct luacl_kernel {
 		cl_int err = clGetKernelInfo(krnl, CL_KERNEL_FUNCTION_NAME, 0, NULL, &size);
 		CheckCLError(L, err, "Failed requesting size of function name from kernel: %d.");
 
-		char * funcName = static_cast<char *>(malloc(size));
-		CheckAllocError(L, funcName);
-		err = clGetKernelInfo(krnl, CL_KERNEL_FUNCTION_NAME, size, funcName, NULL);
+		std::vector<char> funcName(size);
+		err = clGetKernelInfo(krnl, CL_KERNEL_FUNCTION_NAME, size, funcName.data(), NULL);
 		CheckCLError(L, err, "Failed requesting number of args info from kernel: %d.");
-		lua_pushlstring(L, funcName, size);
+		lua_pushstring(L, std::string(funcName.data(), size).c_str());
 		return 1;
 	}
     
@@ -134,9 +133,8 @@ struct luacl_kernel {
         CheckCLError(L, err, "Failed requesting size of workgroup info: %d.");
         assert(size == sizeof(T) * length);
         
-        T * value = static_cast<T *>(malloc(size));
-        CheckAllocError(L, value);
-        err = clGetKernelWorkGroupInfo(krnl, device, param, size, value, NULL);
+        std::vector<T> value(length);
+        err = clGetKernelWorkGroupInfo(krnl, device, param, size, value.data(), NULL);
         CheckCLError(L, err, "Failed requesting workgroup info: %d.");
         if (length > 1) {
             lua_newtable(L);

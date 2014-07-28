@@ -155,14 +155,12 @@ struct luacl_context {
 		CheckCLError(L, err, "Failed requesting length of property table.");
 		assert(size == 3 * sizeof(cl_context_properties));
 
-		cl_context_properties * prop = static_cast<cl_context_properties *>(malloc(size));
-		CheckAllocError(L, prop);
-		err = clGetContextInfo(context, CL_CONTEXT_PROPERTIES, size, prop, NULL);
-		CheckCLError(L, err, "Failed requesting property table.", prop);
+		std::vector<cl_context_properties> prop(3);
+		err = clGetContextInfo(context, CL_CONTEXT_PROPERTIES, size, prop.data(), NULL);
+		CheckCLError(L, err, "Failed requesting property table.");
 		assert(prop[0] == CL_CONTEXT_PLATFORM);
 		cl_platform_id platform = reinterpret_cast<cl_platform_id>(prop[1]);
 		luacl_object<cl_platform_id>::Wrap(L, platform);
-		free(prop);
 		return 1;
 	}
 

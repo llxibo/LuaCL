@@ -210,11 +210,10 @@ struct luacl_program {
 		cl_int err = clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, 0, NULL, &size);
 		CheckCLError(L, err, "Failed requesting length of build log: %d.");
 
-		char * log_string = static_cast<char *>(malloc(size));
-		CheckAllocError(L, log_string);
-		err = clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, size, log_string, NULL);
-		CheckCLError(L, err, "Failed requesting build log: %d.", log_string);
-		lua_pushlstring(L, log_string, size);
+		std::vector<char> buffer(size / sizeof(char));
+		err = clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, size, buffer.data(), NULL);
+		CheckCLError(L, err, "Failed requesting build log: %d.");
+		lua_pushstring(L, std::string(buffer.data(), size).c_str());
 		return 1;
 	}
 
