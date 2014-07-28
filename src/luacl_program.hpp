@@ -65,17 +65,39 @@ struct luacl_program {
 		traits::Wrap(L, program);
 		return 1;
 	}
-/*
+
 	static int CreateFromBinary(lua_State *L) {
 		cl_context context = luacl_object<cl_context>::CheckObject(L);
-		size_t size = 0;
-		const char * source = luaL_checklstring(L, 2, &size);
-		//cl_int err;
-		//cl_program program = clCreateProgramWithBinary();
+		std::vector<cl_device_id> devices = luacl_object<cl_device_id>::CheckObjectTable(L, 2);
+		std::vector<std::string> binaries = traits::CheckStringTable(L, 3);
 
+		size_t size = devices.size();
+		if (size != binaries.size()) {
+			return luaL_error(L, "Bad argument #2 and #3: table length mismatch.");
+		}
+		std::vector<size_t> lengths;
+		std::vector<const unsigned char *> binaryPointers;	/* No need to free pointers in this container */
+		for (size_t index = 0; index < size; index++) {
+			lengths.push_back(binaries[index].size());
+			binaryPointers.push_back(
+				reinterpret_cast<const unsigned char *>(binaries[index].c_str())
+			);
+		}
+		cl_int err = 0;
+		std::vector<cl_int> binaryStatus(size);
+		cl_program program = clCreateProgramWithBinary(
+			context, 
+			static_cast<cl_uint>(size), 
+			devices.data(), 
+			lengths.data(), 
+			binaryPointers.data(), 
+			binaryStatus.data(), 
+			&err
+		);
+		CheckCLError(L, err, "Failed creating program from binaries: %d.");
 		return 0;
 	}
-//*/
+
 	static int Build(lua_State *L) {
 		cl_program program = traits::CheckObject(L);
 		const char * options = lua_tostring(L, 2);
@@ -99,9 +121,8 @@ struct luacl_program {
         cl_int err = clGetProgramInfo(program, CL_PROGRAM_NUM_DEVICES, sizeof(numDevices), &numDevices, NULL);
         CheckCLError(L, err, "Failed requesting number of devices in program: %d.");
         
-        cl_device_id * devices = static_cast<cl_device_id *>(malloc(numDevices * sizeof(cl_device_id)));
-        CheckAllocError(L, devices);
-        err = clGetProgramInfo(program, CL_PROGRAM_DEVICES, numDevices * sizeof(cl_device_id), devices, NULL);
+		std::vector<cl_device_id> devices(numDevices);
+        err = clGetProgramInfo(program, CL_PROGRAM_DEVICES, numDevices * sizeof(cl_device_id), devices.data(), NULL);
         CheckCLError(L, err, "Failed requesting device list in progtam: %d.");
         
         for (cl_uint index = 0; index < numDevices; index++) {

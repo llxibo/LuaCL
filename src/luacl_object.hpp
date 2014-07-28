@@ -3,6 +3,7 @@
 
 #include "LuaCL.h"
 #include <vector>
+#include <string>
 #include <assert.h>
 
 static const char LUACL_ERR_MALLOC[] = "Insufficient memory";
@@ -98,6 +99,22 @@ struct luacl_object {
 			lua_pop(L, 1);
 		}
 		return numbers;
+	}
+
+	static std::vector<std::string> CheckStringTable(lua_State *L, int index) {
+		if (!lua_istable(L, index)) {
+			luaL_error(L, "Bad argument #%d, table of string expected, got %s.", index, luaL_typename(L, index));
+			return std::vector<std::string>();
+		}
+		std::vector<std::string> strings;
+		lua_pushnil(L);
+		while (lua_next(L, index)) {
+			size_t len = 0;
+			const char * str = luaL_checklstring(L, -1, &len);
+			strings.push_back(std::string(str, len));
+			lua_pop(L, 1);
+		}
+		return strings;
 	}
 };
 
