@@ -5,6 +5,7 @@
 #include "luacl_object.hpp"
 #include "luacl_program.hpp"
 #include "luacl_cmdqueue.hpp"
+#include "luacl_buffer.hpp"
 
 static const char LUACL_CONTEXT_REGISTRY[] = "LuaCL.Registry.Context";
 static const char LUACL_CONTEXT_METATABLE[] = "LuaCL.Metatable.Context";
@@ -43,6 +44,8 @@ struct luacl_context {
 		lua_setfield(L, -2, "CreateProgramFromBinary");
 		lua_pushcfunction(L, luacl_cmdqueue::Create);
 		lua_setfield(L, -2, "CreateCommandQueue");
+		lua_pushcfunction(L, luacl_buffer::Create);
+		lua_setfield(L, -2, "CreateBuffer");
 		lua_setfield(L, -2, "__index");
 		lua_pushcfunction(L, traits::ToString);
 		lua_setfield(L, -2, "__tostring");
