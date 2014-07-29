@@ -4,7 +4,6 @@
 #include "LuaCL.h"
 #include "luacl_object.hpp"
 #include <assert.h>
-#include <string>
 
 static const char LUACL_DEVICE_REGISTRY[] = "LuaCL.Registry.Device";
 static const char LUACL_DEVICE_METATABLE[] = "LuaCL.Metatable.Device";
@@ -45,12 +44,11 @@ struct luacl_device {
 
 		cl_uint numDevices = 0;
 		cl_int err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 0, NULL, &numDevices);
-		CheckCLError(L, err, "Failed requesting number of devices.", NULL);
+		CheckCLError(L, err, "Failed requesting number of devices: %d.", NULL);
 
-		cl_device_id * devices = static_cast<cl_device_id *>(malloc(sizeof(cl_device_id) * numDevices));
-		CheckAllocError(L, devices);
-		err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, numDevices, devices, NULL);
-		CheckCLError(L, err, "Failed requesting platform list.", devices);
+		std::vector<cl_device_id> devices(numDevices);
+		err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, numDevices, devices.data(), NULL);
+		CheckCLError(L, err, "Failed requesting platform list: %d.");
 
 		for (cl_uint index = 0; index < numDevices; index++) {
 			//printf("Wrapping device: %p\n", devices[index]);
@@ -130,17 +128,14 @@ struct luacl_device {
 		}
 		size_t size = 0;
 		cl_int err = clGetDeviceInfo(device, param, 0, NULL, &size);
-		CheckCLError(L, err, "Failed requesting length of device info string.", NULL);
+		CheckCLError(L, err, "Failed requesting length of device info string: %d.", NULL);
 
-		char * value = static_cast<char *>(malloc(sizeof(char) * size));
-		CheckAllocError(L, value);
-		err = clGetDeviceInfo(device, param, size, value, NULL);
-		CheckCLError(L, err, "Failed requesting device info as string.", value);
+		std::vector<char> value(size);
+		err = clGetDeviceInfo(device, param, size, value.data(), NULL);
+		CheckCLError(L, err, "Failed requesting device info as string: %d.");
 
-		std::string value_s(value, size);
-		free(value);
 		lua_pushstring(L, key.c_str());
-		lua_pushstring(L, value_s.c_str());
+		lua_pushstring(L, std::string(value.data(), size).c_str());
 		lua_settable(L, -3);
 		return 0;
 	}
@@ -148,19 +143,19 @@ struct luacl_device {
 	template <typename T> static void PushDeviceInfo(lua_State *L, cl_device_id device, cl_device_info param, std::string key) {
 		size_t size = 0;
 		cl_int err = clGetDeviceInfo(device, param, 0, NULL, &size);
-		CheckCLError(L, err, "Failed requesting length of device info.", NULL);
+		CheckCLError(L, err, "Failed requesting length of device info: %d.", NULL);
 		//printf("%d: %d - %d\n", param, size, sizeof(T));
 		assert(size == sizeof(T));
 		T value = 0;
 		err = clGetDeviceInfo(device, param, sizeof(T), &value, NULL);
-		CheckCLError(L, err, "Failed requesting device info.", NULL);
+		CheckCLError(L, err, "Failed requesting device info: %d.", NULL);
 		
 		lua_pushstring(L, key.c_str());
 		lua_pushnumber(L, static_cast<lua_Number>(value));
 		lua_settable(L, -3);
 	}
 
-	template <typename T> static int PushDeviceInfoArray(lua_State *L, cl_device_id device, cl_device_info param, std::string key) {
+	template <typename T> static int PushDeviceInfoArray(lua_State *L, cl_device_id device, cl_device_info param, const char * key) {
 		size_t size = 0;
 		cl_int err = clGetDeviceInfo(device, param, 0, NULL, &size);
 		CheckCLError(L, err, "Failed requesting length of device info array.", NULL);
@@ -168,18 +163,16 @@ struct luacl_device {
 		//	printf("Device Array: %Iu - %Iu\n", size, sizeof(T));
 		//#endif
 		assert(size % sizeof(T) == 0);
-		T * value = static_cast<T *>(malloc(size));
-		CheckAllocError(L, value);
 
-		err = clGetDeviceInfo(device, param, size, value, NULL);
-		CheckCLError(L, err, "Failed requesting device info as array.", NULL);
-		lua_pushstring(L, key.c_str());
+		std::vector<T> value(size / sizeof(T));
+		err = clGetDeviceInfo(device, param, size, value.data(), NULL);
+		CheckCLError(L, err, "Failed requesting device info as array: %d.");
+		lua_pushstring(L, key);
 		lua_newtable(L);
 		for (unsigned int index = 0; index < (size / sizeof(T)); index++) {
 			lua_pushnumber(L, static_cast<lua_Number>(value[index]));
 			lua_rawseti(L, -2, index + 1);
 		}
-		free(value);
 		lua_settable(L, -3);
 		return 0;
 	}

@@ -55,31 +55,20 @@ struct luacl_context {
 		
 		/* Get arg2: device | {devices} */
 		cl_uint numDevices = 0;
-		cl_device_id * devices = NULL;
+		std::vector<cl_device_id> devices;
 		if (lua_istable(L, 2)) {
 			//printf("CreateContext: Checking table as device list...\n");
-			numDevices = static_cast<cl_uint>(lua_objlen(L, 2));
-			//printf("CreateContext: table length %d\n", numDevices);
-			devices = static_cast<cl_device_id *>(malloc(sizeof(cl_device_id) * numDevices));
-			CheckAllocError(L, devices);
-			for (unsigned int index = 0; index < numDevices; index++) {
-				lua_rawgeti(L, 2, index + 1);	/* Remember that Lua array is 1-index based */
-				//printf("CreateContext: got #%d: %s\n", index, luaL_typename(L, -1));
-				devices[index] = luacl_object<cl_device_id>::CheckObject(L, -1, devices);
-				lua_pop(L, 1);
-			}
+			devices = luacl_object<cl_device_id>::CheckObjectTable(L, 2);
 		}
 		else if (lua_isuserdata(L, 2)) {
 			//printf("CreateContext: Checking userdata as device...\n");
-			numDevices = 1;
-			devices = static_cast<cl_device_id *>(malloc(sizeof(cl_device_id)));
-			CheckAllocError(L, devices);
-			*devices = luacl_object<cl_device_id>::CheckObject(L, 2, devices);
+			cl_device_id device = luacl_object<cl_device_id>::CheckObject(L, 2);
+			devices.push_back(device);
 		}
 		else {
 			return luaL_error(L, "CreateContext: Bad argument, expecting device(s) on arg #2.");
 		}
-		assert(devices != NULL);	/* The device list should not be NULL by now */
+		assert(!devices.empty());	/* The device list should not be NULL by now */
 
 		/* Get arg3: callbackFunc | nil */
 		lua_State * callbackThread = NULL;
@@ -93,9 +82,8 @@ struct luacl_context {
 			CL_CONTEXT_PLATFORM, reinterpret_cast<cl_context_properties>(platform), 0	/* static_cast denied by MSVC? */
 		};
 		cl_int err;
-		cl_context context = clCreateContext(prop, numDevices, devices, Callback, static_cast<void *>(callbackThread), &err);
-		CheckCLError(L, err, "Failed creating context: %d", devices);
-		free(devices);
+		cl_context context = clCreateContext(prop, static_cast<cl_uint>(devices.size()), devices.data(), Callback, static_cast<void *>(callbackThread), &err);
+		CheckCLError(L, err, "Failed creating context: %d");
 
 		/* Use context pointer as a key, to register callback func */
 		if (callbackThread != NULL) {	/* we have a callback func */
@@ -133,31 +121,34 @@ struct luacl_context {
 	
 	static int GetDevices(lua_State *L) {
 		cl_context context = traits::CheckObject(L);
-		cl_uint size = 0;
-		cl_int err = clGetContextInfo(context, CL_CONTEXT_NUM_DEVICES, sizeof(cl_uint), &size, NULL);
-		CheckCLError(L, err, "Failed requesting number of devices.");
+		cl_uint numDevices = 0;
+		cl_int err = clGetContextInfo(context, CL_CONTEXT_NUM_DEVICES, sizeof(numDevices), &numDevices, NULL);
+		CheckCLError(L, err, "Failed requesting number of devices: %d.");
 
-		cl_device_id * devices = static_cast<cl_device_id *>(malloc(sizeof(cl_device_id) * size));
-		CheckAllocError(L, devices);
-		err = clGetContextInfo(context, CL_CONTEXT_DEVICES, size * sizeof(cl_device_id), devices, NULL);
-		CheckCLError(L, err, "Failed requesting device list: %d.", devices);
-		for (unsigned int index = 0; index < size; index++) {
+		size_t size = 0;
+		err = clGetContextInfo(context, CL_CONTEXT_DEVICES, 0, NULL, &size);
+		CheckCLError(L, err, "Failed requesting length of device list: %d.");
+		assert(numDevices * sizeof(cl_device_id) == size);
+
+		std::vector<cl_device_id> devices(numDevices);
+		err = clGetContextInfo(context, CL_CONTEXT_DEVICES, size, devices.data(), NULL);
+		CheckCLError(L, err, "Failed requesting device list: %d.");
+		for (unsigned int index = 0; index < numDevices; index++) {
 			luacl_object<cl_device_id>::Wrap(L, devices[index]);
 		}
-		free(devices);
-		return size;
+		return numDevices;
 	}
 
 	static int GetPlatform(lua_State *L) {
 		cl_context context = traits::CheckObject(L);
 		size_t size = 0;
 		cl_int err = clGetContextInfo(context, CL_CONTEXT_PROPERTIES, 0, NULL, &size);
-		CheckCLError(L, err, "Failed requesting length of property table.");
+		CheckCLError(L, err, "Failed requesting length of property table: %d.");
 		assert(size == 3 * sizeof(cl_context_properties));
 
 		std::vector<cl_context_properties> prop(3);
 		err = clGetContextInfo(context, CL_CONTEXT_PROPERTIES, size, prop.data(), NULL);
-		CheckCLError(L, err, "Failed requesting property table.");
+		CheckCLError(L, err, "Failed requesting property table: %d.");
 		assert(prop[0] == CL_CONTEXT_PLATFORM);
 		cl_platform_id platform = reinterpret_cast<cl_platform_id>(prop[1]);
 		luacl_object<cl_platform_id>::Wrap(L, platform);
