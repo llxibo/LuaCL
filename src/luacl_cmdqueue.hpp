@@ -63,7 +63,7 @@ struct luacl_cmdqueue {
 	static int EnqueueNDRangeKernel(lua_State *L) {
 		cl_command_queue cmdqueue = traits::CheckObject(L);
 		cl_kernel krnl = luacl_object<cl_kernel>::CheckObject(L, 2);
-
+        return 0;
 	}
 
 	static int Finish(lua_State *L) {

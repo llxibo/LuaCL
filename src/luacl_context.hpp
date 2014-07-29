@@ -36,6 +36,8 @@ struct luacl_context {
 		lua_setfield(L, -2, "GetPlatform");
 		lua_pushcfunction(L, luacl_program::Create);
 		lua_setfield(L, -2, "CreateProgram");
+		lua_pushcfunction(L, luacl_program::CreateFromBinary);
+		lua_setfield(L, -2, "CreateProgramFromBinary");
 		lua_pushcfunction(L, luacl_cmdqueue::Create);
 		lua_setfield(L, -2, "CreateCommandQueue");
 		lua_setfield(L, -2, "__index");
@@ -54,7 +56,6 @@ struct luacl_context {
 		cl_platform_id platform = luacl_object<cl_platform_id>::CheckObject(L);
 		
 		/* Get arg2: device | {devices} */
-		cl_uint numDevices = 0;
 		std::vector<cl_device_id> devices;
 		if (lua_istable(L, 2)) {
 			//printf("CreateContext: Checking table as device list...\n");

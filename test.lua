@@ -80,6 +80,12 @@ for index, platform in ipairs(platforms) do
     		file:close()
     	end
     	print("===End of Binaries===")
+
+        print("\nCreating program from binaries...")
+        local newProgram, status = context:CreateProgramFromBinary(devices, binaries)
+        print("Created binary ", tostring(newProgram))
+        dump_table(status, "build_status")
+
     else
         print("Cannot dump binaries for unsuccessful build")
     end

@@ -72,6 +72,7 @@ struct luacl_program {
 		std::vector<std::string> binaries = traits::CheckStringTable(L, 3);
 
 		size_t size = devices.size();
+        printf("Got %d binary objects\n", size);
 		if (size != binaries.size()) {
 			return luaL_error(L, "Bad argument #2 and #3: table length mismatch.");
 		}
@@ -95,7 +96,14 @@ struct luacl_program {
 			&err
 		);
 		CheckCLError(L, err, "Failed creating program from binaries: %d.");
-		return 0;
+        
+        traits::Wrap(L, program);
+        lua_newtable(L);
+        for (size_t index = 0; index < size; index++) {
+            lua_pushnumber(L, binaryStatus[index]);
+            lua_rawseti(L, -2, static_cast<int>(index + 1));
+        }
+		return 2;
 	}
 
 	static int Build(lua_State *L) {
@@ -150,49 +158,33 @@ struct luacl_program {
             return luaL_error(L, "Length of binaries mismatch.");
         }
         
+        std::vector<size_t> sizes(numBinaries);
+        
 		/* Allocate and request binary size list */
-		size_t * sizes = static_cast<size_t *>(malloc(sizeOfSizes));
-		CheckAllocError(L, sizes);
-		err = clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES, sizeOfSizes, sizes, NULL);
-        CheckCLError(L, err, "Failed requesting sizes of binaries from program: %d.", sizes);
+		err = clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES, sizeOfSizes, sizes.data(), NULL);
+        CheckCLError(L, err, "Failed requesting sizes of binaries from program: %d.");
 		
-		/* Allocate binary arrays */
-        char ** binaries = static_cast<char **>(malloc(sizeOfStrings * sizeof(char *)));
-		if (binaries == NULL) {
-			CleanupGetBinary(sizes, binaries, 0);
-			return luaL_error(L, LUACL_ERR_MALLOC);
-		}
-		for (int index = 0; index < numBinaries; index++) {
-			binaries[index] = static_cast<char *>(malloc(sizes[index]));
-			if (binaries[index] == NULL) {	/* Failed allocation could crash clGetProgramInfo */
-				CleanupGetBinary(sizes, binaries, numBinaries);
-				return luaL_error(L, LUACL_ERR_MALLOC);
-			}
-		}
+		/* Allocate binary buffers */
+        std::vector< std::vector<char> > binaries(numBinaries);
+        std::vector<char *> binaryPointers;
+        for (int index = 0; index < numBinaries; index++) {
+            // printf("Allocating %p for binary array #%d\n", sizes[index], index);
+            binaries[index].resize(sizes[index]);
+            binaryPointers.push_back(binaries[index].data());
+        }
 
 		/* Request copy of binaries */
-		err = clGetProgramInfo(program, CL_PROGRAM_BINARIES, sizeOfStrings, binaries, NULL);
-		if (err != CL_SUCCESS) {
-			CleanupGetBinary(sizes, binaries, numBinaries);
-			return luaL_error(L, "Failed requesting binaries from program: %d.", err);
-		}
+        assert(binaryPointers.size() == numBinaries);
+		err = clGetProgramInfo(program, CL_PROGRAM_BINARIES, sizeOfStrings, binaryPointers.data(), NULL);
+		CheckCLError(L, err, "Failed requesting binaries from program: %d.");
 		
 		/* Push binaries to Lua */
         for (int index = 0; index < numBinaries; index++) {
-            lua_pushlstring(L, binaries[index], sizes[index]);
+            lua_pushlstring(L, binaries[index].data(), sizes[index]);
         }
-		CleanupGetBinary(sizes, binaries, numBinaries);
-		return numBinaries;
+        return numBinaries;
 	}
-
-	static void CleanupGetBinary(size_t * sizes, char ** binaries, int numBinaries) { 
-		free(sizes);
-		for (int index = 0; index < numBinaries; index++) {
-			free(binaries[index]);
-		}
-		free(binaries);
-	}
-
+    
 	static int GetBuildStatus(lua_State *L) {
 		cl_program program = traits::CheckObject(L);
 		cl_device_id device = luacl_object<cl_device_id>::CheckObject(L, 2);
