@@ -273,7 +273,7 @@ typedef struct {
 #include "bling\bling.c"
 #undef LUACL_LOAD_SNAPSHOT_T_MEMBERLIST
 } snapshot_t;
-#define psnapshot_t deviceonly( __global ) snapshot_t*
+#define psnapshot_t snapshot_t*
 typedef struct {
     psnapshot_t buffer;
     k64u bitmap;
@@ -556,7 +556,7 @@ psnapshot_t snapshot_read( rtinfo_t* rti, k8u no ) {
 
 void snapshot_init( rtinfo_t* rti, psnapshot_t buffer ) {
     rti->snapshot_manager.bitmap = ~ K64U_C( 0 ); /* every bit is set to available. */
-    rti->snapshot_manager.buffer = &buffer[ get_global_id( 0 ) * SNAPSHOT_SIZE ];
+    rti->snapshot_manager.buffer = buffer;
 }
 
 float enemy_health_percent( rtinfo_t* rti ) {
@@ -599,10 +599,9 @@ void sim_init( rtinfo_t* rti, k32u seed, psnapshot_t ssbuf ) {
 
 /* Single iteration logic. */
 deviceonly(__kernel) void sim_iterate(
-                deviceonly( __global ) float* dps_result,
-                deviceonly( __global ) snapshot_t* snapshot_buffer
+                deviceonly( __global ) float* dps_result
 ) {
-    hostonly( snapshot_buffer = malloc( SNAPSHOT_SIZE * iterations * sizeof( snapshot_t ) ); )
+    deviceonly( __private ) snapshot_t snapshot_buffer[ SNAPSHOT_SIZE ];
     deviceonly( __private ) rtinfo_t _rti;
 
     sim_init(
@@ -614,7 +613,6 @@ deviceonly(__kernel) void sim_iterate(
     while( eq_execute( &_rti ) );
 
     dps_result[get_global_id( 0 )] = _rti.damage_collected / TO_SECONDS( _rti.expected_combat_length );
-    hostonly( free( snapshot_buffer ) );
 }
 
 /* Load class module. */
@@ -637,7 +635,7 @@ int main() {
     float* result = malloc( 4 * iterations );
     int i, j;
     for( i = 0; i < iterations; i++ ) {
-        sim_iterate( result, 0 );
+        sim_iterate( result );
     }
     /*
     printf( "result:\n" );
