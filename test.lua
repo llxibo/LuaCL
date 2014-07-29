@@ -39,14 +39,16 @@ for index, platform in ipairs(platforms) do
 	end
 
 	-- print(platform.CreateContext(platform, devices))
+	-- devices = {devices[1]}
 	local context = platform:CreateContext(devices)
 	print("Created", context)
 	print("Got devices:", context:GetDevices())
+	devices = {context:GetDevices()}
 	print("Got platform:", context:GetPlatform())
 
 	local source = [[
 		__constant uint WhereIsIt[] = { 0x33333333, 0x55555555, 0xCCCCCCCC, 0xCDCDCDCD };
-		__kernel void myfunc(	__global const float *a,
+		__kernel void myfunc(   __global const float *a,
 								__global const float *b,
 								__global float *result) {
 			int gid = get_global_id(0);
@@ -56,8 +58,10 @@ for index, platform in ipairs(platforms) do
 	]]
 	local program = context:CreateProgram(source)
 	print("Created", program)
-    print("Context of program:", program:GetContext())
-    print("Devices of program:", program:GetDevices())
+	print("Context of program:", program:GetContext())
+	print("Devices of program:", program:GetDevices())
+
+	devices = {program:GetDevices()}
 	program:Build()
 	print("\nCollecting garbage...")
 	program = nil
@@ -65,30 +69,31 @@ for index, platform in ipairs(platforms) do
 
 	program = context:CreateProgram(source)
 	program:Build("-cl-opt-disable")
-	print(program:GetBuildStatus(devices[1]))
-	print(program:GetBuildLog(devices[1]))
-	print(program:GetBuildStatus(devices[2]))
-	print(program:GetBuildLog(devices[2]))
+	for index, device in ipairs(devices) do
+		print(program:GetBuildStatus(device))
+		print(program:GetBuildLog(device))
+	end
 
-    if program:GetBuildStatus(devices[1]) == 0 then
-    	print("=======Binaries======")
-    	local binaries = {program:GetBinary()}
-    	for index, binary in ipairs(binaries) do
-    		print(("Lua: Length of binary #%d: %08X"):format(index, binary:len()))
-    		local file = io.open(index .. ".bin", "w")
-    		file:write(binary)
-    		file:close()
-    	end
-    	print("===End of Binaries===")
+	if program:GetBuildStatus(devices[1]) == 0 then
+		print("=======Binaries======")
+		local binaries = {program:GetBinary()}
+		for index, binary in ipairs(binaries) do
+			print(("Lua: Length of binary #%d: %08X"):format(index, binary:len()))
+			local file = io.open(index .. ".bin", "w")
+			file:write(binary)
+			file:close()
+		end
+		print("===End of Binaries===")
 
-        print("\nCreating program from binaries...")
-        local newProgram, status = context:CreateProgramFromBinary(devices, binaries)
-        print("Created binary ", tostring(newProgram))
-        dump_table(status, "build_status")
-
-    else
-        print("Cannot dump binaries for unsuccessful build")
-    end
+		print("\nCreating program from binaries...")
+		local newProgram, status = context:CreateProgramFromBinary(devices, binaries)
+		print("Created binary ", tostring(newProgram))
+		dump_table(status, "build_status")
+		newProgram:Build()
+		print("Program built from binary:", tostring(newProgram))
+	else
+		print("Cannot dump binaries for unsuccessful build")
+	end
 	print("\nCreating kernel...")
 	local kernel = program:CreateKernel("myfunc")
 	print(kernel)
@@ -98,21 +103,21 @@ for index, platform in ipairs(platforms) do
 	print("GetNumArgs", kernel:GetNumArgs())
 	print("GetFunctionName", kernel:GetFunctionName())
 
-    for index, device in ipairs(devices) do
-        local info = kernel:GetWorkGroupInfo(device)
-        -- print("WorkGroupInfo: ", tostring(device))
-        dump_table(info, ("(%s):GetWorkGroupInfo(%s)"):format(tostring(kernel), tostring(device)))
+	for index, device in ipairs(devices) do
+		local info = kernel:GetWorkGroupInfo(device)
+		-- print("WorkGroupInfo: ", tostring(device))
+		dump_table(info, ("(%s):GetWorkGroupInfo(%s)"):format(tostring(kernel), tostring(device)))
 
-        local cmdqueue = context:CreateCommandQueue(device)
-        print("\nCreated command queue:", tostring(cmdqueue))
-    end
+		local cmdqueue = context:CreateCommandQueue(device)
+		print("\nCreated command queue:", tostring(cmdqueue))
+	end
 	-- for index = 1, kernel:GetNumArgs() do
-	-- 	kernel:SetArgFloat(index, index)
+	--  kernel:SetArgFloat(index, index)
 	-- end
 
-    program = nil
+	program = nil
 	print("\nCollecting garbage...")
-    collectgarbage()
+	collectgarbage()
 	kernel = nil
 	collectgarbage()
 end

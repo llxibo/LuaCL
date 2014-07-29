@@ -18,7 +18,7 @@ struct luacl_object {
 	typedef luacl_object_constants<cl_object> traits;
 
 	static int Wrap(lua_State *L, cl_object object) {
-        printf("Wrapping object %p\n", object);
+        // printf("Wrapping object %p\n", object);
 		lua_getfield(L, LUA_REGISTRYINDEX, traits::REGISTRY());
 		assert(lua_istable(L, -1));
 		/* Now the top of stack is registry table */
@@ -26,7 +26,7 @@ struct luacl_object {
 		lua_gettable(L, -2);	/* Query the registry table with value of pointer */
 		void *p = lua_touserdata(L, -1);													/* udata/nil, reg */
 		if (p == NULL) {
-			printf("Wrap: Creating cache entry\n");
+			// printf("Wrap: Creating cache entry\n");
 			cl_object *p = static_cast<cl_object *>(lua_newuserdata(L, sizeof(cl_object)));	/* udata, nil, reg */
 			*p = object;
 			luaL_getmetatable(L, traits::METATABLE());										/* mt, udata, nil, reg */
@@ -42,6 +42,16 @@ struct luacl_object {
 			lua_remove(L, -2);																/* udata */
 		}
 		return 1;
+	}
+
+	static int Release(lua_State *L) {
+		cl_object object = CheckObject(L);
+		printf("__gc Releasing %s: %p\n", traits::TOSTRING(), object);
+		LUACL_TRYCALL(
+			cl_int err = traits::Release(object);
+			CheckCLError(L, err, "Failed releasing LuaCL object: %d.");
+		);
+		return 0;
 	}
 
 	static void CreateRegistry(lua_State *L) {
@@ -77,9 +87,11 @@ struct luacl_object {
 			return std::vector<cl_object>();
 		}
 		std::vector<cl_object> objects;
-		lua_pushnil(L);
-		while (lua_next(L, index)) {
+        size_t size = lua_objlen(L, index);
+		for (unsigned int i = 0; i < size; i++) {
+            lua_rawgeti(L, index, i + 1);
 			cl_object object = CheckObject(L, -1);
+            printf("CheckObject %s %p\n", typeid(object).name(), object);
 			objects.push_back(object);
 			lua_pop(L, 1);
 		}
@@ -92,8 +104,8 @@ struct luacl_object {
 			return std::vector<cl_object>();
 		}
 		std::vector<cl_object> numbers;
-		lua_pushnil(L);
-		while (lua_next(L, index)) {
+		for (unsigned int i = 0; i < size; i++) {
+			lua_rawgeti(L, index, i + 1);
 			cl_object num = static_cast<cl_object>(luaL_checknumber(L, -1));
 			numbers.push_back(num);
 			lua_pop(L, 1);
@@ -111,6 +123,7 @@ struct luacl_object {
 		while (lua_next(L, index)) {
 			size_t len = 0;
 			const char * str = luaL_checklstring(L, -1, &len);
+            printf("CheckString key %d: %lx\n", static_cast<int>(lua_tonumber(L, -2)), len);
 			strings.push_back(std::string(str, len));
 			lua_pop(L, 1);
 		}
@@ -118,6 +131,7 @@ struct luacl_object {
 	}
 };
 
+//*
 #define CHECK_ALLOC_ERROR_MACRO 1
 #if (CHECK_ALLOC_ERROR_MACRO)
     #define CheckAllocError(L, p) {if (p == NULL) {luaL_error(L, LUACL_ERR_MALLOC); return 0;}};
@@ -128,7 +142,7 @@ void CheckAllocError(lua_State *L, void *p, const char * msg = LUACL_ERR_MALLOC)
 	}
 }
 #endif
-
+//*/
 void CheckCLError(lua_State *L, cl_uint err, const char * msg, void *p = NULL) {
 	if (err != CL_SUCCESS) {
 		free(p);

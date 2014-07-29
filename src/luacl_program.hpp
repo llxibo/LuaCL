@@ -23,6 +23,9 @@ struct luacl_object_constants <cl_program> {
 	static const char * TOSTRING() {
 		return LUACL_PROGRAM_TOSTRING;
 	}
+	static cl_int Release(cl_program program) {
+		return clReleaseProgram(program);
+	}
 };
 
 struct luacl_program {
@@ -49,7 +52,7 @@ struct luacl_program {
 		lua_setfield(L, -2, "__index");
 		lua_pushcfunction(L, traits::ToString);
 		lua_setfield(L, -2, "__tostring");
-		lua_pushcfunction(L, Release);
+		lua_pushcfunction(L, traits::Release);
 		lua_setfield(L, -2, "__gc");
 
 		traits::CreateRegistry(L);
@@ -72,7 +75,7 @@ struct luacl_program {
 		std::vector<std::string> binaries = traits::CheckStringTable(L, 3);
 
 		size_t size = devices.size();
-        printf("Got %d binary objects\n", size);
+        // printf("Got %zu binary objects\n", size);
 		if (size != binaries.size()) {
 			return luaL_error(L, "Bad argument #2 and #3: table length mismatch.");
 		}
@@ -80,6 +83,7 @@ struct luacl_program {
 		std::vector<const unsigned char *> binaryPointers;	/* No need to free pointers in this container */
 		for (size_t index = 0; index < size; index++) {
 			lengths.push_back(binaries[index].size());
+            // printf("Binary size #%zu: %lx\n", index, binaries[index].size());
 			binaryPointers.push_back(
 				reinterpret_cast<const unsigned char *>(binaries[index].c_str())
 			);
@@ -168,7 +172,7 @@ struct luacl_program {
         std::vector< std::vector<char> > binaries(numBinaries);
         std::vector<char *> binaryPointers;
         for (int index = 0; index < numBinaries; index++) {
-            // printf("Allocating %p for binary array #%d\n", sizes[index], index);
+            //printf("Allocating %lx for binary array #%d\n", sizes[index], index);
             binaries[index].resize(sizes[index]);
             binaryPointers.push_back(binaries[index].data());
         }
@@ -207,14 +211,6 @@ struct luacl_program {
 		CheckCLError(L, err, "Failed requesting build log: %d.");
 		lua_pushstring(L, std::string(buffer.data(), size).c_str());
 		return 1;
-	}
-
-	static int Release(lua_State *L) {
-		cl_program program = traits::CheckObject(L);
-		printf("__gc Releasing program %p\n", program);
-		LUACL_TRYCALL(clReleaseProgram(program));
-		// LUACL_TRYCALL(clReleaseProgram(program));	/* Release second time should always raise a system exception */
-		return 0;
 	}
 };
 

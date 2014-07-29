@@ -19,6 +19,9 @@ struct luacl_object_constants<cl_command_queue> {
 	static const char * TOSTRING() {
 		return LUACL_CMDQUEUE_TOSTRING;
 	}
+	static cl_int Release(cl_command_queue cmdqueue) {
+		return clReleaseCommandQueue(cmdqueue);
+	}
 };
 
 struct luacl_cmdqueue {
@@ -36,7 +39,7 @@ struct luacl_cmdqueue {
 		lua_setfield(L, -2, "__index");
 		lua_pushcfunction(L, traits::ToString);
 		lua_setfield(L, -2, "__tostring");
-		lua_pushcfunction(L, Release);
+		lua_pushcfunction(L, traits::Release);
 		lua_setfield(L, -2, "__gc");
 
 		traits::CreateRegistry(L);
@@ -70,14 +73,6 @@ struct luacl_cmdqueue {
 		cl_command_queue cmdqueue = traits::CheckObject(L);
 		cl_int err = clFinish(cmdqueue);
 		CheckCLError(L, err, "Failed finishing command queue: %d.");
-		return 0;
-	}
-
-	static int Release(lua_State *L) {
-		cl_command_queue cmdqueue = traits::CheckObject(L);
-		printf("__gc Releasing cmdqueue %p\n", cmdqueue);
-
-		LUACL_TRYCALL(clReleaseCommandQueue(cmdqueue));
 		return 0;
 	}
 };
