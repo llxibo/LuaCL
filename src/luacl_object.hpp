@@ -44,6 +44,16 @@ struct luacl_object {
 		return 1;
 	}
 
+	static int Release(lua_State *L) {
+		cl_object object = CheckObject(L);
+		printf("__gc Releasing %s: %p\n", traits::TOSTRING(), object);
+		LUACL_TRYCALL(
+			cl_int err = traits::Release(object);
+			CheckCLError(L, err, "Failed releasing LuaCL object: %d.");
+		);
+		return 0;
+	}
+
 	static void CreateRegistry(lua_State *L) {
 		/* Create device userdata registry */
 		lua_newtable(L);											/* reg */
@@ -94,8 +104,8 @@ struct luacl_object {
 			return std::vector<cl_object>();
 		}
 		std::vector<cl_object> numbers;
-		lua_pushnil(L);
-		while (lua_next(L, index)) {
+		for (unsigned int i = 0; i < size; i++) {
+			lua_rawgeti(L, index, i + 1);
 			cl_object num = static_cast<cl_object>(luaL_checknumber(L, -1));
 			numbers.push_back(num);
 			lua_pop(L, 1);
@@ -113,7 +123,7 @@ struct luacl_object {
 		while (lua_next(L, index)) {
 			size_t len = 0;
 			const char * str = luaL_checklstring(L, -1, &len);
-            printf("CheckString key %f: %lx\n", lua_tonumber(L, -2), len);
+            printf("CheckString key %d: %lx\n", static_cast<int>(lua_tonumber(L, -2)), len);
 			strings.push_back(std::string(str, len));
 			lua_pop(L, 1);
 		}
@@ -121,6 +131,7 @@ struct luacl_object {
 	}
 };
 
+//*
 #define CHECK_ALLOC_ERROR_MACRO 1
 #if (CHECK_ALLOC_ERROR_MACRO)
     #define CheckAllocError(L, p) {if (p == NULL) {luaL_error(L, LUACL_ERR_MALLOC); return 0;}};
@@ -131,7 +142,7 @@ void CheckAllocError(lua_State *L, void *p, const char * msg = LUACL_ERR_MALLOC)
 	}
 }
 #endif
-
+//*/
 void CheckCLError(lua_State *L, cl_uint err, const char * msg, void *p = NULL) {
 	if (err != CL_SUCCESS) {
 		free(p);

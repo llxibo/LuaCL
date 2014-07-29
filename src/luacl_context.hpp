@@ -22,6 +22,9 @@ struct luacl_object_constants<cl_context> {
 	static const char * TOSTRING() {
 		return LUACL_CONTEXT_TOSTRING;
 	}
+	static cl_int Release(cl_context context) {
+		return clReleaseContext(context);
+	}
 };
 
 struct luacl_context {
@@ -157,25 +160,16 @@ struct luacl_context {
 	}
 
 	static int Release(lua_State *L) {
-		cl_context context = CheckObject(L);
-		//printf("__gc Releasing context %p\n", context);
+		cl_context context = traits::CheckObject(L);
 
 		/* reg[p] = nil */
 		lua_getfield(L, LUA_REGISTRYINDEX, LUACL_CONTEXT_REGISTRY_CALLBACK);
 		lua_pushlightuserdata(L, static_cast<void *>(context));
 		lua_pushnil(L);
 		lua_settable(L, -3);
+		lua_pop(L, 1);
 
-		clReleaseContext(context);
-		return 0;
-	}
-
-	static int Wrap(lua_State *L, cl_context context) {
-		return traits::Wrap(L, context);
-	}
-
-	static cl_context CheckObject(lua_State *L) {
-		return traits::CheckObject(L);
+		return traits::Release(L);
 	}
 };
 
