@@ -77,9 +77,11 @@ struct luacl_object {
 			return std::vector<cl_object>();
 		}
 		std::vector<cl_object> objects;
-		lua_pushnil(L);
-		while (lua_next(L, index)) {
+        size_t size = lua_objlen(L, index);
+		for (unsigned int i = 0; i < size; i++) {
+            lua_rawgeti(L, index, i + 1);
 			cl_object object = CheckObject(L, -1);
+            printf("CheckObject %s %p\n", typeid(object).name(), object);
 			objects.push_back(object);
 			lua_pop(L, 1);
 		}
@@ -111,6 +113,7 @@ struct luacl_object {
 		while (lua_next(L, index)) {
 			size_t len = 0;
 			const char * str = luaL_checklstring(L, -1, &len);
+            printf("CheckString key %f: %lx\n", lua_tonumber(L, -2), len);
 			strings.push_back(std::string(str, len));
 			lua_pop(L, 1);
 		}

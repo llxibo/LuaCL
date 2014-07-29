@@ -39,6 +39,7 @@ for index, platform in ipairs(platforms) do
 	end
 
 	-- print(platform.CreateContext(platform, devices))
+    devices = {devices[1]}
 	local context = platform:CreateContext(devices)
 	print("Created", context)
 	print("Got devices:", context:GetDevices())
@@ -67,8 +68,8 @@ for index, platform in ipairs(platforms) do
 	program:Build("-cl-opt-disable")
 	print(program:GetBuildStatus(devices[1]))
 	print(program:GetBuildLog(devices[1]))
-	print(program:GetBuildStatus(devices[2]))
-	print(program:GetBuildLog(devices[2]))
+	-- print(program:GetBuildStatus(devices[2]))
+	-- print(program:GetBuildLog(devices[2]))
 
     if program:GetBuildStatus(devices[1]) == 0 then
     	print("=======Binaries======")
