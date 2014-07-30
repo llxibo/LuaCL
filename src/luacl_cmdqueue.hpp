@@ -85,7 +85,7 @@ struct luacl_cmdqueue {
 		luacl_buffer_info buffer = luacl_object<luacl_buffer_info>::CheckObject(L);
 		size_t size = static_cast<size_t>(luaL_checknumber(L, 2));
 		size_t offset = static_cast<size_t>(lua_tonumber(L, 3));
-		size = size == 0 ? buffer->size : size;
+		size = (size == 0) ? buffer->size : size;
 		if (size + offset > buffer->size) {
 			return luaL_error(L, "Invalid size or offset.");
 		}

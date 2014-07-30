@@ -38,4 +38,4 @@ extern "C" {
 
 #define LUACL_TRYCALL(call) do{ LUACL_TRYCALL2(call) }while(0)
 
-#endif
+#endif /* __LUACL_H */
