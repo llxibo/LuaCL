@@ -8,6 +8,25 @@
 
 static const char LUACL_ERR_MALLOC[] = "Insufficient memory";
 
+//*
+#define CHECK_ALLOC_ERROR_MACRO 1
+#if (CHECK_ALLOC_ERROR_MACRO)
+#define CheckAllocError(L, p) {if (p == NULL) {luaL_error(L, LUACL_ERR_MALLOC); return 0;}};
+#else
+void CheckAllocError(lua_State *L, void *p, const char * msg = LUACL_ERR_MALLOC) {
+	if (p == NULL) {
+		luaL_error(L, msg);
+	}
+}
+#endif
+//*/
+void CheckCLError(lua_State *L, cl_uint err, const char * msg, void *p = NULL) {
+	if (err != CL_SUCCESS) {
+		free(p);
+		luaL_error(L, msg, err);
+	}
+}
+
 /* template trait class holding constants */
 template <class cl_object_const_type>
 struct luacl_object_constants {};
@@ -104,6 +123,7 @@ struct luacl_object {
 			return std::vector<cl_object>();
 		}
 		std::vector<cl_object> numbers;
+        size_t size = lua_objlen(L, index);
 		for (unsigned int i = 0; i < size; i++) {
 			lua_rawgeti(L, index, i + 1);
 			cl_object num = static_cast<cl_object>(luaL_checknumber(L, -1));
@@ -130,24 +150,5 @@ struct luacl_object {
 		return strings;
 	}
 };
-
-//*
-#define CHECK_ALLOC_ERROR_MACRO 1
-#if (CHECK_ALLOC_ERROR_MACRO)
-    #define CheckAllocError(L, p) {if (p == NULL) {luaL_error(L, LUACL_ERR_MALLOC); return 0;}};
-#else
-void CheckAllocError(lua_State *L, void *p, const char * msg = LUACL_ERR_MALLOC) {
-	if (p == NULL) {
-		luaL_error(L, msg);
-	}
-}
-#endif
-//*/
-void CheckCLError(lua_State *L, cl_uint err, const char * msg, void *p = NULL) {
-	if (err != CL_SUCCESS) {
-		free(p);
-		luaL_error(L, msg, err);
-	}
-}
 
 #endif /* __LUACL_OBJECT_HPP */
