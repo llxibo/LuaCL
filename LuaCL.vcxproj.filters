@@ -19,6 +19,9 @@
     <Filter Include="头文件\lua">
       <UniqueIdentifier>{3f8238e6-0b8f-4b1a-89be-5f111b2e6ea1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="头文件\glue">
+      <UniqueIdentifier>{5c34b292-2c54-4bb1-8920-3c057e940339}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\LuaCL.h">
@@ -93,32 +96,32 @@
     <ClInclude Include="lua-5.1.4\src\lzio.h">
       <Filter>头文件\lua</Filter>
     </ClInclude>
-    <ClInclude Include="src\luacl_platform.hpp">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="src\luacl_context.hpp">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="src\luacl_device.hpp">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="src\luacl_object.hpp">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="src\luacl_program.hpp">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="src\luacl_kernel.hpp">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="src\luacl_buffer.hpp">
-      <Filter>头文件</Filter>
+      <Filter>头文件\glue</Filter>
     </ClInclude>
     <ClInclude Include="src\luacl_cmdqueue.hpp">
-      <Filter>头文件</Filter>
+      <Filter>头文件\glue</Filter>
+    </ClInclude>
+    <ClInclude Include="src\luacl_context.hpp">
+      <Filter>头文件\glue</Filter>
+    </ClInclude>
+    <ClInclude Include="src\luacl_device.hpp">
+      <Filter>头文件\glue</Filter>
     </ClInclude>
     <ClInclude Include="src\luacl_event.hpp">
-      <Filter>头文件</Filter>
+      <Filter>头文件\glue</Filter>
+    </ClInclude>
+    <ClInclude Include="src\luacl_kernel.hpp">
+      <Filter>头文件\glue</Filter>
+    </ClInclude>
+    <ClInclude Include="src\luacl_object.hpp">
+      <Filter>头文件\glue</Filter>
+    </ClInclude>
+    <ClInclude Include="src\luacl_platform.hpp">
+      <Filter>头文件\glue</Filter>
+    </ClInclude>
+    <ClInclude Include="src\luacl_program.hpp">
+      <Filter>头文件\glue</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -23,14 +23,16 @@ extern "C" {
 #endif
 
 #ifdef _MSC_VER
-#define LUACL_TRYCALL(call) __try {	\
-		call;						\
+#define _LUACL_TRYCALL(call) __try {	\
+		call						\
 	}								\
 	__except (1) {					\
 		luaL_error(L, "Fatal error: error executing OpenCL API %s", #call);	\
 	}
 #else
-#define LUACL_TRYCALL(call) call;
+#define _LUACL_TRYCALL(call) call
 #endif
+
+#define LUACL_TRYCALL(call) do{ _LUACL_TRYCALL(call) }while(0)
 
 #endif
