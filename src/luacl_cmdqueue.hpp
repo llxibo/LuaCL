@@ -74,9 +74,13 @@ struct luacl_cmdqueue {
     static int EnqueueWriteBuffer(lua_State *L) {
         cl_command_queue cmdqueue = traits::CheckObject(L);
         luacl_buffer_info buffer = luacl_object<luacl_buffer_info>::CheckObject(L);
-        size_t size = luaL_checknumber(L, 2);
-        size_t offset = lua_tonumber(L, 3);
-        std::vector<cl_event> eventList = luacl_object<cl_event>::CheckObjectTable(L, 4);
+        size_t size = static_cast<size_t>(luaL_checknumber(L, 2));
+        size_t offset = static_cast<size_t>(lua_tonumber(L, 3));
+		size = size == 0 ? buffer->size : size;
+		if (size + offset > buffer->size) {
+			return luaL_error(L, "Invalid size or offset.");
+		}
+		std::vector<cl_event> eventList = luacl_object<cl_event>::CheckObjectTable(L, 4);
         cl_bool blocking = lua_toboolean(L, 5);
         cl_event event = 0;
         cl_int err = clEnqueueWriteBuffer(cmdqueue, buffer->mem, blocking, offset, size, buffer->data, static_cast<cl_uint>(eventList.size()), eventList.data(), &event);
@@ -84,6 +88,7 @@ struct luacl_cmdqueue {
         luacl_object<cl_event>::Wrap(L, event);
         return 1;
     }
+
 	static int Finish(lua_State *L) {
 		cl_command_queue cmdqueue = traits::CheckObject(L);
 		cl_int err = clFinish(cmdqueue);

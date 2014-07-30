@@ -114,21 +114,25 @@ for index, platform in ipairs(platforms) do
 	-- for index = 1, kernel:GetNumArgs() do
 	--  kernel:SetArgFloat(index, index)
 	-- end
-	local bufferSize = 1048576 -- * 256
-	local buffer = context:CreateBuffer(bufferSize)
-	print("Created buffer ", buffer)
-	local startTime = os.clock()
-	for index = 0, bufferSize / 4 - 1 do
-		buffer:SetInt(index, index)
+	for index = 1, 10 do
+		local bufferSize = 1048576 * 2048
+		local buffer = context:CreateBuffer(bufferSize)
+		print("Created buffer ", buffer)
+		local startTime = os.clock()
+		for index = 0, bufferSize / 1024 - 1 do
+			buffer:SetInt(index, index)
+		end
+		print("Write time ", os.clock() - startTime)
+		local startTime = os.clock()
+		for index = 0, bufferSize / 1024 - 1 do
+			-- buffer:SetInt(index, index)
+			buffer:GetInt(index)
+			-- assert(buffer:GetInt(index) == index, index)
+		end
+		print("Read time ", os.clock() - startTime)
+		buffer = nil
+		collectgarbage()
 	end
-	print("Write time ", os.clock() - startTime)
-	local startTime = os.clock()
-	for index = 0, bufferSize / 4 - 1 do
-		-- buffer:SetInt(index, index)
-		buffer:GetInt(index)
-		-- assert(buffer:GetInt(index) == index, index)
-	end
-	print("Read time ", os.clock() - startTime)
 end
 print("\nCollecting garbage...")
 collectgarbage()
