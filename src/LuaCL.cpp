@@ -9,6 +9,7 @@
 #include "luacl_buffer.hpp"
 #include "luacl_event.hpp"
 
+
 LUA_API int panic(lua_State *L) {
 	printf("Panic error:\n");
 	const char * msg = lua_tostring(L, 1);
@@ -37,6 +38,8 @@ int main(int argc, char **argv) {
 	luacl_buffer::Init(L);
     luacl_event::Init(L);
     
+	util::test_host_byte_order();
+
 	int error = luaL_dofile(L, "test.lua");
 	if (error) {
 		fprintf(stderr, "%s\n", lua_tostring(L, -1));

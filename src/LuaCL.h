@@ -14,6 +14,7 @@ extern "C" {
 } /* extern "C" */
 
 #include <stdlib.h>
+#include <stdint.h>
 
 /* OpenCL.h has built-in extern C protection */
 #ifdef __APPLE__
@@ -21,6 +22,8 @@ extern "C" {
 #else
 #include "CL/OpenCL.h"
 #endif
+
+#include "luacl_endianness.hpp"
 
 #ifdef _MSC_VER
 #define LUACL_TRYCALL2(call) __try {	\

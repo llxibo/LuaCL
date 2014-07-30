@@ -22,6 +22,9 @@
     <Filter Include="头文件\glue">
       <UniqueIdentifier>{5c34b292-2c54-4bb1-8920-3c057e940339}</UniqueIdentifier>
     </Filter>
+    <Filter Include="头文件\util">
+      <UniqueIdentifier>{37664e37-091d-4d60-b390-88b937b150c0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\LuaCL.h">
@@ -122,6 +125,9 @@
     </ClInclude>
     <ClInclude Include="src\luacl_program.hpp">
       <Filter>头文件\glue</Filter>
+    </ClInclude>
+    <ClInclude Include="src\luacl_endianness.hpp">
+      <Filter>头文件\util</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
