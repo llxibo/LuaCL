@@ -44,7 +44,7 @@ struct luacl_device {
 
 		cl_uint numDevices = 0;
 		cl_int err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 0, NULL, &numDevices);
-		CheckCLError(L, err, "Failed requesting number of devices: %d.", NULL);
+		CheckCLError(L, err, "Failed requesting number of devices: %d.");
 
 		std::vector<cl_device_id> devices(numDevices);
 		err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, numDevices, devices.data(), NULL);
@@ -128,7 +128,7 @@ struct luacl_device {
 		}
 		size_t size = 0;
 		cl_int err = clGetDeviceInfo(device, param, 0, NULL, &size);
-		CheckCLError(L, err, "Failed requesting length of device info string: %d.", NULL);
+		CheckCLError(L, err, "Failed requesting length of device info string: %d.");
 
 		std::vector<char> value(size);
 		err = clGetDeviceInfo(device, param, size, value.data(), NULL);
@@ -143,12 +143,12 @@ struct luacl_device {
 	template <typename T> static void PushDeviceInfo(lua_State *L, cl_device_id device, cl_device_info param, std::string key) {
 		size_t size = 0;
 		cl_int err = clGetDeviceInfo(device, param, 0, NULL, &size);
-		CheckCLError(L, err, "Failed requesting length of device info: %d.", NULL);
+		CheckCLError(L, err, "Failed requesting length of device info: %d.");
 		//printf("%d: %d - %d\n", param, size, sizeof(T));
 		assert(size == sizeof(T));
 		T value = 0;
 		err = clGetDeviceInfo(device, param, sizeof(T), &value, NULL);
-		CheckCLError(L, err, "Failed requesting device info: %d.", NULL);
+		CheckCLError(L, err, "Failed requesting device info: %d.");
 		
 		lua_pushstring(L, key.c_str());
 		lua_pushnumber(L, static_cast<lua_Number>(value));
@@ -158,7 +158,7 @@ struct luacl_device {
 	template <typename T> static int PushDeviceInfoArray(lua_State *L, cl_device_id device, cl_device_info param, const char * key) {
 		size_t size = 0;
 		cl_int err = clGetDeviceInfo(device, param, 0, NULL, &size);
-		CheckCLError(L, err, "Failed requesting length of device info array.", NULL);
+		CheckCLError(L, err, "Failed requesting length of device info array: %d.");
 		//#if _DEBUG && _MSC_VER
 		//	printf("Device Array: %Iu - %Iu\n", size, sizeof(T));
 		//#endif
