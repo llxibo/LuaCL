@@ -14,6 +14,8 @@ Debug/
 *.opensdf
 *.suo
 *.vcxproj.user
+*.psess
+*.vsp
 *.o
 
 *.xcodeproj/project.xcworkspace
