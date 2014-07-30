@@ -7,6 +7,7 @@
 #include "luacl_kernel.hpp"
 #include "luacl_cmdqueue.hpp"
 #include "luacl_buffer.hpp"
+#include "luacl_event.hpp"
 
 LUA_API int panic(lua_State *L) {
 	printf("Panic error:\n");
@@ -34,7 +35,8 @@ int main(int argc, char **argv) {
 	luacl_kernel::Init(L);
 	luacl_cmdqueue::Init(L);
 	luacl_buffer::Init(L);
-
+    luacl_event::Init(L);
+    
 	int error = luaL_dofile(L, "test.lua");
 	if (error) {
 		fprintf(stderr, "%s\n", lua_tostring(L, -1));
