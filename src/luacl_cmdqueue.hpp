@@ -75,8 +75,8 @@ struct luacl_cmdqueue {
 		std::vector<cl_event> events = luacl_object<cl_event>::CheckObjectTable(L, 6);
 
 		cl_event event = NULL;
-		cl_int err = clEnqueueNDRangeKernel(cmdqueue, krnl, workDim, globalWorkOffset.data(), globalWorkSize.data(), localWorkSize.data(), events.size(), events.data(), &event);
-
+		cl_int err = clEnqueueNDRangeKernel(cmdqueue, krnl, workDim, globalWorkOffset.data(), globalWorkSize.data(), localWorkSize.data(), static_cast<cl_uint>(events.size()), events.data(), &event);
+		CheckCLError(L, err, "Failed requesting enqueue NDRange: %d.");
         return 0;
 	}
 

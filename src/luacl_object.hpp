@@ -20,9 +20,8 @@ void CheckAllocError(lua_State *L, void *p, const char * msg = LUACL_ERR_MALLOC)
 }
 #endif
 //*/
-void CheckCLError(lua_State *L, cl_uint err, const char * msg, void *p = NULL) {
+void CheckCLError(lua_State *L, cl_uint err, const char * msg) {
 	if (err != CL_SUCCESS) {
-		free(p);
 		luaL_error(L, msg, err);
 	}
 }

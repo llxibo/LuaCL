@@ -50,12 +50,12 @@ struct luacl_platform {
 		/* Check size of value */
 		size_t size = 0;
 		cl_int err = clGetPlatformInfo(platform, param, 0, NULL, &size);
-		CheckCLError(L, err, "Failed requesting size of info.", NULL);
+		CheckCLError(L, err, "Failed requesting size of info: %d.");
 
 		/* Request platform parameter */
 		std::vector<char> value(size);
 		err = clGetPlatformInfo(platform, param, size, value.data(), NULL);
-		CheckCLError(L, err, "Failed requesting platform info.");
+		CheckCLError(L, err, "Failed requesting platform info: %d.");
 
 		/* Push key and value to table */
 		lua_pushstring(L, key.c_str());
@@ -78,11 +78,11 @@ struct luacl_platform {
 	static int Get(lua_State *L) {
 		cl_uint numPlatforms = 0;
 		cl_int err = clGetPlatformIDs(0, NULL, &numPlatforms);
-		CheckCLError(L, err, "Failed requesting number of platforms.", NULL);
+		CheckCLError(L, err, "Failed requesting number of platforms: %d.");
 
 		std::vector<cl_platform_id> platforms(numPlatforms);
 		err = clGetPlatformIDs(numPlatforms, platforms.data(), NULL);
-		CheckCLError(L, err, "Failed requesting platform list.");
+		CheckCLError(L, err, "Failed requesting platform list: %d.");
 
 		for (cl_uint index = 0; index < numPlatforms; index++) {
 			traits::Wrap(L, platforms[index]);
