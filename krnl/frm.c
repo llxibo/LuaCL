@@ -19,16 +19,16 @@
 
 /* Codes enclosed in 'hostonly' will be discarded at OpenCL devices, and vice versa. */
 #if defined(__OPENCL_VERSION__)
-#define hostonly(...)
-#define deviceonly(...) __VA_ARGS__
+#define hostonly(code)
+#define deviceonly(code) code
 #else
-#define hostonly(...) __VA_ARGS__
-#define deviceonly(...)
+#define hostonly(code) code
+#define deviceonly(code)
 #endif /* defined(__OPENCL_VERSION__) */
 #if defined(_MSC_VER)
-#define msvconly(...) __VA_ARGS__
+#define msvconly(code) code
 #else
-#define msvconly(...)
+#define msvconly(code)
 #endif /* defined(_MSC_VER) */
 
 /* Std C Library. */
@@ -53,7 +53,7 @@ void free( void* );
                 KRNL_STR(expression),  hfuncname ,__FILE__, __LINE__); \
                 abort(); }else
 #else
-#define assert(...)
+#define assert(expression)
 #endif /* defined(_DEBUG) && !defined(__OPENCL_VERSION__) */
 
 /* Unified typename. */
@@ -104,14 +104,14 @@ float convert_float_rtp( k64u x ) {
 
 /* Unified compile hint. */
 #if defined(__OPENCL_VERSION__)
-#define kdeclspec(...) __attribute__((__VA_ARGS__))
-#define hdeclspec(...)
+#define kdeclspec(attr) __attribute__((attr))
+#define hdeclspec(attr)
 #else
-#define kdeclspec(...)
+#define kdeclspec(attr)
 #if defined(_MSC_VER)
-#define hdeclspec(...) __declspec(__VA_ARGS__)
+#define hdeclspec __declspec
 #else
-#define hdeclspec(...) __attribute__((__VA_ARGS__))
+#define hdeclspec(attr) __attribute__((attr))
 #endif /* defined(_MSC_VER) */
 #endif /* defined(__OPENCL_VERSION__) */
 
@@ -307,7 +307,7 @@ void tprint( rtinfo_t* rti ) {
 }
 )
 #if defined(__OPENCL_VERSION__) || !defined(_DEBUG)
-#define lprintf(...)
+#define lprintf
 #else
 #define lprintf(...) if(1){tprint(rti);printf(__VA_ARGS__);printf("\n");}else
 #endif /* defined(__OPENCL_VERSION__) */
