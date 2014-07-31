@@ -9,7 +9,6 @@
 #include "luacl_buffer.hpp"
 #include "luacl_event.hpp"
 
-
 LUA_API int panic(lua_State *L) {
 	printf("Panic error:\n");
 	const char * msg = lua_tostring(L, 1);

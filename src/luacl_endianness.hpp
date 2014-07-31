@@ -1,6 +1,8 @@
 #ifndef __LUACL_ENDIANNESS_HPP
 #define __LUACL_ENDIANNESS_HPP
 
+#include <stdint.h>
+
 namespace util{
     
 	enum luacl_byte_order_enumeration {

@@ -19,7 +19,6 @@ extern "C" {
 
 #if defined(_LUACL_PAUSE_SYSTEM)
 #include <stdlib.h>
-#include <stdint.h>
 #endif
 
 /* OpenCL.h has built-in extern C protection */
