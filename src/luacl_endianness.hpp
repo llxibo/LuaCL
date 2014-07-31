@@ -47,8 +47,8 @@ namespace util{
 	template <typename T>
 	T luacl_byte_order_reverse(T in) {
 		T out;
-		char * dest = static_cast<char *>(&out);
-		char * src = static_cast<char *>(&in + 1);
+		char * dest = reinterpret_cast<char *>(&out);
+		char * src = reinterpret_cast<char *>(&in + 1);
 
 		for (size_t i = 0; i < sizeof(T); i++) {
 			memcpy(dest++, --src, 1);
