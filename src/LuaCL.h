@@ -13,11 +13,11 @@ extern "C" {
 #pragma warning(pop)
 } /* extern "C" */
 
-#if _MSC_VER && _DEBUG
+#if defined(_MSC_VER) && defined(_DEBUG)
 #define _LUACL_PAUSE_SYSTEM
 #endif
 
-#if _LUACL_PAUSE_SYSTEM
+#if defined(_LUACL_PAUSE_SYSTEM)
 #include <stdlib.h>
 #include <stdint.h>
 #endif

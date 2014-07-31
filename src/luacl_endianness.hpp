@@ -58,7 +58,7 @@ namespace util{
 	}
 
 	void test_host_byte_order(void) {
-		char * order[] = {
+		const char * order[] = {
 			"Untested Endianness",
 			"Little Endianness",
 			"Big Endianness",
