@@ -114,17 +114,18 @@ for index, platform in ipairs(platforms) do
 	-- for index = 1, kernel:GetNumArgs() do
 	--  kernel:SetArgFloat(index, index)
 	-- end
-	for index = 1, 10 do
-		local bufferSize = 1048576 * 2048
+	local numTests = 1
+	for index = 1, numTests do
+		local bufferSize = 1048576 * 16
 		local buffer = context:CreateBuffer(bufferSize)
 		print("Created buffer ", buffer)
 		local startTime = os.clock()
-		for index = 0, bufferSize / 1024 - 1 do
+		for index = 0, bufferSize / buffer:GetSizeInt() - 1 do
 			buffer:SetInt(index, index)
 		end
 		print("Write time ", os.clock() - startTime)
 		local startTime = os.clock()
-		for index = 0, bufferSize / 1024 - 1 do
+		for index = 0, bufferSize / buffer:GetSizeInt() - 1 do
 			-- buffer:SetInt(index, index)
 			buffer:GetInt(index)
 			-- assert(buffer:GetInt(index) == index, index)
