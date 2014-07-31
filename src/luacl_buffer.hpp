@@ -46,14 +46,11 @@ struct luacl_buffer {
 	static void Init(lua_State *L) {
 		luaL_newmetatable(L, LUACL_MEM_METATABLE);
 		lua_newtable(L);
-		lua_pushcfunction(L, Get<int>);
-		lua_setfield(L, -2, "GetInt");
-		lua_pushcfunction(L, Set<int>);
-		lua_setfield(L, -2, "SetInt");
-		lua_pushcfunction(L, Get<float>);
-		lua_setfield(L, -2, "GetFloat");
-		lua_pushcfunction(L, Set<float>);
-		lua_setfield(L, -2, "SetFloat");
+		RegisterType<int>(L, "Int");
+        RegisterType<float>(L, "Float");
+        RegisterType<double>(L, "Double");
+        RegisterType<short>(L, "Short");
+        RegisterType<char>(L, "Char");
 		lua_setfield(L, -2, "__index");
 		lua_pushcfunction(L, traits::ToString);
 		lua_setfield(L, -2, "__tostring");
@@ -83,6 +80,16 @@ struct luacl_buffer {
 		traits::Wrap(L, bufferObject);
 		return 1;
 	}
+    
+    template <typename T>
+    static void RegisterType(lua_State *L, const char * name) {
+		lua_pushcfunction(L, Get<T>);
+		lua_setfield(L, -2, std::string("Get").append(name).c_str());
+		lua_pushcfunction(L, Set<T>);
+		lua_setfield(L, -2, std::string("Set").append(name).c_str());
+        lua_pushcfunction(L, GetSize<T>);
+        lua_setfield(L, -2, std::string("GetSize").append(name).c_str());
+    }
 
 	template <typename T>
 	static int Get(lua_State *L) {
@@ -105,6 +112,24 @@ struct luacl_buffer {
 		//* (reinterpret_cast<T *>(buffer->data) + addr) = value;
 		return 0;
 	}
+    
+    template <typename T>
+    static int GetSize(lua_State *L) {
+        lua_pushnumber(L, static_cast<lua_Number>(sizeof(T)));
+        return 1;
+    }
+    
+    static int Clear(lua_State *L) {
+        luacl_buffer_info buffer = traits::CheckObject(L);
+        size_t size = static_cast<size_t>(lua_tonumber(L, 2));
+        size_t offset = static_cast<size_t>(lua_tonumber(L, 3));
+        size = (size == 0) ? buffer->size : size;
+        if (size + offset > buffer->size) {
+            luaL_error(L, "Bad argument: size and offset range out of bound");
+        }
+        memset(reinterpret_cast<char *>(buffer->data) + offset, 0, size);
+        return 0;
+    }
 };
 
 #endif /* __LUACL_BUFFER_HPP */
