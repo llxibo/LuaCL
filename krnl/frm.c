@@ -273,9 +273,9 @@ typedef struct {
 #include "bling\bling.c"
 #undef LUACL_LOAD_SNAPSHOT_T_MEMBERLIST
 } snapshot_t;
-#define psnapshot_t snapshot_t*
+
 typedef struct {
-    psnapshot_t buffer;
+    snapshot_t* buffer;
     k64u bitmap;
 } snapshot_manager_t;
 
@@ -532,7 +532,7 @@ void eq_delete( rtinfo_t* rti, time_t time, k8u routnum ) {
 
 }
 
-k8u snapshot_alloc( rtinfo_t* rti, psnapshot_t* snapshot ) {
+k8u snapshot_alloc( rtinfo_t* rti, snapshot_t** snapshot ) {
     k8u no;
     assert( rti->snapshot_manager.bitmap ); /* Full check. */
     no = clz( rti->snapshot_manager.bitmap ); /* Get first available place. */
@@ -541,20 +541,20 @@ k8u snapshot_alloc( rtinfo_t* rti, psnapshot_t* snapshot ) {
     return no;
 }
 
-psnapshot_t snapshot_kill( rtinfo_t* rti, k8u no ) {
+snapshot_t* snapshot_kill( rtinfo_t* rti, k8u no ) {
     assert( no < SNAPSHOT_SIZE ); /* Subscript check. */
     assert( ~rti->snapshot_manager.bitmap & ( K64U_MSB >> no ) ); /* Existance check. */
     rti->snapshot_manager.bitmap |= K64U_MSB >> no; /* Mark as available. */
     return &( rti->snapshot_manager.buffer[ no ] );
 }
 
-psnapshot_t snapshot_read( rtinfo_t* rti, k8u no ) {
+snapshot_t* snapshot_read( rtinfo_t* rti, k8u no ) {
     assert( no < SNAPSHOT_SIZE ); /* Subscript check. */
     assert( ~rti->snapshot_manager.bitmap & ( K64U_MSB >> no ) ); /* Existance check. */
     return &( rti->snapshot_manager.buffer[ no ] );
 }
 
-void snapshot_init( rtinfo_t* rti, psnapshot_t buffer ) {
+void snapshot_init( rtinfo_t* rti, snapshot_t* buffer ) {
     rti->snapshot_manager.bitmap = ~ K64U_C( 0 ); /* every bit is set to available. */
     rti->snapshot_manager.buffer = buffer;
 }
@@ -570,7 +570,7 @@ float enemy_health_percent( rtinfo_t* rti ) {
     return mix( death_pct, initial_health_percentage, ( float )remainder / ( float )rti->expected_combat_length );
 }
 
-void sim_init( rtinfo_t* rti, k32u seed, psnapshot_t ssbuf ) {
+void sim_init( rtinfo_t* rti, k32u seed, snapshot_t* ssbuf ) {
     /* Analogize get_global_id for CPU. */
     hostonly(
         static int gid = 0;
@@ -601,8 +601,8 @@ void sim_init( rtinfo_t* rti, k32u seed, psnapshot_t ssbuf ) {
 deviceonly(__kernel) void sim_iterate(
                 deviceonly( __global ) float* dps_result
 ) {
-    deviceonly( __private ) snapshot_t snapshot_buffer[ SNAPSHOT_SIZE ];
     deviceonly( __private ) rtinfo_t _rti;
+    snapshot_t snapshot_buffer[ SNAPSHOT_SIZE ];
 
     sim_init(
         &_rti,

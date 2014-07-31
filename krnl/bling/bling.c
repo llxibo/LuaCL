@@ -106,7 +106,7 @@ DECL_EVENT( smackthat_land ) {
 }
 
 DECL_EVENT( livingbomb_execute ) {
-    psnapshot_t ss;
+    snapshot_t* ss;
     snapshot = snapshot_alloc( rti, &ss );
     rti->player.livingbomb.expire = TIME_OFFSET( FROM_SECONDS( 15 ) );
     ss->ip[0] = (k32u)rti->player.livingbomb.expire;
@@ -115,7 +115,7 @@ DECL_EVENT( livingbomb_execute ) {
 
 DECL_EVENT( livingbomb_tick ) {
     time_t next_tick;
-    psnapshot_t ss = snapshot_read( rti, snapshot );
+    snapshot_t* ss = snapshot_read( rti, snapshot );
     /* Livingbomb may be refreshed. */
     if ( ss->ip[0] != (k32u)rti->player.livingbomb.expire ){
         snapshot_kill( rti, snapshot );
@@ -133,7 +133,7 @@ DECL_EVENT( livingbomb_tick ) {
 
 DECL_EVENT( livingbomb_expire ) {
     /* Livingbomb may be refreshed. Double check the expire time. */
-    psnapshot_t ss = snapshot_read( rti, snapshot );
+    snapshot_t* ss = snapshot_read( rti, snapshot );
     if ( ss->ip[0] == (k32u)rti->player.livingbomb.expire ){
 		lprintf("livingbomb expire");
 		deal_damage( rti, 600.0f, DMGTYPE_MAGIC );

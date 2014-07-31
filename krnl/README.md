@@ -384,11 +384,6 @@
     指明了快照系统最大可以容纳的快照数量。
 
 
-* `psnapshot_t`
-
-    指向快照的指针类型应使用`psnapshot_t`而不是`snapshot_t *`，因为在OpenCL中需要指明其存储限定符。
-
-
 * `snapshot_init`
 
     初始化快照系统，在启动时由框架自动调用。
@@ -400,31 +395,31 @@
 
         k8u snapshot_alloc(
             rtinfo_t* rti,
-            psnapshot_t* snapshot
+            snapshot_t** snapshot
         );
 
-    rti原样传递。函数将snapshot所指的`psnapshot_t`设置为指向可用快照空间的指针，然后返回此快照的编号。
+    rti原样传递。函数将snapshot所指的`snapshot_t*`设置为指向可用快照空间的指针，然后返回此快照的编号。
 
     快照编号被用于读取和销毁快照，也是`_event_t`的成员之一。
 
     *例*
 
         k8u no;
-        psnapshot_t pss;
+        snapshot_t* pss;
         
         no = snapshot_alloc( rti, &pss ); /* 申请快照 */
         pss->fieldA = foo;  /* 填写快照 */
         pss->fieldB = bar;
         eq_enqueue( rti, TIME_OFFSET( 300 ), rout, no ); /* 将快照传递给事件rout */
 
-    在OpenCL运行时不会检查快照系统是否已满。如果快照系统已满，尝试使用`snapshot_alloc`会导致未定义行为。模块实现时应在CPU上测试快照系统空间是否充足。
+    在OpenCL运行时不会检查快照系统是否已满。如果快照系统已满，尝试使用`snapshot_alloc`会导致不可预期的行为。模块实现时应在CPU上测试快照系统空间是否充足。
 
 
 * `snapshot_read`
 
     读取一个快照。原型如下
 
-        psnapshot_t snapshot_read(
+        snapshot_t* snapshot_read(
             rtinfo_t* rti,
             k8u no
         );
@@ -436,7 +431,7 @@
 
     读取一个快照，并将其所占有的空间释放。原型如下
 
-        psnapshot_t snapshot_kill(
+        snapshot_t* snapshot_kill(
             rtinfo_t* rti,
             k8u no
         );
