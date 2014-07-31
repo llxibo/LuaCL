@@ -2,17 +2,19 @@
 #define __LUACL_ENDIANNESS_HPP
 
 namespace util{
-	enum luacl_byte_order_enumeration{
+    
+	enum luacl_byte_order_enumeration {
 		LUACL_UNTESTED_ENDIAN,
 		LUACL_LITTLE_ENDIAN,
 		LUACL_BIG_ENDIAN,
 		LUACL_MIXED_ENDIAN,
 	};
-	extern "C"
-	inline luacl_byte_order_enumeration luacl_host_byte_order(void){
+	
+    extern "C"
+	inline luacl_byte_order_enumeration luacl_host_byte_order(void) {
 
 		static luacl_byte_order_enumeration byte_order = LUACL_UNTESTED_ENDIAN;
-		if (byte_order != LUACL_UNTESTED_ENDIAN){
+		if (byte_order != LUACL_UNTESTED_ENDIAN) {
 			return byte_order;
 		}
 
@@ -26,37 +28,37 @@ namespace util{
 		
 		bool asc = true;
 		bool desc = true;
-		for (size_t i = 1; i < sizeof(uint32_t); i++){
+		for (size_t i = 1; i < sizeof(uint32_t); i++) {
 			asc = asc && dest[i - 1] < dest[i];
 			desc = desc && dest[i - 1] > dest[i];
 		}
 		
-		if (!asc && desc){
+		if (!asc && desc) {
 			return byte_order = LUACL_LITTLE_ENDIAN;
 		}
-		else if (asc && !desc){
+		else if (asc && !desc) {
 			return byte_order = LUACL_BIG_ENDIAN;
 		}
-		else{
+		else {
 			return byte_order = LUACL_MIXED_ENDIAN;
 		}
 	}
 
 	template <typename T>
-	T luacl_byte_order_reverse(T in){
+	T luacl_byte_order_reverse(T in) {
 		T out;
-		char * dest = (char *)(&out);
-		char * src = (char *)(&in + 1);
+		char * dest = static_cast<char *>(&out);
+		char * src = static_cast<char *>(&in + 1);
 
-		for (size_t i = 0; i < sizeof(T); i++){
+		for (size_t i = 0; i < sizeof(T); i++) {
 			memcpy(dest++, --src, 1);
 		}
 
 		return out;
 	}
 
-	void test_host_byte_order(void){
-		char* order[] = {
+	void test_host_byte_order(void) {
+		char * order[] = {
 			"Untested Endianness",
 			"Little Endianness",
 			"Big Endianness",
@@ -70,7 +72,6 @@ namespace util{
 		test = luacl_byte_order_reverse(test);
 		printf("Reversed: %08X\n", test);
 	}
-
 }
 
 #endif /* __LUACL_ENDIANNESS_HPP */
