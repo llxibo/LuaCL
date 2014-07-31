@@ -14,7 +14,9 @@ LUA_API int panic(lua_State *L) {
 	printf("Panic error:\n");
 	const char * msg = lua_tostring(L, 1);
 	printf("%s\n", msg);
+#if defined(_LUACL_PAUSE_SYSTEM)
 	system("pause");
+#endif
 	exit(0);
 	return 1;
 }
@@ -46,6 +48,9 @@ int main(int argc, char **argv) {
 	}
 
 	lua_close(L);
+    
+#if defined(_LUACL_PAUSE_SYSTEM)
 	system("pause");
+#endif
 	return 0;
 }
