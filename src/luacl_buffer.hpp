@@ -7,6 +7,7 @@
 static const char LUACL_MEM_REGISTRY[] = "LuaCL.Registry.Mem";
 static const char LUACL_MEM_METATABLE[] = "LuaCL.Metatable.Mem";
 static const char LUACL_MEM_TOSTRING[] = "LuaCL_Mem";
+static const size_t LUACL_BUFFER_MIN_SIZE = 2;
 
 struct luacl_buffer_object {
 	cl_mem mem = NULL;
@@ -50,10 +51,22 @@ struct luacl_buffer {
 		lua_setfield(L, -2, "GetInt");
 		lua_pushcfunction(L, Set<int>);
 		lua_setfield(L, -2, "SetInt");
+		lua_pushcfunction(L, Get<short>);
+		lua_setfield(L, -2, "GetShort");
+		lua_pushcfunction(L, Set<short>);
+		lua_setfield(L, -2, "SetShort");
+		lua_pushcfunction(L, Get<char>);
+		lua_setfield(L, -2, "GetChar");
+		lua_pushcfunction(L, Set<char>);
+		lua_setfield(L, -2, "SetChar");
 		lua_pushcfunction(L, Get<float>);
 		lua_setfield(L, -2, "GetFloat");
 		lua_pushcfunction(L, Set<float>);
 		lua_setfield(L, -2, "SetFloat");
+		lua_pushcfunction(L, Get<double>);
+		lua_setfield(L, -2, "GetDouble");
+		lua_pushcfunction(L, Set<double>);
+		lua_setfield(L, -2, "SetDouble");
 		lua_setfield(L, -2, "__index");
 		lua_pushcfunction(L, traits::ToString);
 		lua_setfield(L, -2, "__tostring");
@@ -69,6 +82,9 @@ struct luacl_buffer {
 		cl_mem_flags flags = static_cast<cl_mem_flags>(lua_tonumber(L, 3));
 		flags = (flags == 0) ? (CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR) : flags;
 
+		if (size == 0) {
+			return luaL_error(L, "Bad argument #2: size of buffer must be greater than %d.", LUACL_BUFFER_MIN_SIZE);
+		}
 		void * data = malloc(size);
 		CheckAllocError(L, data);
 		memset(data, 0, size);
