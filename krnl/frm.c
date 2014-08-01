@@ -14,7 +14,9 @@
 
 /* Debug on CPU! */
 #if !defined(__OPENCL_VERSION__)
+#ifndef _DEBUG
 #define _DEBUG
+#endif /* _DEBUG */
 #endif /* !defined(__OPENCL_VERSION__) */
 
 /* Codes enclosed in 'hostonly' will be discarded at OpenCL devices, and vice versa. */
@@ -47,7 +49,7 @@ void free( void* );
 #define hfuncname __FUNCTION__
 #else
 #define hfuncname __func__
-#endif
+#endif /* defined(_MSC_VER) */
 #define assert(expression) if(!(expression)){ \
         printf("Assertion failed: %s, function %s, file %s, line %d.\n", \
                 KRNL_STR(expression),  hfuncname ,__FILE__, __LINE__); \
@@ -155,10 +157,10 @@ k8u clz( k64u mask ) {
     unsigned long IDX = 0;
     if ( mask >> 32 ) {
         _BitScanReverse( &IDX, mask >> 32 );
-        return 31 - IDX;
+        return (k8u)(31 - IDX);
     }
     _BitScanReverse( &IDX, mask & 0xFFFFFFFFULL );
-    return 63 - IDX;
+    return (k8u)(63 - IDX);
 }
 #else
 /*
@@ -373,7 +375,7 @@ float stdnor_rng( rtinfo_t* rti ) {
         Which is representable by decimal 1.1920929E-7.
         With a minimal value 1.1920929E-7, the max vaule stdnor_rng could give is approximately 5.64666.
     */
-    return sqrt( -2.0f * log( uni_rng( rti ) + 1.1920929E-7 ) ) * cospi( 2.0f * uni_rng( rti ) );
+    return (float)(sqrt( -2.0f * log( uni_rng( rti ) + 1.1920929E-7 ) ) * cospi( 2.0f * uni_rng( rti ) ));
     /*
         To get another individual normally distributed number in pair, replace 'cospi' to 'sinpi'.
         It's simply thrown away here, because of diverge penalty.
@@ -633,11 +635,12 @@ void scan_apl( rtinfo_t* rti ) {
 #if !defined(__OPENCL_VERSION__)
 int main() {
     float* result = malloc( 4 * iterations );
-    int i, j;
+    int i;
     for( i = 0; i < iterations; i++ ) {
         sim_iterate( result );
     }
     /*
+	int j;
     printf( "result:\n" );
     for( i = 0; i < iterations; i += 5 ) {
         for( j = 0; j < 5 && j + i < iterations; j++ )

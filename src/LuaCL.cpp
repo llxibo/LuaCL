@@ -18,7 +18,7 @@ int main(int argc, char **argv) {
 	}
 
 	luaL_openlibs(L);
-	
+
 	lua_atpanic(L, panic);
 
 #if defined(_DEBUG)
@@ -32,8 +32,6 @@ int main(int argc, char **argv) {
 	luacl_cmdqueue::Init(L);
 	luacl_buffer::Init(L);
     luacl_event::Init(L);
-    
-	util::test_host_byte_order();
 
 	int error = luaL_dofile(L, "test.lua");
 	if (error) {
@@ -41,7 +39,7 @@ int main(int argc, char **argv) {
 	}
 
 	lua_close(L);
-    
+
 #if defined(_LUACL_PAUSE_SYSTEM)
 	system("pause");
 #endif
