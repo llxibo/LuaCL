@@ -64,11 +64,11 @@ struct luacl_context {
 		/* Get arg2: device | {devices} */
 		std::vector<cl_device_id> devices;
 		if (lua_istable(L, 2)) {
-			//printf("CreateContext: Checking table as device list...\n");
+			//l_debug(L, "CreateContext: Checking table as device list...");
 			devices = luacl_object<cl_device_id>::CheckObjectTable(L, 2);
 		}
 		else if (lua_isuserdata(L, 2)) {
-			//printf("CreateContext: Checking userdata as device...\n");
+			//l_debug(L, "CreateContext: Checking userdata as device...");
 			cl_device_id device = luacl_object<cl_device_id>::CheckObject(L, 2);
 			devices.push_back(device);
 		}

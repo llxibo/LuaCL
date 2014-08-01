@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		8D2E507E198BDBCA00680C25 /* unit_test.lua in Copy Files */ = {isa = PBXBuildFile; fileRef = 8D2E507D198BDBBD00680C25 /* unit_test.lua */; };
 		8D98B3A1197F41E9003C95C5 /* OpenCL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8D98B3A0197F41E9003C95C5 /* OpenCL.framework */; };
 		8D98B3A9197F427D003C95C5 /* dump_table.lua in Copy Files */ = {isa = PBXBuildFile; fileRef = 8D98B3A6197F4245003C95C5 /* dump_table.lua */; };
 		8DADEFA219763E1D00FCB9E8 /* test.lua in Copy Files */ = {isa = PBXBuildFile; fileRef = 8DADEFA119763E1100FCB9E8 /* test.lua */; };
@@ -50,6 +51,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 16;
 			files = (
+				8D2E507E198BDBCA00680C25 /* unit_test.lua in Copy Files */,
 				8D98B3A9197F427D003C95C5 /* dump_table.lua in Copy Files */,
 				8DADEFA219763E1D00FCB9E8 /* test.lua in Copy Files */,
 			);
@@ -60,6 +62,8 @@
 
 /* Begin PBXFileReference section */
 		8D0D2D041982C42C00F77691 /* luacl_kernel.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = luacl_kernel.hpp; sourceTree = "<group>"; };
+		8D2E507C198BCA6400680C25 /* luacl_debug.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = luacl_debug.hpp; sourceTree = "<group>"; };
+		8D2E507D198BDBBD00680C25 /* unit_test.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = unit_test.lua; sourceTree = "<group>"; };
 		8D51C9BC1983A2E80043C259 /* luacl_cmdqueue.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = luacl_cmdqueue.hpp; sourceTree = "<group>"; };
 		8D588208198404940076E512 /* luacl_buffer.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = luacl_buffer.hpp; sourceTree = "<group>"; };
 		8D6C702D1981E521003A1CAD /* luacl_program.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = luacl_program.hpp; sourceTree = "<group>"; };
@@ -149,8 +153,9 @@
 				8DDF12851976164E001AD698 /* lua-5.1.4 */,
 				8DDF122419761629001AD698 /* src */,
 				8DB74FC4197615AE0021F366 /* Products */,
-				8DADEFA119763E1100FCB9E8 /* test.lua */,
 				8D98B3A6197F4245003C95C5 /* dump_table.lua */,
+				8DADEFA119763E1100FCB9E8 /* test.lua */,
+				8D2E507D198BDBBD00680C25 /* unit_test.lua */,
 			);
 			sourceTree = "<group>";
 		};
@@ -168,6 +173,7 @@
 				8D588208198404940076E512 /* luacl_buffer.hpp */,
 				8D51C9BC1983A2E80043C259 /* luacl_cmdqueue.hpp */,
 				8D98B3A2197F4228003C95C5 /* luacl_context.hpp */,
+				8D2E507C198BCA6400680C25 /* luacl_debug.hpp */,
 				8D98B3A3197F4228003C95C5 /* luacl_device.hpp */,
 				8DA492111989DD5400FEE746 /* luacl_endianness.hpp */,
 				8D7ECE8B198905E500BA80E5 /* luacl_event.hpp */,
@@ -351,7 +357,7 @@
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
+					"_DEBUG=1",
 					"$(inherited)",
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;

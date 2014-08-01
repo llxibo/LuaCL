@@ -26,7 +26,6 @@ struct luacl_object_constants<cl_kernel> {
 };
 
 struct luacl_kernel {
-
 	typedef luacl_object<cl_kernel> traits;
 
 	static void Init(lua_State *L) {

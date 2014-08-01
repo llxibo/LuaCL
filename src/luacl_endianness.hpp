@@ -4,7 +4,6 @@
 #include <stdint.h>
 
 namespace util{
-    
 	enum luacl_byte_order_enumeration {
 		LUACL_UNTESTED_ENDIAN,
 		LUACL_LITTLE_ENDIAN,

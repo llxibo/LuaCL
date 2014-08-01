@@ -24,7 +24,6 @@ struct luacl_object_constants <cl_platform_id> {
 };
 
 struct luacl_platform {
-
 	typedef luacl_object<cl_platform_id> traits;
 
 	static void Init(lua_State *L) {
@@ -67,11 +66,11 @@ struct luacl_platform {
 	static int GetInfo(lua_State *L) {
 		cl_platform_id platform = traits::CheckObject(L);
 		lua_newtable(L);	/* Create a table */
-		PushInfo(L, platform, CL_PLATFORM_PROFILE, "profile");
-		PushInfo(L, platform, CL_PLATFORM_VERSION, "version");
-		PushInfo(L, platform, CL_PLATFORM_NAME, "name");
-		PushInfo(L, platform, CL_PLATFORM_VENDOR, "vendor");
-		PushInfo(L, platform, CL_PLATFORM_EXTENSIONS, "extensions");
+		PushInfo(L, platform, CL_PLATFORM_PROFILE, "PROFILE");
+		PushInfo(L, platform, CL_PLATFORM_VERSION, "VERSION");
+		PushInfo(L, platform, CL_PLATFORM_NAME, "NAME");
+		PushInfo(L, platform, CL_PLATFORM_VENDOR, "VENDOR");
+		PushInfo(L, platform, CL_PLATFORM_EXTENSIONS, "EXTENSIONS");
 		return 1;
 	}
 

@@ -1,14 +1,5 @@
 #include "LuaCL.h"
 
-#include "luacl_platform.hpp"
-#include "luacl_device.hpp"
-#include "luacl_context.hpp"
-#include "luacl_program.hpp"
-#include "luacl_kernel.hpp"
-#include "luacl_cmdqueue.hpp"
-#include "luacl_buffer.hpp"
-#include "luacl_event.hpp"
-
 LUA_API int panic(lua_State *L) {
 	printf("Panic error:\n");
 	const char * msg = lua_tostring(L, 1);
@@ -30,6 +21,9 @@ int main(int argc, char **argv) {
 	
 	lua_atpanic(L, panic);
 
+#if defined(_DEBUG)
+    luacl_debug::Init(L);
+#endif
 	luacl_platform::Init(L);
 	luacl_device::Init(L);
 	luacl_context::Init(L);

@@ -9,16 +9,17 @@ static const char LUACL_MEM_METATABLE[] = "LuaCL.Metatable.Mem";
 static const char LUACL_MEM_TOSTRING[] = "LuaCL_Mem";
 static const size_t LUACL_BUFFER_MIN_SIZE = 2;
 
+/* Buffer object, keeping cl_mem object and allocated memory. */
 struct luacl_buffer_object {
 	cl_mem mem = NULL;
 	void * data = NULL;
 	size_t size = 0;
 
 	~luacl_buffer_object() {
-		if (mem != NULL) {
+		if (mem != NULL) {      /* Note that the cl_mem might not be assigned upon destruction */
 			clReleaseMemObject(mem);
 		}
-		free(data);
+		free(data);             /* According to C99, free(NULL) should always be safe. */
 	}
 };
 
@@ -99,7 +100,9 @@ struct luacl_buffer {
 	static int Get(lua_State *L) {
 		luacl_buffer_info buffer = traits::CheckObject(L, 1);
 		size_t addr = static_cast<size_t>(lua_tonumber(L, 2));
-		// assert(addr >= 0 && addr * sizeof(T) < buffer->size);
+		if (addr * sizeof(T) > buffer->size) {
+            luaL_error(L, "Buffer access out of bound.");
+        }
 		T * data = reinterpret_cast<T *>(buffer->data);
 		lua_pushnumber(L, static_cast<lua_Number>(data[addr]));
 		return 1;
@@ -110,7 +113,9 @@ struct luacl_buffer {
 		luacl_buffer_info buffer = traits::CheckObject(L, 1);
 		size_t addr = static_cast<size_t>(lua_tonumber(L, 2));
 		T value = static_cast<T>(lua_tonumber(L, 3));
-		// assert(addr >= 0 && sizeof(addr) < buffer->size);
+		if (sizeof(addr) > buffer->size) {
+            luaL_error(L, "Buffer access out of bound.");
+        }
 		T * data = reinterpret_cast<T *>(buffer->data);
 		data[addr] = value;
 		//* (reinterpret_cast<T *>(buffer->data) + addr) = value;
