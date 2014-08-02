@@ -1,4 +1,13 @@
 print("LuaCL unit test")
+require "UnitTest.object"
+
+require "UnitTest.platform"
+
+local p = UnitTest.platform.Test()
+
+-- do return end
+
+local reg = GetRegistry()
 
 local function isLightUserdata(value)
 	return type(value) == "number" and tostring(value) == ""
@@ -17,7 +26,6 @@ local function matchTableValue(tbl1, tbl2)
 		assert(set2[value])
 	end
 end
--- assert(RegisterDebugCallback, "Unit test requires debug build.")
 
 -- debugInfo is an array that allows indexing values from the end with negative index
 local debugInfo = setmetatable({}, {
@@ -35,16 +43,12 @@ end
 
 RegisterDebugCallback(debugCallback)
 
-local reg = GetRegistry()
-
 ------ Platform ------
 do
 	assert(GetPlatform, "GetPlatform not found")
 
 	local platformReg = reg.LuaCL_Platform_Registry
 	assert(not next(platformReg), "Platform registry should be empty")
-	assert(getmetatable(platformReg).__mode == "kv", "Platform registry should be pure weak")
-
 	local platforms = {GetPlatform()}
 	assert(#platforms, "No platform detected")
 	-- dump_table(reg["LuaCL.Registry.Platform"], "LuaCL.Registry.Platform")
@@ -187,9 +191,50 @@ for index, platform in ipairs(platforms) do
 		collectgarbage()
 		assert(not next(reg.LuaCL_Device_Registry), "Failed collecting devices")
 
+		------ platform.CreateContext ------
 		local devices = {platform:GetDevices()}
-		local context = platform:CreateContext(devices)
+		local ret, err = pcall(platform.CreateContext)
+		assert(not ret)
+		assert(err:find("LuaCL_Platform expected, got no value"))
+		local ret, err = pcall(platform.CreateContext, platform)
+		assert(not ret)
+		assert(err:find("Bad argument, expecting one or more valid devices on arg #2."))
+		local ret, err = pcall(platform.CreateContext, platform, newproxy())
+		assert(not ret)
+		assert(err:find("LuaCL_Device expected, got userdata"))
+		local ret, err = pcall(platform.CreateContext, platform, {})	-- Create context with empty device list
+		assert(not ret)
+		assert(err:find("Bad argument, expecting one or more valid devices on arg #2."))
 
+		-- Context creation with single device
+		for index, device in ipairs(devices) do
+			collectgarbage()	-- Collect context objects from previous cycle
+			assert(not next(reg.LuaCL_Context_Registry))	-- The registry should be empty
+			local context = platform:CreateContext(device)
+			assert(getmetatable(context) == reg.LuaCL_Context)
+
+			assert(type(context.GetDevices) == "function")
+			local ret, err = pcall(context.GetDevices)
+			assert(not ret)
+			assert(err:find("LuaCL_Context expected, got no value"))
+			local ret, err = pcall(context.GetDevices, newproxy())
+			assert(not ret)
+			assert(err:find("LuaCL_Context expected, got userdata"))
+
+			local contextDevices = {context:GetDevices()}
+			assert(#contextDevices == 1)
+			assert(contextDevices[1] == device)
+		end
+
+		-- Context creation with multiple devices
+		local context = platform:CreateContext(devices)
+		local contextDevices = {context:GetDevices()}
+		assert(#devices == #contextDevices)
+		for index, device in ipairs(devices) do
+			-- Notice that the returned device list may not match the sequence of the device list it was created from
+			-- assert(device == contextDevices[index])
+		end
+		matchTableValue(devices, contextDevices)	-- But the listed devices should match
 	end
 end
 

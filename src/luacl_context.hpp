@@ -73,10 +73,10 @@ struct luacl_context {
 			devices.push_back(device);
 		}
 		else {
-			return luaL_error(L, "CreateContext: Bad argument, expecting device(s) on arg #2.");
+			return luaL_error(L, "CreateContext: Bad argument, expecting one or more valid devices on arg #2.");
 		}
 		if (devices.empty()) {			/* The device list should not be NULL by now */
-			return luaL_error(L, "CreateContext: Bad argument, expecting one or more valid device(s) on arg #2.");
+			return luaL_error(L, "CreateContext: Bad argument, expecting one or more valid devices on arg #2.");
 		}
 
 		/* Get arg3: callbackFunc | nil */
