@@ -45,22 +45,19 @@ namespace util{
 	}
 
 	template <typename T>
-	T* luacl_byte_order_reverse(T* buffer, size_t size) {
-		T* ret = buffer;
-		char * src = reinterpret_cast<char *>(buffer + 1);
-		char temp[sizeof(T)];
+	void luacl_byte_order_reverse(T * buffer, size_t size) {
+        char * src = reinterpret_cast<char *>(buffer + 1);
+		char wordBuffer[sizeof(T)];
 
 		while (size--) {
 			for (size_t i = 0; i < sizeof(T); i++) {
-				memcpy(temp + i, --src, 1);
+				memcpy(wordBuffer + i, --src, 1);
 			}
-			memcpy(buffer, temp, sizeof(T));
+			memcpy(buffer, wordBuffer, sizeof(T));
 
 			src += sizeof(T) * 2;
 			buffer++;
 		}
-
-		return ret;
 	}
 }
 

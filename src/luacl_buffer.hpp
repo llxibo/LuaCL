@@ -3,6 +3,7 @@
 
 #include "LuaCL.h"
 #include "luacl_object.hpp"
+#include "luacl_endianness.hpp"
 
 static const char LUACL_MEM_REGISTRY[] = "LuaCL_Mem_Registry";
 static const char LUACL_MEM_METATABLE[] = "LuaCL_Mem";
@@ -48,6 +49,8 @@ struct luacl_buffer {
 	static void Init(lua_State *L) {
 		luaL_newmetatable(L, LUACL_MEM_METATABLE);
 		lua_newtable(L);
+        lua_pushcfunction(L, GetBufferSize);
+        lua_setfield(L, -2, "GetBufferSize");
 		RegisterType<int>(L, "Int");
         RegisterType<float>(L, "Float");
         RegisterType<double>(L, "Double");
@@ -86,6 +89,12 @@ struct luacl_buffer {
 		return 1;
 	}
     
+    static int GetBufferSize(lua_State *L) {
+        luacl_buffer_info buffer = traits::CheckObject(L);
+        lua_pushnumber(L, static_cast<lua_Number>(buffer->size));
+        return 1;
+    }
+    
     template <typename T>
     static void RegisterType(lua_State *L, const char * name) {
 		lua_pushcfunction(L, Get<T>);
@@ -94,30 +103,32 @@ struct luacl_buffer {
 		lua_setfield(L, -2, std::string("Set").append(name).c_str());
         lua_pushcfunction(L, GetSize<T>);
         lua_setfield(L, -2, std::string("GetSize").append(name).c_str());
+        lua_pushcfunction(L, ReverseEndian<T>);
+        lua_setfield(L, -2, std::string("ReverseEndian").append(name).c_str());
     }
 
 	template <typename T>
 	static int Get(lua_State *L) {
 		luacl_buffer_info buffer = traits::CheckObject(L, 1);
-		size_t addr = static_cast<size_t>(lua_tonumber(L, 2));
-		if (addr * sizeof(T) > buffer->size) {
+		size_t index = static_cast<size_t>(lua_tonumber(L, 2));
+		if (index * sizeof(T) > buffer->size + sizeof(T) - 1) {
             luaL_error(L, "Buffer access out of bound.");
         }
 		T * data = reinterpret_cast<T *>(buffer->data);
-		lua_pushnumber(L, static_cast<lua_Number>(data[addr]));
+		lua_pushnumber(L, static_cast<lua_Number>(data[index]));
 		return 1;
 	}
 
 	template <typename T>
 	static int Set(lua_State *L) {
 		luacl_buffer_info buffer = traits::CheckObject(L, 1);
-		size_t addr = static_cast<size_t>(lua_tonumber(L, 2));
+		size_t index = static_cast<size_t>(lua_tonumber(L, 2));
 		T value = static_cast<T>(lua_tonumber(L, 3));
-		if (sizeof(addr) > buffer->size) {
+		if (index * sizeof(T) > buffer->size + sizeof(T) - 1) {
             luaL_error(L, "Buffer access out of bound.");
         }
 		T * data = reinterpret_cast<T *>(buffer->data);
-		data[addr] = value;
+		data[index] = value;
 		//* (reinterpret_cast<T *>(buffer->data) + addr) = value;
 		return 0;
 	}
@@ -128,15 +139,31 @@ struct luacl_buffer {
         return 1;
     }
     
+    template <typename T>
+    static int ReverseEndian(lua_State *L) {
+		luacl_buffer_info buffer = traits::CheckObject(L, 1);
+		size_t index = static_cast<size_t>(lua_tonumber(L, 2));
+        size_t range = static_cast<size_t>(lua_tonumber(L, 3));
+        range = (range == 0) ? buffer->size / sizeof(T) - index : range;
+        if (index * sizeof(T) > buffer->size + sizeof(T) - 1) {
+            luaL_error(L, "Buffer access out of bound.");
+        }
+		T * data = reinterpret_cast<T *>(buffer->data);
+        LUACL_TRYCALL(
+            util::luacl_byte_order_reverse<T>(data + index, range);
+        );
+		return 0;
+    }
+    
     static int Clear(lua_State *L) {
         luacl_buffer_info buffer = traits::CheckObject(L);
-        size_t size = static_cast<size_t>(lua_tonumber(L, 2));
-        size_t offset = static_cast<size_t>(lua_tonumber(L, 3));
-        size = (size == 0) ? buffer->size : size;
-        if (size + offset > buffer->size) {
+        size_t offset = static_cast<size_t>(lua_tonumber(L, 2));
+        size_t bytes = static_cast<size_t>(lua_tonumber(L, 3));
+        bytes = (bytes == 0) ? (buffer->size - offset) : bytes;
+        if (bytes + offset > buffer->size) {
             luaL_error(L, "Bad argument: size and offset range out of bound");
         }
-        memset(reinterpret_cast<char *>(buffer->data) + offset, 0, size);
+        memset(reinterpret_cast<char *>(buffer->data) + offset, 0, bytes);
         return 0;
     }
 };
