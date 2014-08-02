@@ -89,18 +89,108 @@ for index, platform in ipairs(platforms) do
 		assert(info[key])
 	end
 
-	------ Device ------
 	do
+		------ platform.GetDevices ------
 		local ret, err = pcall(platform.GetDevices)
 		assert(not ret)
 		assert(err:find("LuaCL_Platform expected, got no value"))
 		local ret, err = pcall(platform.GetDevices, newproxy())
 		assert(not ret)
 		assert(err:find("LuaCL_Platform expected, got userdata"))
+
+		assert(not next(reg.LuaCL_Device_Registry))
 		local devices = {platform:GetDevices()}
+		assert(#devices > 0, "No device found")
 		for index, device in ipairs(devices) do
-			print(getmetatable(device))
+			assert(getmetatable(device) == reg.LuaCL_Device)
+			assert(tostring(device):find("LuaCL_Device: "))
+
+			assert(device.GetInfo)
+			local ret, err = pcall(device.GetInfo)
+			assert(not ret)
+			assert(err:find("LuaCL_Device expected, got no value"))
+			local ret, err = pcall(device.GetInfo, platform)
+			assert(not ret)
+			assert(err:find("LuaCL_Device expected, got userdata"))
+
+			local info = device:GetInfo()
+			assert(type(info) == "table")
+			local deviceInfoKeys = {
+				TYPE = "number",
+				VENDOR_ID = "number",
+				MAX_COMPUTE_UNITS = "number",
+				MAX_WORK_ITEM_DIMENSIONS = "number",
+				MAX_WORK_GROUP_SIZE = "number",
+				MAX_WORK_ITEM_SIZES = "table",
+				PREFERRED_VECTOR_WIDTH_CHAR = "number",
+				PREFERRED_VECTOR_WIDTH_SHORT = "number",
+				PREFERRED_VECTOR_WIDTH_INT = "number",
+				PREFERRED_VECTOR_WIDTH_LONG = "number",
+				PREFERRED_VECTOR_WIDTH_FLOAT = "number",
+				PREFERRED_VECTOR_WIDTH_DOUBLE = "number",
+				MAX_CLOCK_FREQUENCY = "number",
+				ADDRESS_BITS = "number",
+				MAX_READ_IMAGE_ARGS = "number",
+				MAX_WRITE_IMAGE_ARGS = "number",
+				MAX_MEM_ALLOC_SIZE = "number",
+				IMAGE2D_MAX_WIDTH = "number",
+				IMAGE2D_MAX_HEIGHT = "number",
+				IMAGE3D_MAX_WIDTH = "number",
+				IMAGE3D_MAX_HEIGHT = "number",
+				IMAGE3D_MAX_DEPTH = "number",
+				IMAGE_SUPPORT = "number",
+				MAX_PARAMETER_SIZE = "number",
+				MAX_SAMPLERS = "number",
+				MEM_BASE_ADDR_ALIGN = "number",
+				MIN_DATA_TYPE_ALIGN_SIZE = "number",
+				SINGLE_FP_CONFIG = "number",
+				GLOBAL_MEM_CACHE_TYPE = "number",
+				GLOBAL_MEM_CACHELINE_SIZE = "number",
+				GLOBAL_MEM_CACHE_SIZE = "number",
+				GLOBAL_MEM_SIZE = "number",
+				MAX_CONSTANT_BUFFER_SIZE = "number",
+				MAX_CONSTANT_ARGS = "number",
+				LOCAL_MEM_TYPE = "number",
+				LOCAL_MEM_SIZE = "number",
+				ERROR_CORRECTION_SUPPORT = "number",
+				PROFILING_TIMER_RESOLUTION = "number",
+				ENDIAN_LITTLE = "number",
+				AVAILABLE = "number",
+				COMPILER_AVAILABLE = "number",
+				EXECUTION_CAPABILITIES = "number",
+				QUEUE_PROPERTIES = "number",
+				NAME = "string",
+				VENDOR = "string",
+				DRIVER_VERSION = "string",
+				PROFILE = "string",
+				VERSION = "string",
+				EXTENSIONS = "string",
+				DOUBLE_FP_CONFIG = "number",
+				PREFERRED_VECTOR_WIDTH_HALF = "number",
+				HOST_UNIFIED_MEMORY = "number",
+				NATIVE_VECTOR_WIDTH_CHAR = "number",
+				NATIVE_VECTOR_WIDTH_SHORT = "number",
+				NATIVE_VECTOR_WIDTH_INT = "number",
+				NATIVE_VECTOR_WIDTH_LONG = "number",
+				NATIVE_VECTOR_WIDTH_FLOAT = "number",
+				NATIVE_VECTOR_WIDTH_DOUBLE = "number",
+				NATIVE_VECTOR_WIDTH_HALF = "number",
+			}
+			for key, value in pairs(deviceInfoKeys) do
+				assert(type(info[key]) == value)
+			end
 		end
+
+		matchTableValue(devices, reg.LuaCL_Device_Registry)
+
+		devices = nil
+		collectgarbage()
+		assert(not next(reg.LuaCL_Device_Registry), "Failed collecting devices")
+
+		local devices = {platform:GetDevices()}
+		local context = platform:CreateContext(devices)
+
 	end
 end
 
+print("All tests passed")
