@@ -11,6 +11,7 @@
 #define iterations 1
 #define deterministic_seed 5171
 #define power_max 100.0f
+#define passive_power_regen 1
 
 /* Debug on CPU! */
 #if !defined(__OPENCL_VERSION__)
@@ -157,10 +158,10 @@ k8u clz( k64u mask ) {
     unsigned long IDX = 0;
     if ( mask >> 32 ) {
         _BitScanReverse( &IDX, mask >> 32 );
-        return (k8u)(31 - IDX);
+        return ( k8u )( 31 - IDX );
     }
     _BitScanReverse( &IDX, mask & 0xFFFFFFFFULL );
-    return (k8u)(63 - IDX);
+    return ( k8u )( 63 - IDX );
 }
 #else
 /*
@@ -375,7 +376,7 @@ float stdnor_rng( rtinfo_t* rti ) {
         Which is representable by decimal 1.1920929E-7.
         With a minimal value 1.1920929E-7, the max vaule stdnor_rng could give is approximately 5.64666.
     */
-    return (float)(sqrt( -2.0f * log( uni_rng( rti ) + 1.1920929E-7 ) ) * cospi( 2.0f * uni_rng( rti ) ));
+    return ( float )( sqrt( -2.0f * log( uni_rng( rti ) + 1.1920929E-7 ) ) * cospi( 2.0f * uni_rng( rti ) ) );
     /*
         To get another individual normally distributed number in pair, replace 'cospi' to 'sinpi'.
         It's simply thrown away here, because of diverge penalty.
@@ -424,7 +425,8 @@ void power_gain( rtinfo_t* rti, float power ) {
 /* Power check. */
 kbool power_check( rtinfo_t* rti, float cost ) {
     if ( cost <= rti->player.power ) return 1;
-    eq_enqueue_ps( rti, TIME_OFFSET( FROM_SECONDS( ( cost - rti->player.power ) / rti->player.power_regen ) ) );
+    if ( passive_power_regen && rti->player.power_regen > 0 )
+        eq_enqueue_ps( rti, TIME_OFFSET( FROM_SECONDS( ( cost - rti->player.power ) / rti->player.power_regen ) ) );
     return 0;
 }
 
@@ -480,7 +482,8 @@ int eq_execute( rtinfo_t* rti ) {
         p[i] = last;
 
         /* Now 'min' contains the top priority. Execute it. */
-        power_gain( rti, TO_SECONDS( min.time - rti->timestamp ) * rti->player.power_regen );
+        if ( passive_power_regen )
+            power_gain( rti, TO_SECONDS( min.time - rti->timestamp ) * rti->player.power_regen );
         rti->timestamp = min.time;
 
         if ( min.routine == EVENT_END_SIMULATION ) /* Finish the simulation here. */
@@ -492,7 +495,8 @@ int eq_execute( rtinfo_t* rti ) {
 
     } else {
         /* Invoke power suffice routine. */
-        power_gain( rti, TO_SECONDS( rti->eq.power_suffice - rti->timestamp ) * rti->player.power_regen );
+        if ( passive_power_regen )
+            power_gain( rti, TO_SECONDS( rti->eq.power_suffice - rti->timestamp ) * rti->player.power_regen );
         rti->timestamp = rti->eq.power_suffice;
         rti->eq.power_suffice = 0;
         /*
@@ -568,7 +572,7 @@ float enemy_health_percent( rtinfo_t* rti ) {
         The best solution here is to use a linear mix of time to approximate the health precent,
         which is used in SimC for the very first iteration.
     */
-    time_t remainder = max( (k16u)FROM_SECONDS( 0 ), (k16u)(rti->expected_combat_length - rti->timestamp) );
+    time_t remainder = max( ( k16u )FROM_SECONDS( 0 ), ( k16u )( rti->expected_combat_length - rti->timestamp ) );
     return mix( death_pct, initial_health_percentage, ( float )remainder / ( float )rti->expected_combat_length );
 }
 
@@ -600,8 +604,8 @@ void sim_init( rtinfo_t* rti, k32u seed, snapshot_t* ssbuf ) {
 }
 
 /* Single iteration logic. */
-deviceonly(__kernel) void sim_iterate(
-                deviceonly( __global ) float* dps_result
+deviceonly( __kernel ) void sim_iterate(
+    deviceonly( __global ) float* dps_result
 ) {
     deviceonly( __private ) rtinfo_t _rti;
     snapshot_t snapshot_buffer[ SNAPSHOT_SIZE ];
@@ -640,7 +644,7 @@ int main() {
         sim_iterate( result );
     }
     /*
-	int j;
+    int j;
     printf( "result:\n" );
     for( i = 0; i < iterations; i += 5 ) {
         for( j = 0; j < 5 && j + i < iterations; j++ )
