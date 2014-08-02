@@ -7,10 +7,10 @@
 #include "luacl_cmdqueue.hpp"
 #include "luacl_buffer.hpp"
 
-static const char LUACL_CONTEXT_REGISTRY[] = "LuaCL.Registry.Context";
-static const char LUACL_CONTEXT_METATABLE[] = "LuaCL.Metatable.Context";
+static const char LUACL_CONTEXT_REGISTRY[] = "LuaCL_Context_Registry";
+static const char LUACL_CONTEXT_METATABLE[] = "LuaCL_Context";
 static const char LUACL_CONTEXT_TOSTRING[] = "LuaCL_Context";
-static const char LUACL_CONTEXT_REGISTRY_CALLBACK[] = "LuaCL.Registry.ContextCallback";
+static const char LUACL_CONTEXT_REGISTRY_CALLBACK[] = "LuaCL_ContextCallback_Registry";
 
 template <>
 struct luacl_object_constants<cl_context> {

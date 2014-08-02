@@ -6,8 +6,8 @@
 #include "luacl_device.hpp"
 #include "luacl_context.hpp"
 
-static const char LUACL_PLATFORM_REGISTRY[] = "LuaCL.Registry.Platform";
-static const char LUACL_PLATFORM_METATABLE[] = "LuaCL.Metatable.Platform";
+static const char LUACL_PLATFORM_REGISTRY[] = "LuaCL_Platform_Registry";
+static const char LUACL_PLATFORM_METATABLE[] = "LuaCL_Platform";
 static const char LUACL_PLATFORM_TOSTRING[] = "LuaCL_Platform";
 
 template <>

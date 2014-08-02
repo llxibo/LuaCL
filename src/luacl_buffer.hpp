@@ -4,8 +4,8 @@
 #include "LuaCL.h"
 #include "luacl_object.hpp"
 
-static const char LUACL_MEM_REGISTRY[] = "LuaCL.Registry.Mem";
-static const char LUACL_MEM_METATABLE[] = "LuaCL.Metatable.Mem";
+static const char LUACL_MEM_REGISTRY[] = "LuaCL_Mem_Registry";
+static const char LUACL_MEM_METATABLE[] = "LuaCL_Mem";
 static const char LUACL_MEM_TOSTRING[] = "LuaCL_Mem";
 static const size_t LUACL_BUFFER_MIN_SIZE = 2;
 

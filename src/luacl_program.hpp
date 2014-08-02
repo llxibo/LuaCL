@@ -8,8 +8,8 @@
 #include "luacl_kernel.hpp"
 #include <assert.h>
 
-static const char LUACL_PROGRAM_REGISTRY[] = "LuaCL.Registry.Program";
-static const char LUACL_PROGRAM_METATABLE[] = "LuaCL.Metatable.Program";
+static const char LUACL_PROGRAM_REGISTRY[] = "LuaCL_Program_Registry";
+static const char LUACL_PROGRAM_METATABLE[] = "LuaCL_Program";
 static const char LUACL_PROGRAM_TOSTRING[] = "LuaCL_Program";
 
 template <>
