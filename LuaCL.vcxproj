@@ -52,6 +52,7 @@
     <ClCompile Include="src\LuaCL.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\luacl_math.hpp" />
     <ClInclude Include="src\luacl_debug.hpp" />
     <ClInclude Include="src\luacl_endianness.hpp" />
     <ClInclude Include="lua-5.1.4\src\lapi.h" />

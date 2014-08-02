@@ -59,5 +59,6 @@ extern "C" {
 #include "luacl_buffer.hpp"
 #include "luacl_event.hpp"
 #include "luacl_endianness.hpp"
+#include "luacl_math.hpp"
 
 #endif /* __LUACL_H */
