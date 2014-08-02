@@ -6,8 +6,8 @@
 #include "luacl_buffer.hpp"
 #include "luacl_event.hpp"
 
-static const char LUACL_CMDQUEUE_REGISTRY[] = "LuaCL.Registry.CmdQueue";
-static const char LUACL_CMDQUEUE_METATABLE[] = "LuaCL.Metatable.CmdQueue";
+static const char LUACL_CMDQUEUE_REGISTRY[] = "LuaCL_CmdQueue_Registry";
+static const char LUACL_CMDQUEUE_METATABLE[] = "LuaCL_CmdQueue";
 static const char LUACL_CMDQUEUE_TOSTRING[] = "LuaCL_CmdQueue";
 
 template <>

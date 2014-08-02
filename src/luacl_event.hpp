@@ -5,8 +5,8 @@
 #include "luacl_object.hpp"
 #include <vector>
 
-static const char LUACL_EVENT_REGISTRY[] = "LuaCL.Registry.Event";
-static const char LUACL_EVENT_METATABLE[] = "LuaCL.Metatable.Event";
+static const char LUACL_EVENT_REGISTRY[] = "LuaCL_Event_Registry";
+static const char LUACL_EVENT_METATABLE[] = "LuaCL_Event";
 static const char LUACL_EVENT_TOSTRING[] = "LuaCL_Event";
 
 template <>

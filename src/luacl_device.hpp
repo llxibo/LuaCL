@@ -5,8 +5,8 @@
 #include "luacl_object.hpp"
 #include <assert.h>
 
-static const char LUACL_DEVICE_REGISTRY[] = "LuaCL.Registry.Device";
-static const char LUACL_DEVICE_METATABLE[] = "LuaCL.Metatable.Device";
+static const char LUACL_DEVICE_REGISTRY[] = "LuaCL_Device_Registry";
+static const char LUACL_DEVICE_METATABLE[] = "LuaCL_Device";
 static const char LUACL_DEVICE_TOSTRING[] = "LuaCL_Device";
 
 template <>

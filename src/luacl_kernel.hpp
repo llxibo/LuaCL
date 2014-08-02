@@ -5,8 +5,8 @@
 #include "luacl_object.hpp"
 #include <assert.h>
 
-static const char LUACL_KERNEL_REGISTRY[] = "LuaCL.Registry.Kernel";
-static const char LUACL_KERNEL_METATABLE[] = "LuaCL.Metatable.Kernel";
+static const char LUACL_KERNEL_REGISTRY[] = "LuaCL_Kernel_Registry";
+static const char LUACL_KERNEL_METATABLE[] = "LuaCL_Kernel";
 static const char LUACL_KERNEL_TOSTRING[] = "LuaCL_Kernel";
 static const char LUACL_KERNEL_DEFAULT_NAME[] = "<anonymous kernel>";
 template <>
