@@ -3,7 +3,13 @@ dofile("dump_table.lua")
 print("LuaCL environment test")
 
 RegisterDebugCallback(print)
-dofile("unit_test.lua")
+
+function load()
+	dofile("UnitTest.lua")
+end
+xpcall(load, function (err)
+	print(debug.traceback(err))
+end)
 do return end
 
 local platforms = {GetPlatform()}
@@ -135,6 +141,11 @@ for index, platform in ipairs(platforms) do
 			-- assert(buffer:GetInt(index) == index, index)
 		end
 		print("Read time ", os.clock() - startTime)
+
+		local startTime = os.clock()
+		buffer:ReverseEndianInt()
+		print("ReverseTime ", os.clock() - startTime)
+
 		buffer = nil
 		collectgarbage()
 	end

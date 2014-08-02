@@ -1,4 +1,13 @@
 print("LuaCL unit test")
+require "UnitTest.object"
+
+require "UnitTest.platform"
+
+local p = UnitTest.platform.Test()
+
+-- do return end
+
+local reg = GetRegistry()
 
 local function isLightUserdata(value)
 	return type(value) == "number" and tostring(value) == ""
@@ -17,7 +26,6 @@ local function matchTableValue(tbl1, tbl2)
 		assert(set2[value])
 	end
 end
--- assert(RegisterDebugCallback, "Unit test requires debug build.")
 
 -- debugInfo is an array that allows indexing values from the end with negative index
 local debugInfo = setmetatable({}, {
@@ -34,12 +42,6 @@ local function debugCallback(msg)
 end
 
 RegisterDebugCallback(debugCallback)
-
-local reg = GetRegistry()
-
-assert(getmetatable(reg.LuaCL_Platform_Registry).__mode == "kv", "Platform registry should be pure weak")
-assert(getmetatable(reg.LuaCL_Context_Registry).__mode == "kv")
-assert(getmetatable(reg.LuaCL_Device_Registry).__mode == "kv")
 
 ------ Platform ------
 do
