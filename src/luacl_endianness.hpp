@@ -11,7 +11,6 @@ namespace util{
 		LUACL_MIXED_ENDIAN,
 	};
 	
-    extern "C"
 	inline luacl_byte_order_enumeration luacl_host_byte_order(void) {
 
 		static luacl_byte_order_enumeration byte_order = LUACL_UNTESTED_ENDIAN;
@@ -46,32 +45,22 @@ namespace util{
 	}
 
 	template <typename T>
-	T luacl_byte_order_reverse(T in) {
-		T out;
-		char * dest = reinterpret_cast<char *>(&out);
-		char * src = reinterpret_cast<char *>(&in + 1);
+	T* luacl_byte_order_reverse(T* buffer, size_t size) {
+		T* ret = buffer;
+		char * src = reinterpret_cast<char *>(buffer + 1);
+		char temp[sizeof(T)];
 
-		for (size_t i = 0; i < sizeof(T); i++) {
-			memcpy(dest++, --src, 1);
+		while (size--) {
+			for (size_t i = 0; i < sizeof(T); i++) {
+				memcpy(temp + i, --src, 1);
+			}
+			memcpy(buffer, temp, sizeof(T));
+
+			src += sizeof(T) * 2;
+			buffer++;
 		}
 
-		return out;
-	}
-
-	void test_host_byte_order(void) {
-		const char * order[] = {
-			"Untested Endianness",
-			"Little Endianness",
-			"Big Endianness",
-			"Mixed Endianness",
-		};
-		int test = 0x3355CCBE;
-
-		printf("Byte order of host: %s\n", order[luacl_host_byte_order()]);
-		
-		printf("Test data: %08X \t", test);
-		test = luacl_byte_order_reverse(test);
-		printf("Reversed: %08X\n", test);
+		return ret;
 	}
 }
 
