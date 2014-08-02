@@ -2,6 +2,10 @@ dofile("dump_table.lua")
 
 print("LuaCL environment test")
 
+RegisterDebugCallback(print)
+-- dofile("unit_test.lua")
+-- do return end
+
 local platforms = {GetPlatform()}
 
 dump_table(platforms, "platforms")

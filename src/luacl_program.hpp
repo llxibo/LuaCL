@@ -29,7 +29,6 @@ struct luacl_object_constants <cl_program> {
 };
 
 struct luacl_program {
-
 	typedef luacl_object<cl_program> traits;
 
 	static void Init(lua_State *L) {
@@ -75,7 +74,7 @@ struct luacl_program {
 		std::vector<std::string> binaries = traits::CheckStringTable(L, 3);
 
 		size_t size = devices.size();
-        // printf("Got %zu binary objects\n", size);
+        // l_debug(L, "Got %zu binary objects", size);
 		if (size != binaries.size()) {
 			return luaL_error(L, "Bad argument #2 and #3: table length mismatch.");
 		}
@@ -83,7 +82,7 @@ struct luacl_program {
 		std::vector<const unsigned char *> binaryPointers;	/* No need to free pointers in this container */
 		for (size_t index = 0; index < size; index++) {
 			lengths.push_back(binaries[index].size());
-            // printf("Binary size #%zu: %lx\n", index, binaries[index].size());
+            // l_debug(L, "Binary size #%zu: %lx", index, binaries[index].size());
 			binaryPointers.push_back(
 				reinterpret_cast<const unsigned char *>(binaries[index].c_str())
 			);
@@ -172,7 +171,7 @@ struct luacl_program {
         std::vector< std::vector<char> > binaries(numBinaries);
         std::vector<char *> binaryPointers;
         for (int index = 0; index < numBinaries; index++) {
-            //printf("Allocating %lx for binary array #%d\n", sizes[index], index);
+            //l_debug(L, "Allocating %lx for binary array #%d", sizes[index], index);
             binaries[index].resize(sizes[index]);
             binaryPointers.push_back(binaries[index].data());
         }

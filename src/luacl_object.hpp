@@ -36,7 +36,7 @@ struct luacl_object {
 	typedef luacl_object_constants<cl_object> traits;
 
 	static int Wrap(lua_State *L, cl_object object) {
-        // printf("Wrapping object %p\n", object);
+        // l_debug(L, "Wrapping object %p", object);
 		lua_getfield(L, LUA_REGISTRYINDEX, traits::REGISTRY());
 		assert(lua_istable(L, -1));
 		/* Now the top of stack is registry table */
@@ -44,7 +44,7 @@ struct luacl_object {
 		lua_gettable(L, -2);	/* Query the registry table with value of pointer */
 		void *p = lua_touserdata(L, -1);													/* udata/nil, reg */
 		if (p == NULL) {
-			// printf("Wrap: Creating cache entry\n");
+			// l_debug(L, "Wrap: Creating cache entry");
 			cl_object *p = static_cast<cl_object *>(lua_newuserdata(L, sizeof(cl_object)));	/* udata, nil, reg */
 			*p = object;
 			luaL_getmetatable(L, traits::METATABLE());										/* mt, udata, nil, reg */
@@ -64,7 +64,7 @@ struct luacl_object {
 
 	static int Release(lua_State *L) {
 		cl_object object = CheckObject(L);
-		printf("__gc Releasing %s: %p\n", traits::TOSTRING(), object);
+		l_debug(L, "__gc Releasing %s: %p", traits::TOSTRING(), object);
 		LUACL_TRYCALL(
 			cl_int err = traits::Release(object);
 			CheckCLError(L, err, "Failed releasing LuaCL object: %d.");
@@ -109,7 +109,7 @@ struct luacl_object {
 		for (unsigned int i = 0; i < size; i++) {
             lua_rawgeti(L, index, i + 1);
 			cl_object object = CheckObject(L, -1);
-            printf("CheckObject %s %p\n", typeid(object).name(), object);
+            l_debug(L, "CheckObject %s %p", typeid(object).name(), object);
 			objects.push_back(object);
 			lua_pop(L, 1);
 		}
@@ -142,7 +142,7 @@ struct luacl_object {
 		while (lua_next(L, index)) {
 			size_t len = 0;
 			const char * str = luaL_checklstring(L, -1, &len);
-            printf("CheckString key %d: %lx\n", static_cast<int>(lua_tonumber(L, -2)), len);
+            l_debug(L, "CheckString key %d: %lx", static_cast<int>(lua_tonumber(L, -2)), len);
 			strings.push_back(std::string(str, len));
 			lua_pop(L, 1);
 		}

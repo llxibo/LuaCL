@@ -23,7 +23,6 @@ struct luacl_object_constants<cl_device_id> {
 };
 
 struct luacl_device {
-
 	typedef luacl_object<cl_device_id> traits;
 
 	static void Init(lua_State *L) {
@@ -51,7 +50,7 @@ struct luacl_device {
 		CheckCLError(L, err, "Failed requesting platform list: %d.");
 
 		for (cl_uint index = 0; index < numDevices; index++) {
-			//printf("Wrapping device: %p\n", devices[index]);
+			l_debug(L, "Wrapping device: %p", devices[index]);
 			traits::Wrap(L, devices[index]);
 		}
 		return static_cast<int>(numDevices);
@@ -122,7 +121,7 @@ struct luacl_device {
 		return 1;
 	}
 
-	static int PushDeviceInfoStr(lua_State *L, cl_device_id device, cl_device_info param, std::string key) {
+	static int PushDeviceInfoStr(lua_State *L, cl_device_id device, cl_device_info param, const char * key) {
 		if (device == NULL) {
 			return 0;
 		}
@@ -134,46 +133,45 @@ struct luacl_device {
 		err = clGetDeviceInfo(device, param, size, value.data(), NULL);
 		CheckCLError(L, err, "Failed requesting device info as string: %d.");
 
-		lua_pushstring(L, key.c_str());
 		lua_pushstring(L, std::string(value.data(), size).c_str());
-		lua_settable(L, -3);
+        lua_setfield(L, -2, key);
 		return 0;
 	}
 
-	template <typename T> static void PushDeviceInfo(lua_State *L, cl_device_id device, cl_device_info param, std::string key) {
+	template <typename T> static int PushDeviceInfo(lua_State *L, cl_device_id device, cl_device_info param, const char * key) {
 		size_t size = 0;
 		cl_int err = clGetDeviceInfo(device, param, 0, NULL, &size);
 		CheckCLError(L, err, "Failed requesting length of device info: %d.");
-		//printf("%d: %d - %d\n", param, size, sizeof(T));
-		assert(size == sizeof(T));
+		//l_debug(L, "%d: %d - %d", param, size, sizeof(T));
+		if (size != sizeof(T)) {
+            return luaL_error(L, "Device info size mismatch: %s", key);
+        }
 		T value = 0;
 		err = clGetDeviceInfo(device, param, sizeof(T), &value, NULL);
 		CheckCLError(L, err, "Failed requesting device info: %d.");
 		
-		lua_pushstring(L, key.c_str());
 		lua_pushnumber(L, static_cast<lua_Number>(value));
-		lua_settable(L, -3);
+		lua_setfield(L, -2, key);
+        return 0;
 	}
 
 	template <typename T> static int PushDeviceInfoArray(lua_State *L, cl_device_id device, cl_device_info param, const char * key) {
 		size_t size = 0;
 		cl_int err = clGetDeviceInfo(device, param, 0, NULL, &size);
 		CheckCLError(L, err, "Failed requesting length of device info array: %d.");
-		//#if _DEBUG && _MSC_VER
-		//	printf("Device Array: %Iu - %Iu\n", size, sizeof(T));
-		//#endif
-		assert(size % sizeof(T) == 0);
+		if (size % sizeof(T) != 0) {
+            return luaL_error(L, "Device info array size mismatch: %s", key);
+        }
 
 		std::vector<T> value(size / sizeof(T));
 		err = clGetDeviceInfo(device, param, size, value.data(), NULL);
 		CheckCLError(L, err, "Failed requesting device info as array: %d.");
-		lua_pushstring(L, key);
 		lua_newtable(L);
 		for (unsigned int index = 0; index < (size / sizeof(T)); index++) {
 			lua_pushnumber(L, static_cast<lua_Number>(value[index]));
 			lua_rawseti(L, -2, index + 1);
 		}
-		lua_settable(L, -3);
+        lua_setfield(L, -2, key);
 		return 0;
 	}
 };
