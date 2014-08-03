@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include <vector>
+#include <errno.h>
 
 namespace util {
 #define WOULD_BE_MODIFIED
@@ -109,8 +110,7 @@ inline double luacl_stdnorm_cdf_inv(double p) {
                (((((b[0] * r + b[1])*r + b[2])*r + b[3])*r + b[4])*r + 1.);
     }
 }
-
-
-}
+    
+}   /* namespace util */
 
 #endif /* __LUACL_MATH_HPP */

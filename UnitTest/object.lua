@@ -4,20 +4,23 @@ local _G = _G
 
 local _M = setmetatable({}, {
 	__index = function (t, key)
-		-- assert(objectRegistry[key], string.format("UnitTest module '%s' not found", key))
-		return _G[key] or objectRegistry[key].env
+		if _G[key] then
+			return _G[key]
+		end
+		assert(objectRegistry[key].env)
+		return objectRegistry[key].env
 	end
 })
 
 _G[GLOBAL_NAME] = _M
 
-setfenv(1, _M)
+-- setfenv(1, _M)
 
 local metatableName
 local registryName
 local tostringName
 
-function NewTest(objType, metatableName, registryName, tostringName)
+function _M.NewTest(objType, metatableName, registryName, tostringName)
 	assert(objType)
 	assert(metatableName)
 	assert(registryName)
@@ -30,10 +33,11 @@ function NewTest(objType, metatableName, registryName, tostringName)
 		tostringName = tostringName,
 		env = env
 	}
-	setfenv(2, env)
+	-- setfenv(2, env)
+	return env
 end
 
-function GetObjectType(objType)
+function _M.GetObjectType(objType)
 	local reg = objectRegistry[objType]
 	assert(reg, string.format("GetObjectType failed: invalid objType %s", tostring(objType)))
 	metatableName = reg.metatableName
@@ -42,8 +46,8 @@ function GetObjectType(objType)
 end
 
 -- Test objects from luacl_object template
-function AssertObject(objType, object)
-	GetObjectType(objType)
+function _M.AssertObject(objType, object)
+	_M.GetObjectType(objType)
 	local registry = GetRegistry()
 	assert(registry, "Cannot find system registry.")
 	local objectReg = registry[registryName]
@@ -57,14 +61,14 @@ function AssertObject(objType, object)
 	assert(tostring(object):find(tostringName .. ":%s"))
 end
 
-function AssertRegEmpty(objType)
-	GetObjectType(objType)
+function _M.AssertRegEmpty(objType)
+	_M.GetObjectType(objType)
 	local objectReg = GetRegistry()[registryName]
 	assert(not next(objectReg))
 end
 
-function AssertRegMatch(objType, t)
-	GetObjectType(objType)
+function _M.AssertRegMatch(objType, t)
+	_M.GetObjectType(objType)
 	local objectReg = GetRegistry()[registryName]
 	for key, value in pairs(objectReg) do
 		local addrKey = tostring(key):match("^userdata: (.+)$")
@@ -73,16 +77,16 @@ function AssertRegMatch(objType, t)
 		assert(addrValue)
 		assert(addrKey == addrValue)
 	end
-	return MatchTableValue(objectReg, t)
+	return _M.MatchTableValue(objectReg, t)
 end
 
-function AssertInfoTable(info, keys)
+function _M.AssertInfoTable(info, keys)
 	for key, expectedType in pairs(keys) do
 		assert(type(info[key]) == expectedType)
 	end
 end
 
-function MatchTableValue(tbl1, tbl2)
+function _M.MatchTableValue(tbl1, tbl2)
 	assert(type(tbl1) == "table")
 	assert(type(tbl2) == "table")
 	local set1, set2 = {}, {}
@@ -98,6 +102,6 @@ function MatchTableValue(tbl1, tbl2)
 	end
 end
 
-function IsLightUserdata(value)
+function _M.IsLightUserdata(value)
 	return type(value) == "number" and tostring(value) == ""
 end

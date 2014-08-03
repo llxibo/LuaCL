@@ -67,6 +67,7 @@
 		8D2E507C198BCA6400680C25 /* luacl_debug.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = luacl_debug.hpp; sourceTree = "<group>"; };
 		8D2E507D198BDBBD00680C25 /* UnitTest.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = UnitTest.lua; sourceTree = "<group>"; };
 		8D2E5083198CCD4B00680C25 /* UnitTest */ = {isa = PBXFileReference; lastKnownFileType = folder; path = UnitTest; sourceTree = "<group>"; };
+		8D2E5087198E03A100680C25 /* luacl_math.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = luacl_math.hpp; sourceTree = "<group>"; };
 		8D51C9BC1983A2E80043C259 /* luacl_cmdqueue.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = luacl_cmdqueue.hpp; sourceTree = "<group>"; };
 		8D588208198404940076E512 /* luacl_buffer.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = luacl_buffer.hpp; sourceTree = "<group>"; };
 		8D6C702D1981E521003A1CAD /* luacl_program.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = luacl_program.hpp; sourceTree = "<group>"; };
@@ -182,6 +183,7 @@
 				8DA492111989DD5400FEE746 /* luacl_endianness.hpp */,
 				8D7ECE8B198905E500BA80E5 /* luacl_event.hpp */,
 				8D0D2D041982C42C00F77691 /* luacl_kernel.hpp */,
+				8D2E5087198E03A100680C25 /* luacl_math.hpp */,
 				8D98B3A4197F4228003C95C5 /* luacl_object.hpp */,
 				8D98B3A5197F4228003C95C5 /* luacl_platform.hpp */,
 				8D6C702D1981E521003A1CAD /* luacl_program.hpp */,
