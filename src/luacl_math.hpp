@@ -45,10 +45,10 @@ void luacl_mean_and_stddev(ARG_IN const T* _data, ARG_IN size_t n, ARG_OUT T& me
 
 /* Phi(x) - the cumulative distribution function for standard normal distribution( mean = 0, stddev = 1 ). */
 inline double luacl_stdnorm_cdf(double x) {
-    return 0.5 * (1 + erf(x * (1 / 1.41421356237309504880)));
+    return 0.5 * (1. + erf(x * (1 / 1.41421356237309504880)));
 }
 
-/* Phi^-1(clvl) - the inverse function of `lualc_stdnorm_cdf`. http://home.online.no/~pjacklam/notes/invnorm/ */
+/* Phi^-1(p) - the inverse function of `lualc_stdnorm_cdf`. http://home.online.no/~pjacklam/notes/invnorm/ */
 inline double luacl_stdnorm_cdf_inv(double p) {
     /* Coefficients in rational approximations. */
     static const double a[] = {
@@ -85,7 +85,7 @@ inline double luacl_stdnorm_cdf_inv(double p) {
     };
     double q, r;
 
-    if (p < 0 || p > 1) {
+    if (p < 0.0 || p > 1.0) {
         return 0.0;
     } else if (p == 0) {
         return -HUGE_VAL /* minus "infinity" */;
@@ -95,20 +95,22 @@ inline double luacl_stdnorm_cdf_inv(double p) {
         /* Rational approximation for lower region */
         q = sqrt(-2 * log(p));
         return (((((c[0] * q + c[1])*q + c[2])*q + c[3])*q + c[4])*q + c[5]) /
-               ((((d[0] * q + d[1])*q + d[2])*q + d[3])*q + 1);
+               ((((d[0] * q + d[1])*q + d[2])*q + d[3])*q + 1.);
     } else if (p > 0.97575) {
         /* Rational approximation for upper region */
-        q = sqrt(-2 * log(1 - p));
+        q = sqrt(-2 * log(1. - p));
         return -(((((c[0] * q + c[1])*q + c[2])*q + c[3])*q + c[4])*q + c[5]) /
-               ((((d[0] * q + d[1])*q + d[2])*q + d[3])*q + 1);
+               ((((d[0] * q + d[1])*q + d[2])*q + d[3])*q + 1.);
     } else {
         /* Rational approximation for central region */
         q = p - 0.5;
         r = q*q;
         return (((((a[0] * r + a[1])*r + a[2])*r + a[3])*r + a[4])*r + a[5])*q /
-               (((((b[0] * r + b[1])*r + b[2])*r + b[3])*r + b[4])*r + 1);
+               (((((b[0] * r + b[1])*r + b[2])*r + b[3])*r + b[4])*r + 1.);
     }
 }
+
+
 }
 
 #endif /* __LUACL_MATH_HPP */
