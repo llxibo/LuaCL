@@ -27,21 +27,30 @@ T luacl_prefix_sum(ARG_IN WOULD_BE_MODIFIED std::vector<T>& data) {
 }
 
 template <typename T>
-void luacl_mean_and_stddev(ARG_IN const T* _data, ARG_IN size_t n, ARG_OUT T& mean, ARG_OUT T& stddev) {
+void luacl_numerical_characteristic(
+    ARG_IN const T* _data,
+    ARG_IN size_t n,
+    ARG_OUT T& mean,
+    ARG_OUT T& stddev,
+    ARG_OUT T& max,
+    ARG_OUT T& min
+) {
     /* Make a copy of _data. */
-    std::vector<T> data(_data, _data + n);
+    std::vector<T> datacopy(_data, _data + n);
 
     /* Prefix-sum to minimize rounding errors for FP types. */
-    mean = luacl_prefix_sum(data) / static_cast<T>(n);
+    mean = luacl_prefix_sum(datacopy) / static_cast<T>(n);
 
-    /* data --> sqr(data - mean) */
-    for (size_t i = 0; i < data.size(); ++i) {
-        data[i] = _data[i] - mean;
-        data[i] *= data[i];
+    /* Maximum, minimum and stddev. */
+    max = _data[0];
+    min = _data[0];
+    for (size_t i = 0; i < datacopy.size(); ++i) {
+        max = _data[i] > max ? _data[i] : max;
+        min = _data[i] < min ? _data[i] : min;
+        datacopy[i] = _data[i] - mean;
+        datacopy[i] *= datacopy[i];
     }
-
-    /* sqr(data - mean) --> stddev */
-    stddev = sqrt(luacl_prefix_sum(data) / static_cast<T>(n));
+    stddev = sqrt(luacl_prefix_sum(datacopy) / static_cast<T>(n));
 }
 
 /* Phi(x) - the cumulative distribution function for standard normal distribution( mean = 0, stddev = 1 ). */
@@ -110,7 +119,7 @@ inline double luacl_stdnorm_cdf_inv(double p) {
                (((((b[0] * r + b[1])*r + b[2])*r + b[3])*r + b[4])*r + 1.);
     }
 }
-    
+
 }   /* namespace util */
 
 #endif /* __LUACL_MATH_HPP */
