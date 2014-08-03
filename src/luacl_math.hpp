@@ -49,7 +49,7 @@ inline double luacl_stdnorm_cdf(double x) {
 }
 
 /* Phi^-1(clvl) - the inverse function of `lualc_stdnorm_cdf`. http://home.online.no/~pjacklam/notes/invnorm/ */
-inline double luacl_stdnorm_cdf_inv(double clvl) {
+inline double luacl_stdnorm_cdf_inv(double p) {
     /* Coefficients in rational approximations. */
     static const double a[] = {
         -3.969683028665376e+01,
@@ -85,30 +85,25 @@ inline double luacl_stdnorm_cdf_inv(double clvl) {
     };
     double q, r;
 
-    errno = 0;
-
-    if (clvl < 0 || clvl > 1) {
-        errno = EDOM;
+    if (p < 0 || p > 1) {
         return 0.0;
-    } else if (clvl == 0) {
-        errno = ERANGE;
+    } else if (p == 0) {
         return -HUGE_VAL /* minus "infinity" */;
-    } else if (clvl == 1) {
-        errno = ERANGE;
+    } else if (p == 1) {
         return HUGE_VAL /* "infinity" */;
-    } else if (clvl < 0.02425) {
+    } else if (p < 0.02425) {
         /* Rational approximation for lower region */
-        q = sqrt(-2 * log(clvl));
+        q = sqrt(-2 * log(p));
         return (((((c[0] * q + c[1])*q + c[2])*q + c[3])*q + c[4])*q + c[5]) /
                ((((d[0] * q + d[1])*q + d[2])*q + d[3])*q + 1);
-    } else if (clvl > 0.97575) {
+    } else if (p > 0.97575) {
         /* Rational approximation for upper region */
-        q = sqrt(-2 * log(1 - clvl));
+        q = sqrt(-2 * log(1 - p));
         return -(((((c[0] * q + c[1])*q + c[2])*q + c[3])*q + c[4])*q + c[5]) /
                ((((d[0] * q + d[1])*q + d[2])*q + d[3])*q + 1);
     } else {
         /* Rational approximation for central region */
-        q = clvl - 0.5;
+        q = p - 0.5;
         r = q*q;
         return (((((a[0] * r + a[1])*r + a[2])*r + a[3])*r + a[4])*r + a[5])*q /
                (((((b[0] * r + b[1])*r + b[2])*r + b[3])*r + b[4])*r + 1);
