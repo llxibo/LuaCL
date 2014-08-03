@@ -1,6 +1,6 @@
 require("UnitTest.object")
 
-print("Unit.Test.device loaded")
+print("UnitTest.device loaded")
 local _M = UnitTest.NewTest("device", "LuaCL_Device", "LuaCL_Device_Registry", "LuaCL_Device")
 
 local deviceInfoKeys = {

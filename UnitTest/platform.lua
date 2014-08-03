@@ -1,6 +1,6 @@
 require("UnitTest.object")
 
-print("Unit.Test.platform loaded")
+print("UnitTest.platform loaded")
 local _M = UnitTest.NewTest("platform", "LuaCL_Platform", "LuaCL_Platform_Registry", "LuaCL_Platform")
 
 assert(type(GetPlatform) == "function")

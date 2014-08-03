@@ -20,10 +20,11 @@ require "UnitTest.object"
 
 require "UnitTest.platform"
 
-function err(msg)
-	print("Error: " .. debug.traceback(msg, 2))
-end
-xpcall(UnitTest.platform.Test, err)
+-- -- function err(msg)
+-- -- 	print("Error: " .. debug.traceback(msg, 2))
+-- -- end
+-- xpcall(UnitTest.platform.Test, err)
+UnitTest.platform.Test()
 print("All tests passed")
 do return end
 
