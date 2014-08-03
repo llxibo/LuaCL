@@ -2,9 +2,12 @@ print("LuaCL unit test")
 require "UnitTest.object"
 
 require "UnitTest.platform"
-UnitTest.platform.Test()
-
--- do return end
+function err(msg)
+	print("Error: " .. debug.traceback(msg, 2))
+end
+xpcall(UnitTest.platform.Test, err)
+print("All tests passed")
+do return end
 
 local reg = GetRegistry()
 

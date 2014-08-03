@@ -1,7 +1,7 @@
 require("UnitTest.object")
 
-print("Unit.Test.platform loaded")
-UnitTest.NewTest("device", "LuaCL_Device", "LuaCL_Device_Registry", "LuaCL_Device")
+print("Unit.Test.device loaded")
+local _M = UnitTest.NewTest("device", "LuaCL_Device", "LuaCL_Device_Registry", "LuaCL_Device")
 
 local deviceInfoKeys = {
 	TYPE = "number",
@@ -65,13 +65,12 @@ local deviceInfoKeys = {
 	NATIVE_VECTOR_WIDTH_HALF = "number",
 }
 
-function Test(platform)
+function _M.Test(platform)
 	assert(platform.GetDevices)
 	UnitTest.AssertRegEmpty("device")
 	do
 		local devices = {platform:GetDevices()}
 		UnitTest.AssertRegMatch("device", devices)
-
 		for index, device in ipairs(devices) do
 			UnitTest.AssertObject("device", device)
 
@@ -80,5 +79,6 @@ function Test(platform)
 			UnitTest.AssertInfoTable(info, deviceInfoKeys)
 		end
 	end
+	collectgarbage()
 	UnitTest.AssertRegEmpty("device")
 end

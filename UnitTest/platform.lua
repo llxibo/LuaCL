@@ -1,7 +1,7 @@
 require("UnitTest.object")
 
 print("Unit.Test.platform loaded")
-UnitTest.NewTest("platform", "LuaCL_Platform", "LuaCL_Platform_Registry", "LuaCL_Platform")
+local _M = UnitTest.NewTest("platform", "LuaCL_Platform", "LuaCL_Platform_Registry", "LuaCL_Platform")
 
 assert(type(GetPlatform) == "function")
 
@@ -13,7 +13,7 @@ local platformInfoKeys = {
 	EXTENSIONS = "string",
 }
 
-function Test()
+function _M.Test()
 	print("Testing platform")
 
 	UnitTest.AssertRegEmpty("platform")
@@ -31,6 +31,9 @@ function Test()
 
 			require "UnitTest.device"
 			UnitTest.device.Test(platform)
+
+			require "UnitTest.context"
+			UnitTest.context.Test(platform)
 		end
 	end
 	collectgarbage()
