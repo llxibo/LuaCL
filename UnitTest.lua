@@ -2,8 +2,7 @@ print("LuaCL unit test")
 require "UnitTest.object"
 
 require "UnitTest.platform"
-
-local p = UnitTest.platform.Test()
+UnitTest.platform.Test()
 
 -- do return end
 

@@ -28,6 +28,9 @@ function Test()
 			-- UnitTest.TestFuncArgs{platform.GetInfo, platform)
 			local info = platform:GetInfo()
 			UnitTest.AssertInfoTable(info, platformInfoKeys)
+
+			require "UnitTest.device"
+			UnitTest.device.Test(platform)
 		end
 	end
 	collectgarbage()

@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include <vector>
+#include <errno.h>
 
 namespace util {
 #define WOULD_BE_MODIFIED
