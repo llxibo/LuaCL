@@ -12,7 +12,7 @@ function _M.Test(platform)
 		for index, device in ipairs(devices) do
 			collectgarbage()
 
-			local context - platform:CreateContext(device)
+			local context = platform:CreateContext(device)
 			UnitTest.AssertObject("context", context)
 			UnitTest.AssertRegMatch("context", {context})
 
