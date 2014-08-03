@@ -4,8 +4,11 @@ local _G = _G
 
 local _M = setmetatable({}, {
 	__index = function (t, key)
-		-- assert(objectRegistry[key], string.format("UnitTest module '%s' not found", key))
-		return _G[key] or objectRegistry[key].env
+		if _G[key] then
+			return _G[key]
+		end
+		assert(objectRegistry[key].env)
+		return objectRegistry[key].env
 	end
 })
 
