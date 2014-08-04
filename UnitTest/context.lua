@@ -10,18 +10,15 @@ function _M.Test(platform)
 	UnitTest.AssertRegEmpty("context")
 	do
 		for index, device in ipairs(devices) do
-			collectgarbage()
 			-- Test context creation with single device
 			local context = platform:CreateContext(device)
 			_M.TestContext(context, {device}, platform)
 		end
 
-		collectgarbage()
 		-- Test context creation with multiple devices
 		local context = platform:CreateContext(devices)
 		_M.TestContext(context, devices, platform)
 	end
-	collectgarbage()
 	UnitTest.AssertRegEmpty("context")
 end
 
@@ -31,9 +28,14 @@ function _M.TestContext(context, devices, platform)
 	UnitTest.AssertObject("context", context)
 	UnitTest.AssertRegMatch("context", {context})
 
+	assert(context:GetPlatform() == platform)
 	local contextDevices = {context:GetDevices()}
 	for index, device in ipairs(contextDevices) do
 		UnitTest.AssertObject("device", device)
 	end
 	UnitTest.MatchTableValue(contextDevices, devices)
+
+	require "UnitTest.program"
+
+	UnitTest.program.Test(context)
 end
