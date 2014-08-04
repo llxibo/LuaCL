@@ -23,7 +23,7 @@ local tostringName
 local origAssert = _G["assert"]
 local function assert(exp, msg, ...)
 	if not exp then
-		error(msg:format(...), 2)
+		error((msg or "Assertion failed!"):format(...), 2)
 	end
 end
 
