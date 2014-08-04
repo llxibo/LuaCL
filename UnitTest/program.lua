@@ -24,31 +24,65 @@ function _M.Test(context)
 	assert(context.CreateProgramFromBinary)
 
 	local devices = {context:GetDevices()}
+	local binaries
 
 	UnitTest.AssertRegEmpty("program")
 	do
 		local program = context:CreateProgram(source)
-		UnitTest.AssertObject("program", program)
-		UnitTest.AssertRegMatch("program", {program})
+		_M.TestProgram(program, context, devices)
 
-		assert(program.GetContext)
-		assert(program.GetDevices)
-		assert(program.GetBuildStatus)
-		assert(program.GetBuildLog)
-
-		local programContext = program:GetContext()
-		assert(context, programContext)
-
-		local programDevices = {program:GetDevices()}
-		UnitTest.MatchTableValue(programDevices, devices)	-- Rough match
-		-- for index, device in ipairs(programDevices) do		-- Exact match, not always apply
-		-- 	assert(devices[index] == device)
-		-- end
-
-		for index, device in ipairs(programDevices) do
-			local buildStatus = program:GetBuildStatus(device)
-			assert(buildStatus == CL_BUILD_NONE)
+		binaries = {program:GetBinary()}
+		for index, binary in ipairs(binaries) do
+			assert(type(binary) == "string")
+			assert(binary:len() > 0)
 		end
 	end
 	UnitTest.AssertRegEmpty("program")
+	do
+		local programFromBinary, binaryStatus = context:CreateProgramFromBinary(devices, binaries)
+		for index, status in ipairs(binaryStatus) do
+			assert(status == CL_BUILD_SUCCESS)
+		end
+		_M.TestProgram(programFromBinary, context, devices)
+	end
+	UnitTest.AssertRegEmpty("program")
+end
+
+function _M.TestProgram(program, context, devices)
+	UnitTest.AssertObject("program", program)
+	UnitTest.AssertRegMatch("program", {program})
+
+	assert(program.GetContext)
+	assert(program.GetDevices)
+	assert(program.GetBuildStatus)
+	assert(program.GetBuildLog)
+	assert(program.Build)
+
+	local programContext = program:GetContext()
+	assert(context == programContext)
+
+	local programDevices = {program:GetDevices()}
+	UnitTest.MatchTableValue(programDevices, devices)	-- Rough match
+	-- for index, device in ipairs(programDevices) do		-- Exact match, not always apply
+	-- 	assert(devices[index] == device)
+	-- end
+
+	for index, device in ipairs(programDevices) do
+		local buildStatus = program:GetBuildStatus(device)
+		assert(buildStatus == CL_BUILD_NONE)
+
+		local buildInfo = program:GetBuildLog(device)
+		assert(buildInfo:len() == 0)		-- Build not done, expecting empty log
+	end
+
+	program:Build()
+
+	for index, device in ipairs(programDevices) do
+		local buildStatus = program:GetBuildStatus(device)
+		assert(buildStatus == CL_BUILD_SUCCESS)
+
+		local buildInfo = program:GetBuildLog(device)
+		assert(type(buildInfo) == "string")
+		assert(buildInfo:len() == 0)
+	end
 end
