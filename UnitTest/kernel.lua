@@ -16,6 +16,20 @@ local kernelInfoKeys = {
 	PRIVATE_MEM_SIZE = "number",
 }
 
+local kernelArgInfoKeys = {
+	ADDRESS_QUALIFIER = "number",
+	ACCESS_QUALIFIER = "number",
+	TYPE_NAME = "string",
+	TYPE_QUALIFIER = "number",
+	NAME = "string",
+}
+
+local kernelArgs = {
+	[0] = "a",
+	[1] = "b",
+	[2] = "result",
+}
+
 function _M.Test(program, funcName, numArgs)
 	assert(program)
 	assert(program.CreateKernel)
@@ -52,6 +66,14 @@ function _M.Test(program, funcName, numArgs)
 			local info = kernel:GetWorkGroupInfo(device)
 			assert(type(info) == "table")
 			UnitTest.AssertInfoTable(info, kernelInfoKeys)
+		end
+
+		assert(kernel.GetArgInfo)
+		for index = 0, numArgs - 1 do
+			local info = kernel:GetArgInfo(index)
+			assert(type(info) == "table")
+			UnitTest.AssertInfoTable(info, kernelArgInfoKeys)
+			assert(kernelArgs[index] == info.NAME)
 		end
 	end
 	UnitTest.AssertRegEmpty("kernel")

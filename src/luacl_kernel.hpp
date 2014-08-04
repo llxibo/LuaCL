@@ -37,6 +37,8 @@ struct luacl_kernel {
 		lua_setfield(L, -2, "GetProgram");
 		lua_pushcfunction(L, GetNumArgs);
 		lua_setfield(L, -2, "GetNumArgs");
+		lua_pushcfunction(L, GetArgInfo);
+		lua_setfield(L, -2, "GetArgInfo");
 		lua_pushcfunction(L, GetFunctionName);
 		lua_setfield(L, -2, "GetFunctionName");
 		lua_pushcfunction(L, GetWorkGroupInfo);
@@ -149,8 +151,48 @@ struct luacl_kernel {
             lua_pushnumber(L, static_cast<lua_Number>(value[0]));
         }
         lua_setfield(L, -2, paramName);
-        return 1;
+        return 0;
     }
+
+	static int GetArgInfo(lua_State *L) {
+		cl_kernel krnl = traits::CheckObject(L);
+		cl_uint index = static_cast<cl_uint>(luaL_checknumber(L, 2));
+		lua_newtable(L);
+		PushArgInfo<cl_kernel_arg_address_qualifier>(L, krnl, index, CL_KERNEL_ARG_ADDRESS_QUALIFIER, "ADDRESS_QUALIFIER");
+		PushArgInfo<cl_kernel_arg_access_qualifier>(L, krnl, index, CL_KERNEL_ARG_ACCESS_QUALIFIER, "ACCESS_QUALIFIER");
+		PushArgInfoStr(L, krnl, index, CL_KERNEL_ARG_TYPE_NAME, "TYPE_NAME");
+		PushArgInfo<cl_kernel_arg_type_qualifier>(L, krnl, index, CL_KERNEL_ARG_TYPE_QUALIFIER, "TYPE_QUALIFIER");
+		PushArgInfoStr(L, krnl, index, CL_KERNEL_ARG_NAME, "NAME");
+		return 1;
+	}
+
+	template <typename T>
+	static int PushArgInfo(lua_State *L, cl_kernel krnl, cl_uint index, cl_kernel_arg_info param, const char * paramName) {
+		size_t size = 0;
+		cl_int err = clGetKernelArgInfo(krnl, index, param, 0, NULL, &size);
+		CheckCLError(L, err, "Failed requesting size of kernel arg info: %d.");
+		assert(size == sizeof(T));
+
+		T value = 0;
+		err = clGetKernelArgInfo(krnl, index, param, size, &value, NULL);
+		CheckCLError(L, err, "Failed requesting kernel arg info: %d.");
+		lua_pushnumber(L, static_cast<lua_Number>(value));
+		lua_setfield(L, -2, paramName);
+		return 0;
+	}
+
+	static int PushArgInfoStr(lua_State *L, cl_kernel krnl, cl_uint index, cl_kernel_arg_info param, const char * paramName) {
+		size_t size = 0;
+		cl_int err = clGetKernelArgInfo(krnl, index, param, 0, NULL, &size);
+		CheckCLError(L, err, "Failed requesting size of kernel arg info string: %d.");
+		
+		std::vector<char> value(size);
+		err = clGetKernelArgInfo(krnl, index, param, size, value.data(), NULL);
+		CheckCLError(L, err, "Failed requesting kernel arg info string: %d.");
+		lua_pushstring(L, std::string(value.data(), value.size()).c_str());
+		lua_setfield(L, -2, paramName);
+		return 0;
+	}
 };
 
 #endif /* __LUACL_KERNEL_HPP */
