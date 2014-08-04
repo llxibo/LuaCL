@@ -17,6 +17,8 @@ local source = [[
 		result[gid] = a[gid] + b[gid];
 	};
 ]]
+local funcName = "myfunc"
+local numArgs = 3
 
 function _M.Test(context)
 	print("Testing program")
@@ -25,6 +27,8 @@ function _M.Test(context)
 
 	local devices = {context:GetDevices()}
 	local binaries
+
+	require "UnitTest.kernel"
 
 	UnitTest.AssertRegEmpty("program")
 	do
@@ -36,6 +40,8 @@ function _M.Test(context)
 			assert(type(binary) == "string")
 			assert(binary:len() > 0)
 		end
+
+		UnitTest.kernel.Test(program, funcName, numArgs)
 	end
 	UnitTest.AssertRegEmpty("program")
 	do
@@ -44,6 +50,7 @@ function _M.Test(context)
 			assert(status == CL_BUILD_SUCCESS)
 		end
 		_M.TestProgram(programFromBinary, context, devices)
+		UnitTest.kernel.Test(programFromBinary, funcName, numArgs)
 	end
 	UnitTest.AssertRegEmpty("program")
 end
