@@ -28,6 +28,8 @@ struct luacl_debug {
         lua_setfield(L, LUA_GLOBALSINDEX, "RegisterDebugCallback");
         lua_pushcfunction(L, GetRegistry);
         lua_setfield(L, LUA_GLOBALSINDEX, "GetRegistry");
+        lua_pushcfunction(L, GetOpenCLVersion);
+        lua_setfield(L, LUA_GLOBALSINDEX, "GetOpenCLVersion");
         return 0;
     }
 
@@ -41,6 +43,19 @@ struct luacl_debug {
 	    lua_pushvalue(L, LUA_REGISTRYINDEX);
 	    return 1;
 	}
+    
+    static int GetOpenCLVersion(lua_State *L) {
+#if defined(CL_VERSION_2_0)
+        lua_pushstring(L, "2.0");
+#elif defined(CL_VERSION_1_2)
+        lua_pushstring(L, "1.2");
+#elif defined(CL_VERSION_1_1)
+        lua_pushstring(L, "1.1");
+#elif defined(CL_VERSION_1_0)
+        lua_pushstring(L, "1.0");
+#endif
+        return 1;
+    }
 };
 
 #endif /* __LUACL_DEBUG_HPP */

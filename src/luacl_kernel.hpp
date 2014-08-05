@@ -37,8 +37,10 @@ struct luacl_kernel {
 		lua_setfield(L, -2, "GetProgram");
 		lua_pushcfunction(L, GetNumArgs);
 		lua_setfield(L, -2, "GetNumArgs");
+#ifdef CL_VERSION_1_2
 		lua_pushcfunction(L, GetArgInfo);
 		lua_setfield(L, -2, "GetArgInfo");
+#endif /* CL_VERSION_1_2 */
 		lua_pushcfunction(L, GetFunctionName);
 		lua_setfield(L, -2, "GetFunctionName");
 		lua_pushcfunction(L, GetWorkGroupInfo);
@@ -154,6 +156,7 @@ struct luacl_kernel {
         return 0;
     }
 
+#ifdef CL_VERSION_1_2
 	static int GetArgInfo(lua_State *L) {
 		cl_kernel krnl = traits::CheckObject(L);
 		cl_uint index = static_cast<cl_uint>(luaL_checknumber(L, 2));
@@ -186,6 +189,7 @@ struct luacl_kernel {
 		cl_int err = clGetKernelArgInfo(krnl, index, param, 0, NULL, &size);
 		CheckCLError(L, err, "Failed requesting size of kernel arg info string: %d.");
 		
+        l_debug(L, "Pushing arg info str %s with length %d", paramName, size);
 		std::vector<char> value(size);
 		err = clGetKernelArgInfo(krnl, index, param, size, value.data(), NULL);
 		CheckCLError(L, err, "Failed requesting kernel arg info string: %d.");
@@ -193,6 +197,7 @@ struct luacl_kernel {
 		lua_setfield(L, -2, paramName);
 		return 0;
 	}
+#endif /* CL_VERSION_1_2 */
 };
 
 #endif /* __LUACL_KERNEL_HPP */

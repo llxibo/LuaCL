@@ -68,12 +68,17 @@ function _M.Test(program, funcName, numArgs)
 			UnitTest.AssertInfoTable(info, kernelInfoKeys)
 		end
 
-		assert(kernel.GetArgInfo)
-		for index = 0, numArgs - 1 do
-			local info = kernel:GetArgInfo(index)
-			assert(type(info) == "table")
-			UnitTest.AssertInfoTable(info, kernelArgInfoKeys)
-			assert(kernelArgs[index] == info.NAME)
+		assert(GetOpenCLVersion)
+		if GetOpenCLVersion() >= 1.2 then
+			assert(kernel.GetArgInfo)
+			for index = 0, numArgs - 1 do
+				local info = kernel:GetArgInfo(index)
+				assert(type(info) == "table")
+				UnitTest.AssertInfoTable(info, kernelArgInfoKeys)
+				dofile("dump_table.lua")
+				dump_table(info, "info")
+				assert(kernelArgs[index] == info.NAME)
+			end
 		end
 	end
 	UnitTest.AssertRegEmpty("kernel")
