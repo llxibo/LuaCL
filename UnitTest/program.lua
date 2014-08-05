@@ -90,6 +90,6 @@ function _M.TestProgram(program, context, devices)
 
 		local buildInfo = program:GetBuildLog(device)
 		assert(type(buildInfo) == "string")
-		assert(buildInfo:len() == 0)
+		assert(not buildInfo:find("%a"))
 	end
 end

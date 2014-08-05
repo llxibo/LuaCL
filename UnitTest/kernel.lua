@@ -69,7 +69,7 @@ function _M.Test(program, funcName, numArgs)
 		end
 
 		assert(GetOpenCLVersion)
-		if GetOpenCLVersion() >= 1.2 then
+		if tonumber(GetOpenCLVersion()) >= 1.2 then
 			assert(kernel.GetArgInfo)
 			for index = 0, numArgs - 1 do
 				local info = kernel:GetArgInfo(index)
