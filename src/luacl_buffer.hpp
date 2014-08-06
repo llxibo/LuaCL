@@ -5,9 +5,9 @@
 #include "luacl_object.hpp"
 #include "luacl_endianness.hpp"
 
-static const char LUACL_MEM_REGISTRY[] = "LuaCL_Mem_Registry";
-static const char LUACL_MEM_METATABLE[] = "LuaCL_Mem";
-static const char LUACL_MEM_TOSTRING[] = "LuaCL_Mem";
+static const char LUACL_MEM_REGISTRY[] = "LuaCL_Buffer_Registry";
+static const char LUACL_MEM_METATABLE[] = "LuaCL_Buffer";
+static const char LUACL_MEM_TOSTRING[] = "LuaCL_Buffer";
 static const size_t LUACL_BUFFER_MIN_SIZE = 2;
 
 /* Buffer object, keeping cl_mem object and allocated memory. */
@@ -111,7 +111,7 @@ struct luacl_buffer {
 	static int Get(lua_State *L) {
 		luacl_buffer_info buffer = traits::CheckObject(L, 1);
 		size_t index = static_cast<size_t>(lua_tonumber(L, 2));
-		if (index * sizeof(T) > buffer->size + sizeof(T) - 1) {
+		if (index * sizeof(T) + sizeof(T) - 1 > buffer->size) {
             luaL_error(L, "Buffer access out of bound.");
         }
 		T * data = reinterpret_cast<T *>(buffer->data);
@@ -124,7 +124,7 @@ struct luacl_buffer {
 		luacl_buffer_info buffer = traits::CheckObject(L, 1);
 		size_t index = static_cast<size_t>(lua_tonumber(L, 2));
 		T value = static_cast<T>(lua_tonumber(L, 3));
-		if (index * sizeof(T) > buffer->size + sizeof(T) - 1) {
+		if (index * sizeof(T) + sizeof(T) - 1 > buffer->size) {
             luaL_error(L, "Buffer access out of bound.");
         }
 		T * data = reinterpret_cast<T *>(buffer->data);
@@ -145,7 +145,7 @@ struct luacl_buffer {
 		size_t index = static_cast<size_t>(lua_tonumber(L, 2));
         size_t range = static_cast<size_t>(lua_tonumber(L, 3));
         range = (range == 0) ? buffer->size / sizeof(T) - index : range;
-        if (index * sizeof(T) > buffer->size + sizeof(T) - 1) {
+        if (index * sizeof(T) + sizeof(T) - 1 > buffer->size) {
             luaL_error(L, "Buffer access out of bound.");
         }
 		T * data = reinterpret_cast<T *>(buffer->data);

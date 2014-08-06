@@ -23,7 +23,7 @@ extern "C" {
 #endif
 
 /* Switch for pausing the command line when debugging in MSVC */
-#if defined(_MSC_VER) && defined(_DEBUG)
+#if defined(_MSC_VER)// && defined(_DEBUG)
 #define _LUACL_PAUSE_SYSTEM
 #endif
 

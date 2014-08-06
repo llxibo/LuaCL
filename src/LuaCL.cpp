@@ -44,9 +44,7 @@ int main(int argc, char **argv) {
     lua_setfield(L, LUA_REGISTRYINDEX, "traceback");
     lua_pop(L, 1);
     
-#if defined(_DEBUG)
     luacl_debug::Init(L);
-#endif
 	luacl_platform::Init(L);
 	luacl_device::Init(L);
 	luacl_context::Init(L);

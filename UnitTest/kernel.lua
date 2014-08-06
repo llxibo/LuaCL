@@ -75,9 +75,9 @@ function _M.Test(program, funcName, numArgs)
 				local info = kernel:GetArgInfo(index)
 				assert(type(info) == "table")
 				UnitTest.AssertInfoTable(info, kernelArgInfoKeys)
-				dofile("dump_table.lua")
-				dump_table(info, "info")
-				assert(kernelArgs[index] == info.NAME)
+				-- dofile("dump_table.lua")
+				-- dump_table(info, "info")
+				-- assert(kernelArgs[index] == info.NAME)
 			end
 		end
 	end

@@ -38,4 +38,8 @@ function _M.TestContext(context, devices, platform)
 	require "UnitTest.program"
 
 	UnitTest.program.Test(context)
+
+	require "UnitTest.buffer"
+
+	UnitTest.buffer.Test(context)
 end

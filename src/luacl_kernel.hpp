@@ -189,7 +189,7 @@ struct luacl_kernel {
 		cl_int err = clGetKernelArgInfo(krnl, index, param, 0, NULL, &size);
 		CheckCLError(L, err, "Failed requesting size of kernel arg info string: %d.");
 		
-        l_debug(L, "Pushing arg info str %s with length %d", paramName, size);
+        //l_debug(L, "Pushing arg info str %s with length %d", paramName, size);
 		std::vector<char> value(size);
 		err = clGetKernelArgInfo(krnl, index, param, size, value.data(), NULL);
 		CheckCLError(L, err, "Failed requesting kernel arg info string: %d.");
