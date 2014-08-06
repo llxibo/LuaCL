@@ -34,27 +34,37 @@ function _M.Test(context)
 			assert(buffer:GetBufferSize() == size)
 			for bufferType, bufferSize in pairs(bufferTypes) do
 				print("Testing", bufferType, bufferSize)
-				local readMethod = "Get" .. bufferType
-				local writeMethod = "Set" .. bufferType
+				local get = buffer["Get" .. bufferType]
+				local set = buffer["Set" .. bufferType]
 				local varSize = buffer["GetSize" .. bufferType]()
 				assert(varSize == bufferSize)
 
-				assert(buffer[readMethod])
-				assert(buffer[writeMethod])
+				assert(get)
+				assert(set)
 
-				-- local ret, err = pcall()
+				-- Check lower boundary
+				local ret, err = pcall(set, buffer, -1)
+				assert(not ret)
+				assert(err == "Buffer access out of bound.")
+
+				-- Check upper boundary
+				local ret, err = pcall(set, buffer, size / bufferSize)
+				assert(not ret)
+				assert(err == "Buffer access out of bound.")
+
+				-- Check with RNG data sequence
 				local seed = os.clock()
 				math.randomseed(seed)
-				for index = 0, size / bufferSize do
+				for index = 0, size / bufferSize - 1 do
 					local value = math.random() * randomBase
-					-- print(writeMethod, index, value)
-					buffer[writeMethod](buffer, index, value)
+					-- print(set, index, value)
+					set(buffer, index, value)
 				end
 				math.randomseed(seed)
-				for index = 0, size / bufferSize do
+				for index = 0, size / bufferSize - 1 do
 					local value = math.random() * randomBase
-					local readValue = buffer[readMethod](buffer, index)
-					-- print(readMethod, index, value, buffer[readMethod](buffer, index))
+					local readValue = get(buffer, index)
+					-- print(get, index, value, buffer[get](buffer, index))
 					assert(readValue == value or readValue == math.floor(value))
 				end
 			end
