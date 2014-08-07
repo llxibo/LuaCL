@@ -7,6 +7,8 @@ local random = math.random
 local floor = math.floor
 local abs = math.abs
 
+local FullTested = false
+
 local bufferTypes = {
 	Int = {
 		size = 4,
@@ -39,8 +41,6 @@ function _M.Test(context)
 	local sizeFactorMax = 8
 	local sizeFactorUnit = 2
 	local sizeFactorBase = 4
-
-	local randomBase = 255
 
 	assert(context)
 	assert(context.CreateBuffer)
@@ -81,25 +81,28 @@ function _M.Test(context)
 				assert(buffer.Clear)
 				buffer:Clear()
 
-				-- Check with RNG data sequence
-				local seed = os.clock()
-				math.randomseed(seed)
-				for index = 0, size / typeInfo.size - 1 do
-					assert(get(buffer, index) == 0)
-					local value = randomValue()
-					set(buffer, index, value)
+				if not FullTested then
+					-- Check with RNG data sequence
+					local seed = os.clock()
+					math.randomseed(seed)
+					for index = 0, size / typeInfo.size - 1 do
+						assert(get(buffer, index) == 0)
+						local value = randomValue()
+						set(buffer, index, value)
+					end
+					math.randomseed(seed)
+					for index = 0, size / typeInfo.size - 1 do
+						local value = randomValue()
+						local readValue = get(buffer, index)
+						assertValue(value, readValue)
+					end
 				end
-				math.randomseed(seed)
-				for index = 0, size / typeInfo.size - 1 do
-					local value = randomValue()
-					local readValue = get(buffer, index)
-					assertValue(value, readValue)
-				end
-
 				assert(buffer["ReverseEndian" .. typeName])
 				buffer["ReverseEndian" .. typeName](buffer)
 			end
 		end
 		UnitTest.AssertRegEmpty("buffer")
 	end
+
+	FullTested = true
 end
