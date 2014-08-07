@@ -60,6 +60,8 @@ struct luacl_buffer {
 		lua_newtable(L);
         lua_pushcfunction(L, GetBufferSize);
         lua_setfield(L, -2, "GetBufferSize");
+		lua_pushcfunction(L, Clear);
+        lua_setfield(L, -2, "Clear");
 		RegisterType<int>(L, "Int");
         RegisterType<float>(L, "Float");
         RegisterType<double>(L, "Double");
@@ -119,8 +121,9 @@ struct luacl_buffer {
 	template <typename T>
 	static int Get(lua_State *L) {
 		luacl_buffer_info buffer = traits::CheckObject(L, 1);
-		size_t index = static_cast<size_t>(lua_tonumber(L, 2));
-		if (index * sizeof(T) + sizeof(T) - 1 > buffer->size) {
+		ptrdiff_t index = static_cast<ptrdiff_t>(lua_tonumber(L, 2));
+		
+		if (index < 0 || (index + 1) * sizeof(T) > buffer->size) {
             luaL_error(L, "Buffer access out of bound.");
         }
 		T * data = reinterpret_cast<T *>(buffer->data);
@@ -131,14 +134,15 @@ struct luacl_buffer {
 	template <typename T>
 	static int Set(lua_State *L) {
 		luacl_buffer_info buffer = traits::CheckObject(L, 1);
-		size_t index = static_cast<size_t>(lua_tonumber(L, 2));
+		ptrdiff_t index = static_cast<ptrdiff_t>(lua_tonumber(L, 2));
 		T value = static_cast<T>(lua_tonumber(L, 3));
-		if (index * sizeof(T) + sizeof(T) - 1 > buffer->size) {
+		
+		if (index < 0 || (index + 1) * sizeof(T) > buffer->size) {
             luaL_error(L, "Buffer access out of bound.");
         }
 		T * data = reinterpret_cast<T *>(buffer->data);
 		data[index] = value;
-		//* (reinterpret_cast<T *>(buffer->data) + addr) = value;
+		//* (reinterpret_cast<T *>(buffer->data) + addr) = value; /* Compare de-asm for performance? */
 		return 0;
 	}
     
@@ -151,10 +155,11 @@ struct luacl_buffer {
     template <typename T>
     static int ReverseEndian(lua_State *L) {
 		luacl_buffer_info buffer = traits::CheckObject(L, 1);
-		size_t index = static_cast<size_t>(lua_tonumber(L, 2));
-        size_t range = static_cast<size_t>(lua_tonumber(L, 3));
+		ptrdiff_t index = static_cast<ptrdiff_t>(lua_tonumber(L, 2));
+		ptrdiff_t range = static_cast<ptrdiff_t>(lua_tonumber(L, 3));
         range = (range == 0) ? buffer->size / sizeof(T) - index : range;
-        if (index * sizeof(T) + sizeof(T) - 1 > buffer->size) {
+
+        if (index < 0 || range < 0 || (index + 1) * sizeof(T) > buffer->size) {
             luaL_error(L, "Buffer access out of bound.");
         }
 		T * data = reinterpret_cast<T *>(buffer->data);
