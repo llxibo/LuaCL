@@ -36,10 +36,11 @@ function _M.TestContext(context, devices, platform)
 	UnitTest.MatchTableValue(contextDevices, devices)
 
 	require "UnitTest.program"
-
 	UnitTest.program.Test(context)
 
 	require "UnitTest.buffer"
-
 	UnitTest.buffer.Test(context)
+
+	require "UnitTest.cmdqueue"
+	UnitTest.cmdqueue.Test(context)
 end
