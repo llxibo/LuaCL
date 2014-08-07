@@ -3,16 +3,40 @@ require("UnitTest.object")
 print("UnitTest.buffer loaded")
 local _M = UnitTest.NewTest("buffer", "LuaCL_Buffer", "LuaCL_Buffer_Registry", "LuaCL_Buffer")
 
+local random = math.random
+local floor = math.floor
+local abs = math.abs
+
 local bufferTypes = {
-	Int = 4,
-	-- Float = 4,
-	-- Double = 8,
-	-- Short = 2,
-	-- Char = 1,
+	Int = {
+		size = 4,
+		assert = function (arg1, arg2) return floor(arg1) == floor(arg2) end,
+		random = function () return random(-2147483648, 2147483647) end,
+	},
+	Float = {
+		size = 4,
+		assert = function (arg1, arg2) return abs(arg1 - arg2) < 1e-6 end,
+		random = function () return (random() - 0.5) * 1e6 end,
+	},
+	Double = {
+		size = 8,
+		assert = function (arg1, arg2) return arg1 == arg2 end,
+		random = function () return (random() - 0.5) * 1e6 end,
+	},
+	Short = {
+		size = 2,
+		assert = function (arg1, arg2) return floor(arg1) == floor(arg2) end,
+		random = function () return random(-32768, 32767) end,
+	},
+	Char = {
+		size = 1,
+		assert = function (arg1, arg2) return floor(arg1) == floor(arg2) end,
+		random = function () return random(-128, 127) end,
+	},
 }
 
 function _M.Test(context)
-	local sizeFactorMax = 10
+	local sizeFactorMax = 8
 	local sizeFactorUnit = 2
 	local sizeFactorBase = 4
 
@@ -22,8 +46,8 @@ function _M.Test(context)
 	assert(context.CreateBuffer)
 
 	for sizeFactor = 1, sizeFactorMax do
-		local size = (sizeFactorBase ^ sizeFactor) * sizeFactorUnit
-		print("Testing buffer size", size)
+		local size = (sizeFactorBase ^ sizeFactor) * sizeFactorUnit + sizeFactor
+		-- print("Testing buffer size", size)
 		UnitTest.AssertRegEmpty("buffer")
 		do
 			local buffer = context:CreateBuffer(size)
@@ -32,41 +56,48 @@ function _M.Test(context)
 
 			assert(buffer.GetBufferSize)
 			assert(buffer:GetBufferSize() == size)
-			for bufferType, bufferSize in pairs(bufferTypes) do
-				print("Testing", bufferType, bufferSize)
-				local get = buffer["Get" .. bufferType]
-				local set = buffer["Set" .. bufferType]
-				local varSize = buffer["GetSize" .. bufferType]()
-				assert(varSize == bufferSize)
-
+			for typeName, typeInfo in pairs(bufferTypes) do
+				-- print("Testing", typeName, typeInfo.size)
+				local get = buffer["Get" .. typeName]
+				local set = buffer["Set" .. typeName]
+				assert(buffer["GetSize" .. typeName]() == typeInfo.size)
 				assert(get)
 				assert(set)
+				local assertValue = typeInfo.assert
+				local randomValue = typeInfo.random
 
 				-- Check lower boundary
-				local ret, err = pcall(set, buffer, -1)
+				local ret, err = pcall(get, buffer, -1)
 				assert(not ret)
 				assert(err == "Buffer access out of bound.")
 
 				-- Check upper boundary
-				local ret, err = pcall(set, buffer, size / bufferSize)
+				local uBound = floor(size / typeInfo.size)
+				-- print("Asserting ubound", uBound)
+				local ret, err = pcall(get, buffer, uBound)
 				assert(not ret)
 				assert(err == "Buffer access out of bound.")
+
+				assert(buffer.Clear)
+				buffer:Clear()
 
 				-- Check with RNG data sequence
 				local seed = os.clock()
 				math.randomseed(seed)
-				for index = 0, size / bufferSize - 1 do
-					local value = math.random() * randomBase
-					-- print(set, index, value)
+				for index = 0, size / typeInfo.size - 1 do
+					assert(get(buffer, index) == 0)
+					local value = randomValue()
 					set(buffer, index, value)
 				end
 				math.randomseed(seed)
-				for index = 0, size / bufferSize - 1 do
-					local value = math.random() * randomBase
+				for index = 0, size / typeInfo.size - 1 do
+					local value = randomValue()
 					local readValue = get(buffer, index)
-					-- print(get, index, value, buffer[get](buffer, index))
-					assert(readValue == value or readValue == math.floor(value))
+					assertValue(value, readValue)
 				end
+
+				assert(buffer["ReverseEndian" .. typeName])
+				buffer["ReverseEndian" .. typeName](buffer)
 			end
 		end
 		UnitTest.AssertRegEmpty("buffer")
