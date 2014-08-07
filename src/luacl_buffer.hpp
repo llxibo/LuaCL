@@ -16,11 +16,19 @@ struct luacl_buffer_object {
 	void * data = NULL;
 	size_t size = 0;
 
-	~luacl_buffer_object() {
-		if (mem != NULL) {      /* Note that the cl_mem might not be assigned upon destruction */
-			clReleaseMemObject(mem);
+	cl_int ReleaseMem() {
+		if (mem == NULL) {
+			return CL_SUCCESS;
 		}
+		cl_int err = clReleaseMemObject(mem);
+		mem = NULL;
+		return err;
+	}
+
+	~luacl_buffer_object() {
+		ReleaseMem();
 		free(data);             /* According to C99, free(NULL) should always be safe. */
+		data = NULL;
 	}
 };
 
@@ -38,8 +46,9 @@ struct luacl_object_constants<luacl_buffer_info> {
 		return LUACL_MEM_TOSTRING;
 	}
 	static cl_int Release(luacl_buffer_info mem) {
+		cl_int err = mem->ReleaseMem();	/* The destructor will do this. In order to get err code, release it prior to destruction. */
 		delete mem;
-		return CL_SUCCESS;
+		return err;
 	}
 };
 
@@ -80,12 +89,12 @@ struct luacl_buffer {
 		luacl_buffer_info bufferObject = new luacl_buffer_object;
 		bufferObject->data = data;		/* The allocated memory is now guarded by bufferObject */
 		bufferObject->size = size;
+		traits::Wrap(L, bufferObject);	/* Push the pointer of uncompleted buffer object to lua stack */
 
 		cl_int err = 0;
 		cl_mem mem = clCreateBuffer(context, flags, size, data, &err);
 		CheckCLError(L, err, "Failed creating buffer: %d.");	/* Potential function exit, *data will be released by bufferObject destructor */
 		bufferObject->mem = mem;
-		traits::Wrap(L, bufferObject);
 		return 1;
 	}
     
