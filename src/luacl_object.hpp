@@ -116,13 +116,16 @@ struct luacl_object {
 		return objects;
 	}
 
-	static std::vector<cl_object> CheckNumberTable(lua_State *L, int index) {
+	static std::vector<cl_object> CheckNumberTable(lua_State *L, int index, bool allowNil = false) {
+		if (allowNil && lua_isnoneornil(L, index)) {
+			return std::vector<cl_object>();
+		}
 		if (!lua_istable(L, index)) {
 			luaL_error(L, "Bad argument #%d, table of number expected, got %s.", index, luaL_typename(L, index));
 			return std::vector<cl_object>();
 		}
 		std::vector<cl_object> numbers;
-        size_t size = lua_objlen(L, index);
+		size_t size = lua_objlen(L, index);		/* Returns 0 for nil */
 		for (unsigned int i = 0; i < size; i++) {
 			lua_rawgeti(L, index, i + 1);
 			cl_object num = static_cast<cl_object>(luaL_checknumber(L, -1));
