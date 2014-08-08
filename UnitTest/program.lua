@@ -9,7 +9,6 @@ print("UnitTest.program loaded")
 local _M = UnitTest.NewTest("program", "LuaCL_Program", "LuaCL_Program_Registry", "LuaCL_Program")
 
 local source = [[
-	__constant uint WhereIsIt[] = { 0x33333333, 0x55555555, 0xCCCCCCCC, 0xCDCDCDCD };
 	__kernel void myfunc(   __global const float *a,
 							__global const float *b,
 							__global float *result) {
