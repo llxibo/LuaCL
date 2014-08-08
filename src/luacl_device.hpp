@@ -30,8 +30,8 @@ struct luacl_device {
 		lua_newtable(L);
 		lua_pushcfunction(L, GetInfo);
 		lua_setfield(L, -2, "GetInfo");
-		//lua_pushcfunction(L, GetDevices);
-		//lua_setfield(L, -1, "GetDevices");
+		lua_pushcfunction(L, GetPlatform);
+		lua_setfield(L, -2, "GetPlatform");
 		lua_setfield(L, -2, "__index");
 		lua_pushcfunction(L, traits::ToString);
 		lua_setfield(L, -2, "__tostring");
@@ -173,6 +173,21 @@ struct luacl_device {
 		}
         lua_setfield(L, -2, key);
 		return 0;
+	}
+
+	static int GetPlatform(lua_State *L) {
+		cl_device_id device = traits::CheckObject(L);
+		size_t size = 0;
+		cl_int err = clGetDeviceInfo(device, CL_DEVICE_PLATFORM, 0, NULL, &size);
+		CheckCLError(L, err, "Failed requesting length of device platform: %d.");
+		if (size != sizeof(cl_platform_id)) {
+			return luaL_error(L, "Device platform size mismatch.");
+		}
+		cl_platform_id platform = NULL;
+		err = clGetDeviceInfo(device, CL_DEVICE_PLATFORM, sizeof(cl_platform_id), &platform, NULL);
+		CheckCLError(L, err, "Failed requesting device platform: %d.");
+		luacl_object<cl_platform_id>::Wrap(L, platform);
+		return 1;
 	}
 };
 
