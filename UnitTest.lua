@@ -25,6 +25,9 @@ require "UnitTest.platform"
 -- -- end
 -- xpcall(UnitTest.platform.Test, err)
 UnitTest.platform.Test()
+
+require "UnitTest.helloworld"
+UnitTest.HelloWorld()
 print("All tests passed")
 do return end
 
