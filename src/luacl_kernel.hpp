@@ -3,6 +3,7 @@
 
 #include "LuaCL.h"
 #include "luacl_object.hpp"
+#include "luacl_buffer.hpp"
 #include <assert.h>
 
 static const char LUACL_KERNEL_REGISTRY[] = "LuaCL_Kernel_Registry";
@@ -45,6 +46,8 @@ struct luacl_kernel {
 		lua_setfield(L, -2, "GetFunctionName");
 		lua_pushcfunction(L, GetWorkGroupInfo);
 		lua_setfield(L, -2, "GetWorkGroupInfo");
+		lua_pushcfunction(L, SetArgMem);
+		lua_setfield(L, -2, "SetArg");
 		lua_pushcfunction(L, SetArg<float>);
 		lua_setfield(L, -2, "SetArgFloat");
 		lua_pushcfunction(L, SetArg<cl_int>);
@@ -132,6 +135,15 @@ struct luacl_kernel {
         return 0;
     }
     
+	static int SetArgMem(lua_State *L) {
+		cl_kernel krnl = traits::CheckObject(L);
+		cl_uint index = static_cast<cl_uint>(luaL_checknumber(L, 2));
+		luacl_buffer_info buffer = luacl_object<luacl_buffer_info>::CheckObject(L, 3);
+		cl_int err = clSetKernelArg(krnl, index - 1, sizeof(cl_mem), buffer->mem);
+		CheckCLError(L, err, "Failed setting kernel arg as mem object: %d.");
+		return 0;
+	}
+
     template <typename T>
     static int PushWorkGroupInfo(lua_State *L, cl_kernel krnl, cl_device_id device, cl_kernel_work_group_info param, const char * paramName, int length = 1) {
         size_t size = 0;

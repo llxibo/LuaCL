@@ -84,10 +84,10 @@ struct luacl_object {
 
 	/* Check and return OpenCL object wrapped in a userdata.
 	   This function always return a non-NULL value, or it will throw a Lua error. */
-	static cl_object CheckObject(lua_State *L, int index = 1, cl_object *resource = NULL) {
+	static cl_object CheckObject(lua_State *L, int index = 1) {
 		cl_object *p = static_cast<cl_object *>(luaL_checkudata(L, index, traits::METATABLE()));
 		if (p == NULL) {
-			free(resource);
+			// free(resource);
 			luaL_error(L, "Failed resolving object from userdata.");	/* This function never returns */
 			return NULL;
 		}
@@ -99,7 +99,10 @@ struct luacl_object {
 		return 1;
 	}
 
-	static std::vector<cl_object> CheckObjectTable(lua_State *L, int index) {
+	static std::vector<cl_object> CheckObjectTable(lua_State *L, int index, bool allowNil = false) {
+		if (allowNil && lua_isnoneornil(L, index)) {
+			return std::vector<cl_object>();
+		}
 		if (!lua_istable(L, index)) {
 			luaL_error(L, "Bad argument #%d, table of %s expected, got %s.", index, traits::TOSTRING(), luaL_typename(L, index));
 			return std::vector<cl_object>();
@@ -125,7 +128,7 @@ struct luacl_object {
 			return std::vector<cl_object>();
 		}
 		std::vector<cl_object> numbers;
-		size_t size = lua_objlen(L, index);		/* Returns 0 for nil */
+		size_t size = lua_objlen(L, index);		/* Must be a table now */
 		for (unsigned int i = 0; i < size; i++) {
 			lua_rawgeti(L, index, i + 1);
 			cl_object num = static_cast<cl_object>(luaL_checknumber(L, -1));
