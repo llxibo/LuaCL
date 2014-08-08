@@ -75,12 +75,12 @@ struct luacl_cmdqueue {
 		if (workDim == 0) {
 			return luaL_error(L, "Invalid working dimension.");
 		}
-		/* Dimension of local work size must match. Global work offset could match the dimension or be empty */
+		/* Dimension of local work size must match. Global work offset could match the dimension or be (optionally) empty */
 		if (workDim != localWorkSize.size() || (!globalWorkOffset.empty() && globalWorkOffset.size() != workDim)) {
 			return luaL_error(L, "Working dimension mismatch.");
 		}
 
-		std::vector<cl_event> events = luacl_object<cl_event>::CheckObjectTable(L, 6);
+		std::vector<cl_event> events = luacl_object<cl_event>::CheckObjectTable(L, 6, true);	/* Event list could be empty */
 
 		cl_event event = NULL;
 		cl_int err = clEnqueueNDRangeKernel(
@@ -100,15 +100,15 @@ struct luacl_cmdqueue {
 
 	static int EnqueueWriteBuffer(lua_State *L) {
 		cl_command_queue cmdqueue = traits::CheckObject(L);
-		luacl_buffer_info buffer = luacl_object<luacl_buffer_info>::CheckObject(L);
-		size_t size = static_cast<size_t>(luaL_checknumber(L, 2));
-		size_t offset = static_cast<size_t>(lua_tonumber(L, 3));
+		luacl_buffer_info buffer = luacl_object<luacl_buffer_info>::CheckObject(L, 2);
+		std::vector<cl_event> eventList = luacl_object<cl_event>::CheckObjectTable(L, 3, true);
+		size_t size = static_cast<size_t>(lua_tonumber(L, 4));
+		size_t offset = static_cast<size_t>(lua_tonumber(L, 5));
 		size = (size == 0) ? buffer->size : size;
 		if (size + offset > buffer->size) {
 			return luaL_error(L, "Invalid size or offset.");
 		}
-		std::vector<cl_event> eventList = luacl_object<cl_event>::CheckObjectTable(L, 4);
-		cl_bool blocking = lua_toboolean(L, 5);
+		cl_bool blocking = lua_toboolean(L, 6);
 		cl_event event = NULL;
 		cl_int err = clEnqueueWriteBuffer(
             cmdqueue,
@@ -128,15 +128,15 @@ struct luacl_cmdqueue {
 
 	static int EnqueueReadBuffer(lua_State *L) {
 		cl_command_queue cmdqueue = traits::CheckObject(L);
-		luacl_buffer_info buffer = luacl_object<luacl_buffer_info>::CheckObject(L);
-		size_t size = static_cast<size_t>(luaL_checknumber(L, 2));
-		size_t offset = static_cast<size_t>(lua_tonumber(L, 3));
+		luacl_buffer_info buffer = luacl_object<luacl_buffer_info>::CheckObject(L, 2);
+		std::vector<cl_event> eventList = luacl_object<cl_event>::CheckObjectTable(L, 3);
+		size_t size = static_cast<size_t>(lua_tonumber(L, 4));
+		size_t offset = static_cast<size_t>(lua_tonumber(L, 5));
 		size = size == 0 ? buffer->size : size;
 		if (size + offset > buffer->size) {
 			return luaL_error(L, "Invalid size or offset.");
 		}
-		std::vector<cl_event> eventList = luacl_object<cl_event>::CheckObjectTable(L, 4);
-		cl_bool blocking = lua_toboolean(L, 5);
+		cl_bool blocking = lua_toboolean(L, 6);
         
 		cl_event event = NULL;
 		cl_int err = clEnqueueReadBuffer(
