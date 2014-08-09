@@ -31,18 +31,18 @@ function UnitTest.HelloWorld()
 	local queue = context:CreateCommandQueue(device)
 	local buffers = {}
 	for index = 1, 3 do
-		buffers[index] = context:CreateBuffer(bufferSize)
-		assert(buffers[index])
-		kernel:SetArg(index, buffers[index])
+		buffer = context:CreateBuffer(bufferSize)
+		assert(buffer)
+		buffer:Clear()
+		for index = 0, bufferSize / buffer:GetSizeFloat() - 1 do
+			buffer:SetFloat(index, index)
+		end
+		kernel:SetArg(index, buffer)
+		buffers[index] = buffer
 	end
-	buffers[1]:Clear()
-	for index = 0, bufferSize / buffers[1]:GetSizeFloat() - 1 do
-		buffers[1]:SetFloat(index, index)
-		buffers[2]:SetFloat(index, index)
-	end
+	local event1 = queue:EnqueueWriteBuffer(buffers[1])
 	local event2 = queue:EnqueueWriteBuffer(buffers[2])
 	local event = queue:EnqueueNDRangeKernel(kernel, {1}, {256}, nil, {event1, event2})
-	print(event)
 	queue:EnqueueReadBuffer(buffers[3], {event})
 	queue:Finish()
 	for index = 0, bufferSize / buffers[1]:GetSizeFloat() - 1 do
