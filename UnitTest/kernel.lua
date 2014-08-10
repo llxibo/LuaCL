@@ -71,7 +71,7 @@ function _M.Test(program, funcName, numArgs)
 		assert(GetOpenCLVersion)
 		if tonumber(GetOpenCLVersion()) >= 1.2 then
 			assert(kernel.GetArgInfo)
-			for index = 0, numArgs - 1 do
+			for index = 1, numArgs do
 				local info = kernel:GetArgInfo(index)
 				assert(type(info) == "table")
 				UnitTest.AssertInfoTable(info, kernelArgInfoKeys)

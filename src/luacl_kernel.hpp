@@ -171,7 +171,7 @@ struct luacl_kernel {
 #ifdef CL_VERSION_1_2
 	static int GetArgInfo(lua_State *L) {
 		cl_kernel krnl = traits::CheckObject(L);
-		cl_uint index = static_cast<cl_uint>(luaL_checknumber(L, 2));
+		cl_uint index = static_cast<cl_uint>(luaL_checknumber(L, 2) - 1);
 		lua_newtable(L);
 		PushArgInfo<cl_kernel_arg_address_qualifier>(L, krnl, index, CL_KERNEL_ARG_ADDRESS_QUALIFIER, "ADDRESS_QUALIFIER");
 		PushArgInfo<cl_kernel_arg_access_qualifier>(L, krnl, index, CL_KERNEL_ARG_ACCESS_QUALIFIER, "ACCESS_QUALIFIER");
