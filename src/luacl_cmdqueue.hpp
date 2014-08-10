@@ -66,7 +66,7 @@ struct luacl_cmdqueue {
 	static int EnqueueNDRangeKernel(lua_State *L) {
 		cl_command_queue cmdqueue = traits::CheckObject(L);
 		cl_kernel krnl = luacl_object<cl_kernel>::CheckObject(L, 2);
-		std::vector<size_t> localWorkSize = luacl_object<size_t>::CheckNumberTable(L, 3);
+		std::vector<size_t> localWorkSize = luacl_object<size_t>::CheckNumberTable(L, 3, true);	/* Optional arg */
 		std::vector<size_t> globalWorkSize = luacl_object<size_t>::CheckNumberTable(L, 4);
 		std::vector<size_t> globalWorkOffset = luacl_object<size_t>::CheckNumberTable(L, 5, true);	/* Optional arg */
 
@@ -76,11 +76,15 @@ struct luacl_cmdqueue {
 			return luaL_error(L, "Invalid working dimension.");
 		}
 		/* Dimension of local work size must match. Global work offset could match the dimension or be (optionally) empty */
-		if (workDim != localWorkSize.size() || (!globalWorkOffset.empty() && globalWorkOffset.size() != workDim)) {
+		if ((!localWorkSize.empty() && workDim != localWorkSize.size()) || 
+			(!globalWorkOffset.empty() && globalWorkOffset.size() != workDim)) {
 			return luaL_error(L, "Working dimension mismatch.");
 		}
 
 		std::vector<cl_event> events = luacl_object<cl_event>::CheckObjectTable(L, 6, true);	/* Event list could be empty */
+
+		const cl_event * eventsData = events.empty() ? NULL : events.data();
+		const cl_uint eventSize = static_cast<cl_uint>(events.size());
 
 		cl_event event = NULL;
 		cl_int err = clEnqueueNDRangeKernel(
@@ -89,9 +93,9 @@ struct luacl_cmdqueue {
             workDim,
 			globalWorkOffset.empty() ? NULL : globalWorkOffset.data(),
             globalWorkSize.data(),
-            localWorkSize.data(),
-            static_cast<cl_uint>(events.size()),
-            events.empty() ? NULL : events.data(),
+            localWorkSize.empty() ? NULL : localWorkSize.data(),
+            eventSize,
+            eventsData,
             &event
         );
 		CheckCLError(L, err, "Failed requesting enqueue NDRange: %d.");
