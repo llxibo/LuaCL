@@ -36,7 +36,7 @@ struct luacl_object {
 	typedef luacl_object_constants<cl_object> traits;
 
 	static int Wrap(lua_State *L, cl_object object) {
-        // l_debug(L, "Wrapping object %p", object);
+        l_debug(L, "Wrapping %s %p", typeid(cl_object).name(), object);
 		lua_getfield(L, LUA_REGISTRYINDEX, traits::REGISTRY());
 		assert(lua_istable(L, -1));
 		/* Now the top of stack is registry table */

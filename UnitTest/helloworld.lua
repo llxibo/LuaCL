@@ -33,9 +33,9 @@ function UnitTest.HelloWorld()
 	for index = 1, 3 do
 		local buffer
 		if index < 3 then
-			buffer = context:CreateBuffer(bufferSize, 4 + 8)
+			buffer = context:CreateBuffer(bufferSize)
 		else
-			buffer = context:CreateBuffer(bufferSize, 2 + 8)
+			buffer = context:CreateBuffer(bufferSize)
 		end
 		assert(buffer)
 		buffer:Clear()

@@ -50,7 +50,7 @@ struct luacl_device {
 		CheckCLError(L, err, "Failed requesting platform list: %d.");
 
 		for (cl_uint index = 0; index < numDevices; index++) {
-			l_debug(L, "Wrapping device: %p", devices[index]);
+			//l_debug(L, "Wrapping device: %p", devices[index]);
 			traits::Wrap(L, devices[index]);
 		}
 		return static_cast<int>(numDevices);

@@ -80,7 +80,7 @@ struct luacl_buffer {
 		cl_context context = luacl_object<cl_context>::CheckObject(L, 1);
 		size_t size = static_cast<size_t>(luaL_checknumber(L, 2));
 		cl_mem_flags flags = static_cast<cl_mem_flags>(lua_tonumber(L, 3));
-		flags = (flags == 0) ? (CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR) : flags;
+		flags = (flags == 0) ? (CL_MEM_READ_WRITE) : flags;
 
 		if (size == 0) {
 			return luaL_error(L, "Bad argument #2: size of buffer must be greater than %d.", LUACL_BUFFER_MIN_SIZE);
@@ -94,7 +94,7 @@ struct luacl_buffer {
 		traits::Wrap(L, bufferObject);	/* Push the pointer of uncompleted buffer object to lua stack */
 
 		cl_int err = 0;
-		cl_mem mem = clCreateBuffer(context, flags, size, data, &err);
+		cl_mem mem = clCreateBuffer(context, flags, size, NULL, &err);
 		CheckCLError(L, err, "Failed creating buffer: %d.");	/* Potential function exit, *data will be released by bufferObject destructor */
 		bufferObject->mem = mem;
 		return 1;
