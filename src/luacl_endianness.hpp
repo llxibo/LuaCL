@@ -21,8 +21,8 @@ inline luacl_byte_order_enumeration luacl_host_byte_order(void) {
     char dest[sizeof(uint32_t)];
     uint32_t src = UINT32_C( 0x01020304 );
     /*
-    	According to ISO C, to reinterpret bits as another data type,
-    	the only strict correct method is to use `memcpy`.
+        According to ISO C, to reinterpret bits as another data type,
+        the only strict correct method is to use `memcpy`.
     */
     memcpy(dest, &src, sizeof(uint32_t));
 

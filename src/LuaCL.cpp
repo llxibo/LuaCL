@@ -1,14 +1,14 @@
 #include "LuaCL.h"
 
 LUA_API int panic(lua_State *L) {
-	printf("Panic error:\n");
-	const char * msg = lua_tostring(L, 1);
-	printf("%s\n", msg);
+    printf("Panic error:\n");
+    const char * msg = lua_tostring(L, 1);
+    printf("%s\n", msg);
 #if defined(_LUACL_PAUSE_SYSTEM)
-	system("pause");
+    system("pause");
 #endif
-	exit(0);
-	return 1;
+    exit(0);
+    return 1;
 }
 
 static int Run(lua_State *L) {
@@ -29,39 +29,39 @@ static int ErrorHandler(lua_State *L) {
 }
 
 int main(int argc, char **argv) {
-	lua_State *L = luaL_newstate();
-	if (NULL == L) {
-		return 1;
-	}
+    lua_State *L = luaL_newstate();
+    if (NULL == L) {
+        return 1;
+    }
 
-	luaL_openlibs(L);
+    luaL_openlibs(L);
 
-	lua_atpanic(L, panic);
+    lua_atpanic(L, panic);
 
     /* Store traceback function to registry, to prevent potential alteration by user */
     lua_getfield(L, LUA_GLOBALSINDEX, "debug");
     lua_getfield(L, -1, "traceback");
     lua_setfield(L, LUA_REGISTRYINDEX, "traceback");
     lua_pop(L, 1);
-    
+
     luacl_debug::Init(L);
-	luacl_platform::Init(L);
-	luacl_device::Init(L);
-	luacl_context::Init(L);
-	luacl_program::Init(L);
-	luacl_kernel::Init(L);
-	luacl_cmdqueue::Init(L);
-	luacl_buffer::Init(L);
+    luacl_platform::Init(L);
+    luacl_device::Init(L);
+    luacl_context::Init(L);
+    luacl_program::Init(L);
+    luacl_kernel::Init(L);
+    luacl_cmdqueue::Init(L);
+    luacl_buffer::Init(L);
     luacl_event::Init(L);
 
     lua_getfield(L, LUA_GLOBALSINDEX, "xpcall");
     lua_pushcfunction(L, Run);
     lua_pushcfunction(L, ErrorHandler);
     lua_call(L, 2, 0);
-	lua_close(L);
+    lua_close(L);
 
 #if defined(_LUACL_PAUSE_SYSTEM)
-	system("pause");
+    system("pause");
 #endif
-	return 0;
+    return 0;
 }

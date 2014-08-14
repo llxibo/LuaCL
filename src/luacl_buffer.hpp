@@ -46,7 +46,7 @@ struct luacl_object_constants<luacl_buffer_info> {
         return LUACL_MEM_TOSTRING;
     }
     static cl_int Release(luacl_buffer_info mem) {
-        cl_int err = mem->ReleaseMem();	/* The destructor will do this. In order to get err code, release it prior to destruction. */
+        cl_int err = mem->ReleaseMem(); /* The destructor will do this. In order to get err code, release it prior to destruction. */
         delete mem;
         return err;
     }
@@ -89,13 +89,13 @@ struct luacl_buffer {
         CheckAllocError(L, data);
         memset(data, 0, size);
         luacl_buffer_info bufferObject = new luacl_buffer_object;
-        bufferObject->data = data;		/* The allocated memory is now guarded by bufferObject */
+        bufferObject->data = data;      /* The allocated memory is now guarded by bufferObject */
         bufferObject->size = size;
-        traits::Wrap(L, bufferObject);	/* Push the pointer of uncompleted buffer object to lua stack */
+        traits::Wrap(L, bufferObject);  /* Push the pointer of uncompleted buffer object to lua stack */
 
         cl_int err = 0;
         cl_mem mem = clCreateBuffer(context, flags, size, NULL, &err);
-        CheckCLError(L, err, "Failed creating buffer: %d.");	/* Potential function exit, *data will be released by bufferObject destructor */
+        CheckCLError(L, err, "Failed creating buffer: %d.");    /* Potential function exit, *data will be released by bufferObject destructor */
         bufferObject->mem = mem;
         return 1;
     }
