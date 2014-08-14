@@ -130,7 +130,7 @@ struct luacl_kernel {
         cl_kernel krnl = traits::CheckObject(L);
         cl_uint index = static_cast<cl_uint>(luaL_checknumber(L, 2));
         T value = static_cast<T>(luaL_checknumber(L, 3));
-        cl_int err = clSetKernelArg(krnl, index - 1, sizeof(T*), &value);
+        cl_int err = clSetKernelArg(krnl, index - 1, sizeof(T), &value);
         CheckCLError(L, err, "Failed setting kernel arg: %d.");
         return 0;
     }
