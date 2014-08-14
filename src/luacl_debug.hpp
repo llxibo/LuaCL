@@ -19,7 +19,10 @@ const char LUACL_DEBUG_CALLBACK_FUNC[] = "LuaCL_Debug_Callback_Func";
         lua_call(L, 1, 0);
     }
 #else
-    void l_debug(lua_State *L, const char * message, ...) {}
+    void l_debug(lua_State *L, const char * message, ...) {
+        LUACL_UNUSED(L);
+        LUACL_UNUSED(message);
+    }
 #endif /* _DEBUG */
 
 struct luacl_debug {
@@ -40,8 +43,12 @@ struct luacl_debug {
     }
 
     static int GetRegistry(lua_State *L) {
+#if _DEBUG
         lua_pushvalue(L, LUA_REGISTRYINDEX);
         return 1;
+#else
+        return 0;
+#endif
     }
 
     static int GetOpenCLVersion(lua_State *L) {

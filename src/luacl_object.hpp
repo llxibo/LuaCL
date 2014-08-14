@@ -103,7 +103,7 @@ struct luacl_object {
         if (allowNil && lua_isnoneornil(L, index)) {
             return std::vector<cl_object>();
         }
-        if (!lua_istable(L, index)) {
+        if (LUACL_UNLIKELY(!lua_istable(L, index))) {
             luaL_error(L, "Bad argument #%d, table of %s expected, got %s.", index, traits::TOSTRING(), luaL_typename(L, index));
             return std::vector<cl_object>();
         }
@@ -123,7 +123,7 @@ struct luacl_object {
         if (allowNil && lua_isnoneornil(L, index)) {
             return std::vector<cl_object>();
         }
-        if (!lua_istable(L, index)) {
+        if (LUACL_UNLIKELY(!lua_istable(L, index))) {
             luaL_error(L, "Bad argument #%d, table of number expected, got %s.", index, luaL_typename(L, index));
             return std::vector<cl_object>();
         }
@@ -139,7 +139,7 @@ struct luacl_object {
     }
 
     static std::vector<std::string> CheckStringTable(lua_State *L, int index) {
-        if (!lua_istable(L, index)) {
+        if (LUACL_UNLIKELY(!lua_istable(L, index))) {
             luaL_error(L, "Bad argument #%d, table of string expected, got %s.", index, luaL_typename(L, index));
             return std::vector<std::string>();
         }

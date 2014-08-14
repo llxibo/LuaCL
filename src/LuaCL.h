@@ -46,6 +46,9 @@ extern "C" {
 
 //#define LUACL_TRYCALL(call) do { _LUACL_TRYCALL(call); } while (0)
 
+#define LUACL_UNUSED(expr)      (void *)expr;
+#define LUACL_LIKELY(expr)      __builtin_expect(!!(expr), true)
+#define LUACL_UNLIKELY(expr)    __builtin_expect(!!(expr), false)
 
 /* Include LuaCL modules */
 #include "luacl_debug.hpp"
