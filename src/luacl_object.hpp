@@ -8,20 +8,30 @@
 
 static const char LUACL_ERR_MALLOC[] = "Insufficient memory";
 
-//*
+/* Macro instead of inline function to explicitly return from caller function.
+ * The inline version will longjmp away from caller, leaving its following pointer usage safe.
+ * However, analyzers wont recognize this behavior and complaint.
+ * An exception could also jump out of caller function, but it comes with extra overhead, and could be hard to handle.
+ * So we got this work-around, to shut compiler from complaining and keep away from exceptions.
+ * The macro is assumed to be used in a lua_CFunction, which returns int. */
 #define CHECK_ALLOC_ERROR_MACRO 1
-#if (CHECK_ALLOC_ERROR_MACRO)
-#define CheckAllocError(L, p) {if (p == NULL) {luaL_error(L, LUACL_ERR_MALLOC); return 0;}};
+#if (CHECK_ALLOC_ERROR_MACRO)       /*  */
+#define CheckAllocError(L, p) {             \
+    if (LUACL_UNLIKELY(p == NULL)) {        \
+        luaL_error(L, LUACL_ERR_MALLOC);    \
+        return 0;                           \
+    }                                       \
+};
 #else
 void CheckAllocError(lua_State *L, void *p, const char * msg = LUACL_ERR_MALLOC) {
-    if (p == NULL) {
+    if (LUACL_UNLIKELY(p == NULL)) {
         luaL_error(L, msg);
     }
 }
 #endif
-//*/
+
 void CheckCLError(lua_State *L, cl_uint err, const char * msg) {
-    if (err != CL_SUCCESS) {
+    if (LUACL_UNLIKELY(err != CL_SUCCESS)) {
         luaL_error(L, msg, err);
     }
 }
@@ -86,7 +96,7 @@ struct luacl_object {
        This function always return a non-NULL value, or it will throw a Lua error. */
     static cl_object CheckObject(lua_State *L, int index = 1) {
         cl_object *p = static_cast<cl_object *>(luaL_checkudata(L, index, traits::METATABLE()));
-        if (p == NULL) {
+        if (LUACL_UNLIKELY(p == NULL)) {
             // free(resource);
             luaL_error(L, "Failed resolving object from userdata.");    /* This function never returns */
             return NULL;
@@ -107,6 +117,7 @@ struct luacl_object {
             luaL_error(L, "Bad argument #%d, table of %s expected, got %s.", index, traits::TOSTRING(), luaL_typename(L, index));
             return std::vector<cl_object>();
         }
+        
         std::vector<cl_object> objects;
         size_t size = lua_objlen(L, index);
         for (unsigned int i = 0; i < size; i++) {
@@ -127,6 +138,7 @@ struct luacl_object {
             luaL_error(L, "Bad argument #%d, table of number expected, got %s.", index, luaL_typename(L, index));
             return std::vector<cl_object>();
         }
+        
         std::vector<cl_object> numbers;
         size_t size = lua_objlen(L, index);     /* Must be a table now */
         for (unsigned int i = 0; i < size; i++) {
@@ -143,6 +155,7 @@ struct luacl_object {
             luaL_error(L, "Bad argument #%d, table of string expected, got %s.", index, luaL_typename(L, index));
             return std::vector<std::string>();
         }
+        
         std::vector<std::string> strings;
         lua_pushnil(L);
         while (lua_next(L, index)) {
