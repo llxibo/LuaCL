@@ -30,6 +30,7 @@ function UnitTest.HelloWorld()
 	assert(kernel)
 	local queue = context:CreateCommandQueue(device)
 	local buffers = {}
+	local workSize
 	for index = 1, 3 do
 		local buffer
 		if index < 3 then
@@ -39,7 +40,8 @@ function UnitTest.HelloWorld()
 		end
 		assert(buffer)
 		buffer:Clear()
-		for index = 0, bufferSize / buffer:GetSizeFloat() - 1 do
+		workSize = bufferSize / buffer:GetSizeFloat()
+		for index = 0, workSize - 1 do
 			buffer:SetFloat(index, index)
 		end
 		kernel:SetArg(index, buffer)
@@ -49,12 +51,13 @@ function UnitTest.HelloWorld()
 	print("event1", event1)
 	local event2 = queue:EnqueueWriteBuffer(buffers[2])
 	print("event2", event2)
-	local event = queue:EnqueueNDRangeKernel(kernel, nil, {16}, nil, {event1, event2})
+	local event = queue:EnqueueNDRangeKernel(kernel, nil, {workSize}, nil, {event1, event2})
 	print(event)
 	queue:EnqueueReadBuffer(buffers[3], {event})
 	queue:Finish()
-	for index = 0, bufferSize / buffers[1]:GetSizeFloat() - 1 do
-		print(buffers[3]:Get(index))
+	for index = 0, workSize - 1 do
+		print(buffers[3]:GetFloat(index), index * 2)
+		assert(buffers[3]:GetFloat(index) == index * 2)
 	end
 end
 

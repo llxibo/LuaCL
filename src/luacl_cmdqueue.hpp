@@ -38,6 +38,8 @@ struct luacl_cmdqueue {
 		lua_setfield(L, -2, "EnqueueReadBuffer");
 		lua_pushcfunction(L, EnqueueNDRangeKernel);
 		lua_setfield(L, -2, "EnqueueNDRangeKernel");
+		lua_pushcfunction(L, Finish);
+		lua_setfield(L, -2, "Finish");
 		lua_setfield(L, -2, "__index");
 		lua_pushcfunction(L, traits::ToString);
 		lua_setfield(L, -2, "__tostring");

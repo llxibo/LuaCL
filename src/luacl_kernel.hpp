@@ -130,7 +130,7 @@ struct luacl_kernel {
         cl_kernel krnl = traits::CheckObject(L);
         cl_uint index = static_cast<cl_uint>(luaL_checknumber(L, 2));
         T value = static_cast<T>(luaL_checknumber(L, 3));
-        cl_int err = clSetKernelArg(krnl, index - 1, sizeof(value), &value);
+        cl_int err = clSetKernelArg(krnl, index - 1, sizeof(T), &value);
         CheckCLError(L, err, "Failed setting kernel arg: %d.");
         return 0;
     }
@@ -140,7 +140,7 @@ struct luacl_kernel {
 		cl_uint index = static_cast<cl_uint>(luaL_checknumber(L, 2));
 		luacl_buffer_info buffer = luacl_object<luacl_buffer_info>::CheckObject(L, 3);
         l_debug(L, "kernel:SetArg index %d, buffer %p, mem %p", index, buffer, buffer->mem);
-		cl_int err = clSetKernelArg(krnl, index - 1, sizeof(cl_mem), static_cast<void *>(buffer->mem));
+		cl_int err = clSetKernelArg(krnl, index - 1, sizeof(cl_mem), &(buffer->mem));
 		CheckCLError(L, err, "Failed setting kernel arg as mem object: %d.");
 		return 0;
 	}
