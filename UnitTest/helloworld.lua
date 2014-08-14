@@ -56,7 +56,8 @@ function UnitTest.HelloWorld()
     queue:EnqueueReadBuffer(buffers[3], {event})
     queue:Finish()
     for index = 0, workSize - 1 do
-        assert(buffers[3]:GetFloat(index) == index * 2)
+        local value = buffers[3]:GetFloat(index)
+        assert(value == index * 2, ("Result mismatch: index %d got %d"):format(index, value))
     end
 end
 
