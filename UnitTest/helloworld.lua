@@ -56,7 +56,6 @@ function UnitTest.HelloWorld()
 	queue:EnqueueReadBuffer(buffers[3], {event})
 	queue:Finish()
 	for index = 0, workSize - 1 do
-		print(buffers[3]:GetFloat(index), index * 2)
 		assert(buffers[3]:GetFloat(index) == index * 2)
 	end
 end
