@@ -122,7 +122,7 @@ struct luacl_device {
     }
 
     static int PushDeviceInfoStr(lua_State *L, cl_device_id device, cl_device_info param, const char * key) {
-        if (device == NULL) {
+        if (LUACL_UNLIKELY(device == NULL)) {
             return 0;
         }
         size_t size = 0;
@@ -143,7 +143,7 @@ struct luacl_device {
         cl_int err = clGetDeviceInfo(device, param, 0, NULL, &size);
         CheckCLError(L, err, "Failed requesting length of device info: %d.");
         //l_debug(L, "%d: %d - %d", param, size, sizeof(T));
-        if (size != sizeof(T)) {
+        if (LUACL_UNLIKELY(size != sizeof(T))) {
             return luaL_error(L, "Device info size mismatch: %s", key);
         }
         T value = 0;
@@ -159,7 +159,7 @@ struct luacl_device {
         size_t size = 0;
         cl_int err = clGetDeviceInfo(device, param, 0, NULL, &size);
         CheckCLError(L, err, "Failed requesting length of device info array: %d.");
-        if (size % sizeof(T) != 0) {
+        if (LUACL_UNLIKELY(size % sizeof(T) != 0)) {
             return luaL_error(L, "Device info array size mismatch: %s", key);
         }
 
@@ -180,7 +180,7 @@ struct luacl_device {
         size_t size = 0;
         cl_int err = clGetDeviceInfo(device, CL_DEVICE_PLATFORM, 0, NULL, &size);
         CheckCLError(L, err, "Failed requesting length of device platform: %d.");
-        if (size != sizeof(cl_platform_id)) {
+        if (LUACL_UNLIKELY(size != sizeof(cl_platform_id))) {
             return luaL_error(L, "Device platform size mismatch.");
         }
         cl_platform_id platform = NULL;

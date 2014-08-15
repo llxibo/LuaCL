@@ -15,7 +15,7 @@ static const char LUACL_ERR_MALLOC[] = "Insufficient memory";
  * So we got this work-around, to shut compiler from complaining and keep away from exceptions.
  * The macro is assumed to be used in a lua_CFunction, which returns int. */
 #define CHECK_ALLOC_ERROR_MACRO 1
-#if (CHECK_ALLOC_ERROR_MACRO)       /*  */
+#if (CHECK_ALLOC_ERROR_MACRO)
 #define CheckAllocError(L, p) {             \
     if (LUACL_UNLIKELY(p == NULL)) {        \
         luaL_error(L, LUACL_ERR_MALLOC);    \

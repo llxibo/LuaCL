@@ -155,7 +155,7 @@ struct luacl_kernel {
         std::vector<T> value(length);
         err = clGetKernelWorkGroupInfo(krnl, device, param, size, value.data(), NULL);
         CheckCLError(L, err, "Failed requesting workgroup info: %d.");
-        if (length > 1) {
+        if (LUACL_UNLIKELY(length > 1)) {
             lua_newtable(L);
             for (int index = 0; index < length; index++) {
                 lua_pushnumber(L, static_cast<lua_Number>(value[index]));

@@ -75,7 +75,7 @@ struct luacl_program {
 
         size_t size = devices.size();
         // l_debug(L, "Got %zu binary objects", size);
-        if (size != binaries.size()) {
+        if (LUACL_UNLIKELY(size != binaries.size())) {
             return luaL_error(L, "Bad argument #2 and #3: table length mismatch.");
         }
         std::vector<size_t> lengths;
@@ -157,7 +157,7 @@ struct luacl_program {
 
         /* Assertion check */
         int numBinaries = static_cast<int>(sizeOfStrings / sizeof(intptr_t));
-        if (sizeOfSizes / sizeof(size_t) != numBinaries) {
+        if (LUACL_UNLIKELY(sizeOfSizes / sizeof(size_t) != numBinaries)) {
             return luaL_error(L, "Length of binaries mismatch.");
         }
 

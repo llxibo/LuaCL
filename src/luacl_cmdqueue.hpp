@@ -34,6 +34,8 @@ struct luacl_cmdqueue {
         lua_newtable(L);
         lua_pushcfunction(L, Finish);
         lua_setfield(L, -2, "Finish");
+        lua_pushcfunction(L, Flush);
+        lua_setfield(L, -2, "Flush");
         lua_pushcfunction(L, EnqueueWriteBuffer);
         lua_setfield(L, -2, "EnqueueWriteBuffer");
         lua_pushcfunction(L, EnqueueReadBuffer);
@@ -92,16 +94,16 @@ struct luacl_cmdqueue {
 
         cl_event event = NULL;
         cl_int err = clEnqueueNDRangeKernel(
-                         cmdqueue,
-                         krnl,
-                         workDim,
-                         globalWorkOffset.empty() ? NULL : globalWorkOffset.data(),
-                         globalWorkSize.data(),
-                         localWorkSize.empty() ? NULL : localWorkSize.data(),
-                         eventSize,
-                         eventsData,
-                         &event
-                     );
+            cmdqueue,
+            krnl,
+            workDim,
+            globalWorkOffset.empty() ? NULL : globalWorkOffset.data(),
+            globalWorkSize.data(),
+            localWorkSize.empty() ? NULL : localWorkSize.data(),
+            eventSize,
+            eventsData,
+            &event
+        );
         CheckCLError(L, err, "Failed requesting enqueue NDRange: %d.");
         return 0;
     }
@@ -120,16 +122,16 @@ struct luacl_cmdqueue {
 
         cl_event event = NULL;
         cl_int err = clEnqueueWriteBuffer(
-                         cmdqueue,
-                         buffer->mem,
-                         blocking,
-                         offset,
-                         size,
-                         buffer->data,
-                         static_cast<cl_uint>(eventList.size()),
-                         eventList.empty() ? NULL : eventList.data(),
-                         &event
-                     );
+            cmdqueue,
+            buffer->mem,
+            blocking,
+            offset,
+            size,
+            buffer->data,
+            static_cast<cl_uint>(eventList.size()),
+            eventList.empty() ? NULL : eventList.data(),
+            &event
+        );
         CheckCLError(L, err, "Failed requesting enqueue write buffer: %d.");
         
         luacl_object<cl_event>::Wrap(L, event);
@@ -150,16 +152,16 @@ struct luacl_cmdqueue {
 
         cl_event event = NULL;
         cl_int err = clEnqueueReadBuffer(
-                         cmdqueue,
-                         buffer->mem,
-                         blocking,
-                         offset,
-                         size,
-                         buffer->data,
-                         static_cast<cl_uint>(eventList.size()),
-                         eventList.empty() ? NULL : eventList.data(),
-                         &event
-                     );
+            cmdqueue,
+            buffer->mem,
+            blocking,
+            offset,
+            size,
+            buffer->data,
+            static_cast<cl_uint>(eventList.size()),
+            eventList.empty() ? NULL : eventList.data(),
+            &event
+        );
         CheckCLError(L, err, "Failed requesting enqueue read buffer: %d.");
         
         luacl_object<cl_event>::Wrap(L, event);
@@ -170,6 +172,13 @@ struct luacl_cmdqueue {
         cl_command_queue cmdqueue = traits::CheckObject(L);
         cl_int err = clFinish(cmdqueue);
         CheckCLError(L, err, "Failed finishing command queue: %d.");
+        return 0;
+    }
+    
+    static int Flush(lua_State *L) {
+        cl_command_queue cmdqueue = traits::CheckObject(L);
+        cl_int err = clFlush(cmdqueue);
+        CheckCLError(L, err, "Failed flushing command queue: %d.");
         return 0;
     }
 };

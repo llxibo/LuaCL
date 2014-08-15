@@ -38,7 +38,7 @@ struct luacl_event {
 
     static int WaitForEvents(lua_State *L) {
         std::vector<cl_event> events = traits::CheckObjectTable(L, 1);
-        if (events.size() == 0) {
+        if (LUACL_UNLIKELY(events.size() == 0)) {
             return luaL_error(L, "Bad arguments: expecting LuaCL_Event objects or table of LuaCL_Event objects.");
         }
         cl_int err = clWaitForEvents(static_cast<cl_uint>(events.size()), events.data());
