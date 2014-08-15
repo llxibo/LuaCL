@@ -20,6 +20,9 @@ struct luacl_object_constants<cl_event> {
     static const char * TOSTRING() {
         return LUACL_EVENT_TOSTRING;
     }
+    static cl_uint Release(cl_event event) {
+        return clReleaseEvent(event);
+    }
 };
 
 struct luacl_event {
@@ -27,7 +30,8 @@ struct luacl_event {
 
     static void Init(lua_State *L) {
         traits::CreateMetatable(L);
-        lua_pop(L, 1);      /* CreateMetatable will push a new table into stack, and we don't need it now */
+        lua_pop(L, 1);      /* CreateMetatable will push __index table into stack, and we don't need it now */
+        traits::RegisterRelease(L);
         traits::CreateRegistry(L);
         traits::RegisterFunction(L, WaitForEvents, "WaitForEvents", LUA_GLOBALSINDEX);
     }
