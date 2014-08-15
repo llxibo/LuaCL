@@ -10,9 +10,9 @@ static const char LUACL_ERR_MALLOC[] = "Insufficient memory";
 
 /* Macro instead of inline function to explicitly return from caller function.
  * The inline version will longjmp away from caller, leaving its following pointer usage safe.
- * However, analyzers wont recognize this behavior and complaint.
+ * However, compilers and analyzers may not recognize this behavior and therefore complain about it.
  * An exception could also jump out of caller function, but it comes with extra overhead, and could be hard to handle.
- * So we got this work-around, to shut compiler from complaining and keep away from exceptions.
+ * So we got this work-around, to shut compiler from complaining and keep away from exception implementation.
  * The macro is assumed to be used in a lua_CFunction, which returns int. */
 #define CHECK_ALLOC_ERROR_MACRO 1
 #if (CHECK_ALLOC_ERROR_MACRO)
@@ -81,7 +81,24 @@ struct luacl_object {
         );
         return 0;
     }
-
+    
+    static void CreateMetatable(lua_State *L) {
+        luaL_newmetatable(L, traits::METATABLE());
+        lua_pushcfunction(L, ToString);
+        lua_setfield(L, -2, "__tostring");
+        lua_newtable(L);
+    }
+    
+    static void RegisterFunction(lua_State *L, lua_CFunction func, const char *name, int index = -2) {
+        lua_pushcfunction(L, func);
+        lua_setfield(L, index, name);
+    }
+    
+    static void RegisterRelease(lua_State *L) {
+        lua_pushcfunction(L, Release);
+        lua_setfield(L, -2, "__gc");
+    }
+    
     static void CreateRegistry(lua_State *L) {
         /* Create device userdata registry */
         lua_newtable(L);                                            /* reg */

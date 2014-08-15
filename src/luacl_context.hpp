@@ -32,26 +32,16 @@ struct luacl_context {
     typedef luacl_object<cl_context> traits;
 
     static void Init(lua_State *L) {
-        luaL_newmetatable(L, LUACL_CONTEXT_METATABLE);
-        lua_newtable(L);
-        lua_pushcfunction(L, GetDevices);
-        lua_setfield(L, -2, "GetDevices");
-        lua_pushcfunction(L, GetPlatform);
-        lua_setfield(L, -2, "GetPlatform");
-        lua_pushcfunction(L, luacl_program::Create);
-        lua_setfield(L, -2, "CreateProgram");
-        lua_pushcfunction(L, luacl_program::CreateFromBinary);
-        lua_setfield(L, -2, "CreateProgramFromBinary");
-        lua_pushcfunction(L, luacl_cmdqueue::Create);
-        lua_setfield(L, -2, "CreateCommandQueue");
-        lua_pushcfunction(L, luacl_buffer::Create);
-        lua_setfield(L, -2, "CreateBuffer");
+        traits::CreateMetatable(L);
+        traits::RegisterFunction(L, GetDevices, "GetDevices");
+        traits::RegisterFunction(L, GetPlatform, "GetPlatform");
+        traits::RegisterFunction(L, luacl_program::Create, "CreateProgram");
+        traits::RegisterFunction(L, luacl_program::CreateFromBinary, "CreateProgramFromBinary");
+        traits::RegisterFunction(L, luacl_cmdqueue::Create, "CreateCommandQueue");
+        traits::RegisterFunction(L, luacl_buffer::Create, "CreateBuffer");
         lua_setfield(L, -2, "__index");
-        lua_pushcfunction(L, traits::ToString);
-        lua_setfield(L, -2, "__tostring");
-        lua_pushcfunction(L, Release);
-        lua_setfield(L, -2, "__gc");
-
+        traits::RegisterRelease(L);
+        
         traits::CreateRegistry(L);
         lua_newtable(L);
         lua_setfield(L, LUA_REGISTRYINDEX, LUACL_CONTEXT_REGISTRY_CALLBACK);

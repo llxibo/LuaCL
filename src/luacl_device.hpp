@@ -26,15 +26,10 @@ struct luacl_device {
     typedef luacl_object<cl_device_id> traits;
 
     static void Init(lua_State *L) {
-        luaL_newmetatable(L, LUACL_DEVICE_METATABLE);
-        lua_newtable(L);
-        lua_pushcfunction(L, GetInfo);
-        lua_setfield(L, -2, "GetInfo");
-        lua_pushcfunction(L, GetPlatform);
-        lua_setfield(L, -2, "GetPlatform");
+        traits::CreateMetatable(L);
+        traits::RegisterFunction(L, GetInfo, "GetInfo");
+        traits::RegisterFunction(L, GetPlatform, "GetPlatform");
         lua_setfield(L, -2, "__index");
-        lua_pushcfunction(L, traits::ToString);
-        lua_setfield(L, -2, "__tostring");
         traits::CreateRegistry(L);
     }
 

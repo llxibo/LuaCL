@@ -56,23 +56,16 @@ struct luacl_buffer {
     typedef luacl_object<luacl_buffer_info> traits;
 
     static void Init(lua_State *L) {
-        luaL_newmetatable(L, LUACL_MEM_METATABLE);
-        lua_newtable(L);
-        lua_pushcfunction(L, GetBufferSize);
-        lua_setfield(L, -2, "GetBufferSize");
-        lua_pushcfunction(L, Clear);
-        lua_setfield(L, -2, "Clear");
+        traits::CreateMetatable(L);
+        traits::RegisterFunction(L, GetBufferSize, "GetBufferSize");
+        traits::RegisterFunction(L, Clear, "Clear");
         RegisterType<int>(L, "Int");
         RegisterType<float>(L, "Float");
         RegisterType<double>(L, "Double");
         RegisterType<short>(L, "Short");
         RegisterType<char>(L, "Char");
         lua_setfield(L, -2, "__index");
-        lua_pushcfunction(L, traits::ToString);
-        lua_setfield(L, -2, "__tostring");
-        lua_pushcfunction(L, traits::Release);
-        lua_setfield(L, -2, "__gc");
-
+        traits::RegisterRelease(L);
         traits::CreateRegistry(L);
     }
 
@@ -82,7 +75,7 @@ struct luacl_buffer {
         cl_mem_flags flags = static_cast<cl_mem_flags>(lua_tonumber(L, 3));
         flags = (flags == 0) ? (CL_MEM_READ_WRITE) : flags;
 
-        if (size == 0) {
+        if (LUACL_UNLIKELY(size == 0)) {
             return luaL_error(L, "Bad argument #2: size of buffer must be greater than %d.", LUACL_BUFFER_MIN_SIZE);
         }
         void * data = malloc(size);
@@ -108,14 +101,10 @@ struct luacl_buffer {
 
     template <typename T>
     static void RegisterType(lua_State *L, const char * name) {
-        lua_pushcfunction(L, Get<T>);
-        lua_setfield(L, -2, std::string("Get").append(name).c_str());
-        lua_pushcfunction(L, Set<T>);
-        lua_setfield(L, -2, std::string("Set").append(name).c_str());
-        lua_pushcfunction(L, GetSize<T>);
-        lua_setfield(L, -2, std::string("GetSize").append(name).c_str());
-        lua_pushcfunction(L, ReverseEndian<T>);
-        lua_setfield(L, -2, std::string("ReverseEndian").append(name).c_str());
+        traits::RegisterFunction(L, Get<T>, std::string("Get").append(name).c_str());
+        traits::RegisterFunction(L, Set<T>, std::string("Set").append(name).c_str());
+        traits::RegisterFunction(L, GetSize<T>, std::string("GetSize").append(name).c_str());
+        traits::RegisterFunction(L, ReverseEndian<T>, std::string("ReverseEndian").append(name).c_str());
     }
 
     template <typename T>

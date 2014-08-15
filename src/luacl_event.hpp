@@ -26,14 +26,10 @@ struct luacl_event {
     typedef luacl_object<cl_event> traits;
 
     static void Init(lua_State *L) {
-        luaL_newmetatable(L, LUACL_EVENT_METATABLE);
-        lua_pushcfunction(L, traits::ToString);
-        lua_setfield(L, -2, "__tostring");
-
+        traits::CreateMetatable(L);
+        lua_pop(L, 1);      /* CreateMetatable will push a new table into stack, and we don't need it now */
         traits::CreateRegistry(L);
-
-        lua_pushcfunction(L, WaitForEvents);
-        lua_setfield(L, LUA_GLOBALSINDEX, "WaitForEvents");
+        traits::RegisterFunction(L, WaitForEvents, "WaitForEvents", LUA_GLOBALSINDEX);
     }
 
     static int WaitForEvents(lua_State *L) {

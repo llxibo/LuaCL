@@ -32,27 +32,16 @@ struct luacl_program {
     typedef luacl_object<cl_program> traits;
 
     static void Init(lua_State *L) {
-        luaL_newmetatable(L, LUACL_PROGRAM_METATABLE);  /* new metatable */
-        lua_newtable(L);                                /* mt = {} */
-        lua_pushcfunction(L, Build);
-        lua_setfield(L, -2, "Build");
-        lua_pushcfunction(L, GetBuildStatus);
-        lua_setfield(L, -2, "GetBuildStatus");
-        lua_pushcfunction(L, GetBuildLog);
-        lua_setfield(L, -2, "GetBuildLog");
-        lua_pushcfunction(L, GetBinary);
-        lua_setfield(L, -2, "GetBinary");
-        lua_pushcfunction(L, GetContext);
-        lua_setfield(L, -2, "GetContext");
-        lua_pushcfunction(L, GetDevices);
-        lua_setfield(L, -2, "GetDevices");
-        lua_pushcfunction(L, luacl_kernel::Create);
-        lua_setfield(L, -2, "CreateKernel");
+        traits::CreateMetatable(L);
+        traits::RegisterFunction(L, Build, "Build");
+        traits::RegisterFunction(L, GetBuildStatus, "GetBuildStatus");
+        traits::RegisterFunction(L, GetBuildLog, "GetBuildLog");
+        traits::RegisterFunction(L, GetBinary, "GetBinary");
+        traits::RegisterFunction(L, GetContext, "GetContext");
+        traits::RegisterFunction(L, GetDevices, "GetDevices");
+        traits::RegisterFunction(L, luacl_kernel::Create, "CreateKernel");
         lua_setfield(L, -2, "__index");
-        lua_pushcfunction(L, traits::ToString);
-        lua_setfield(L, -2, "__tostring");
-        lua_pushcfunction(L, traits::Release);
-        lua_setfield(L, -2, "__gc");
+        traits::RegisterRelease(L);
 
         traits::CreateRegistry(L);
     }

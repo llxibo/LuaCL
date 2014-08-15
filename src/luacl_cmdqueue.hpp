@@ -30,23 +30,14 @@ struct luacl_cmdqueue {
     typedef luacl_object<cl_command_queue> traits;
 
     static void Init(lua_State *L) {
-        luaL_newmetatable(L, LUACL_CMDQUEUE_METATABLE);
-        lua_newtable(L);
-        lua_pushcfunction(L, Finish);
-        lua_setfield(L, -2, "Finish");
-        lua_pushcfunction(L, Flush);
-        lua_setfield(L, -2, "Flush");
-        lua_pushcfunction(L, EnqueueWriteBuffer);
-        lua_setfield(L, -2, "EnqueueWriteBuffer");
-        lua_pushcfunction(L, EnqueueReadBuffer);
-        lua_setfield(L, -2, "EnqueueReadBuffer");
-        lua_pushcfunction(L, EnqueueNDRangeKernel);
-        lua_setfield(L, -2, "EnqueueNDRangeKernel");
+        traits::CreateMetatable(L);
+        traits::RegisterFunction(L, Finish, "Finish");
+        traits::RegisterFunction(L, Flush, "Flush");
+        traits::RegisterFunction(L, EnqueueReadBuffer, "EnqueueReadBuffer");
+        traits::RegisterFunction(L, EnqueueWriteBuffer, "EnqueueWriteBuffer");
+        traits::RegisterFunction(L, EnqueueNDRangeKernel, "EnqueueNDRangeKernel");
         lua_setfield(L, -2, "__index");
-        lua_pushcfunction(L, traits::ToString);
-        lua_setfield(L, -2, "__tostring");
-        lua_pushcfunction(L, traits::Release);
-        lua_setfield(L, -2, "__gc");
+        traits::RegisterRelease(L);
         traits::CreateRegistry(L);
     }
 

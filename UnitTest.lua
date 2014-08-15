@@ -16,13 +16,13 @@ end
 
 RegisterDebugCallback(debugCallback)
 
--- require "UnitTest.platform"
-
 -- -- function err(msg)
 -- --   print("Error: " .. debug.traceback(msg, 2))
 -- -- end
 -- xpcall(UnitTest.platform.Test, err)
--- UnitTest.platform.Test()
+
+require "UnitTest.platform"
+UnitTest.platform.Test()
 
 require "UnitTest.helloworld"
 UnitTest.HelloWorld()

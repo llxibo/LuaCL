@@ -27,22 +27,15 @@ struct luacl_platform {
     typedef luacl_object<cl_platform_id> traits;
 
     static void Init(lua_State *L) {
-        luaL_newmetatable(L, LUACL_PLATFORM_METATABLE); /* new metatable */
-        lua_newtable(L);                                /* mt = {} */
-        lua_pushcfunction(L, GetInfo);
-        lua_setfield(L, -2, "GetInfo");
-        lua_pushcfunction(L, luacl_device::Get);
-        lua_setfield(L, -2, "GetDevices");
-        lua_pushcfunction(L, luacl_context::Create);
-        lua_setfield(L, -2, "CreateContext");
+        traits::CreateMetatable(L);
+        traits::RegisterFunction(L, GetInfo, "GetInfo");
+        traits::RegisterFunction(L, luacl_device::Get, "GetDevices");
+        traits::RegisterFunction(L, luacl_context::Create, "CreateContext");
         lua_setfield(L, -2, "__index");
-        lua_pushcfunction(L, traits::ToString);
-        lua_setfield(L, -2, "__tostring");
 
         traits::CreateRegistry(L);
 
-        lua_pushcfunction(L, Get);
-        lua_setfield(L, LUA_GLOBALSINDEX, "GetPlatform");
+        traits::RegisterFunction(L, Get, "GetPlatform", LUA_GLOBALSINDEX);
     }
 
     static int PushInfo(lua_State *L, cl_platform_id platform, cl_platform_info param, std::string key) {

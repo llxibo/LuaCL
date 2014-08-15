@@ -30,35 +30,21 @@ struct luacl_kernel {
     typedef luacl_object<cl_kernel> traits;
 
     static void Init(lua_State *L) {
-        luaL_newmetatable(L, LUACL_KERNEL_METATABLE);
-        lua_newtable(L);
-        lua_pushcfunction(L, GetContext);
-        lua_setfield(L, -2, "GetContext");
-        lua_pushcfunction(L, GetProgram);
-        lua_setfield(L, -2, "GetProgram");
-        lua_pushcfunction(L, GetNumArgs);
-        lua_setfield(L, -2, "GetNumArgs");
+        traits::CreateMetatable(L);
+        traits::RegisterFunction(L, GetContext, "GetContext");
+        traits::RegisterFunction(L, GetProgram, "GetProgram");
+        traits::RegisterFunction(L, GetNumArgs, "GetNumArgs");
 #ifdef CL_VERSION_1_2
-        lua_pushcfunction(L, GetArgInfo);
-        lua_setfield(L, -2, "GetArgInfo");
+        traits::RegisterFunction(L, GetArgInfo, "GetArgInfo");
 #endif /* CL_VERSION_1_2 */
-        lua_pushcfunction(L, GetFunctionName);
-        lua_setfield(L, -2, "GetFunctionName");
-        lua_pushcfunction(L, GetWorkGroupInfo);
-        lua_setfield(L, -2, "GetWorkGroupInfo");
-        lua_pushcfunction(L, SetArgMem);
-        lua_setfield(L, -2, "SetArg");
-        lua_pushcfunction(L, SetArg<float>);
-        lua_setfield(L, -2, "SetArgFloat");
-        lua_pushcfunction(L, SetArg<cl_int>);
-        lua_setfield(L, -2, "SetArgInt");
-        lua_pushcfunction(L, SetArg<cl_uint>);
-        lua_setfield(L, -2, "SetArgUInt");
+        traits::RegisterFunction(L, GetFunctionName, "GetFunctionName");
+        traits::RegisterFunction(L, GetWorkGroupInfo, "GetWorkGroupInfo");
+        traits::RegisterFunction(L, SetArgMem, "SetArg");
+        traits::RegisterFunction(L, SetArg<float>, "SetArgFloat");
+        traits::RegisterFunction(L, SetArg<cl_int>, "SetArgInt");
+        traits::RegisterFunction(L, SetArg<cl_uint>, "SetArgUInt");
         lua_setfield(L, -2, "__index");
-        lua_pushcfunction(L, traits::ToString);
-        lua_setfield(L, -2, "__tostring");
-        lua_pushcfunction(L, traits::Release);
-        lua_setfield(L, -2, "__gc");
+        traits::RegisterRelease(L);
 
         traits::CreateRegistry(L);
     }
