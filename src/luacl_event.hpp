@@ -30,12 +30,46 @@ struct luacl_event {
 
     static void Init(lua_State *L) {
         traits::CreateMetatable(L);
-        lua_pop(L, 1);      /* CreateMetatable will push __index table into stack, and we don't need it now */
+        traits::RegisterFunction(L, GetCommandQueue, "GetCommandQueue");
+        traits::RegisterFunction(L, GetContext, "GetContext");
+        lua_setfield(L, -2, "__index");
         traits::RegisterRelease(L);
         traits::CreateRegistry(L);
         traits::RegisterFunction(L, WaitForEvents, "WaitForEvents", LUA_GLOBALSINDEX);
     }
-
+    
+    static int GetCommandQueue(lua_State *L) {
+        cl_event event = traits::CheckObject(L);
+        size_t size = 0;
+        cl_command_queue cmdqueue = NULL;
+        cl_int err = clGetEventInfo(event, CL_EVENT_COMMAND_QUEUE, 0, NULL, &size);
+        CheckCLError(L, err, "Failed requesting size of command queue from event: %s.");
+        if (LUACL_UNLIKELY(size != sizeof(cl_command_queue))) {
+            return luaL_error(L, "Failed requesting command queue from event: value size mismatch.");
+        }
+        
+        err = clGetEventInfo(event, CL_EVENT_COMMAND_QUEUE, size, &cmdqueue, NULL);
+        CheckCLError(L, err, "Failed requesting command queue from event: %s.");
+        luacl_object<cl_command_queue>::Wrap(L, cmdqueue);
+        return 1;
+    }
+    
+    static int GetContext(lua_State *L) {
+        cl_event event = traits::CheckObject(L);
+        size_t size = 0;
+        cl_context context = NULL;
+        cl_int err = clGetEventInfo(event, CL_EVENT_CONTEXT, 0, NULL, &size);
+        CheckCLError(L, err, "Failed requesting size of context from event: %s.");
+        if (LUACL_UNLIKELY(size != sizeof(cl_context))) {
+            return luaL_error(L, "Failed requesting context from event: value size mismatch.");
+        }
+        
+        err = clGetEventInfo(event, CL_EVENT_CONTEXT, size, &context, NULL);
+        CheckCLError(L, err, "Failed requesting context from event: %s.");
+        luacl_object<cl_context>::Wrap(L, context);
+        return 1;
+    }
+    
     static int WaitForEvents(lua_State *L) {
         std::vector<cl_event> events = traits::CheckObjectTable(L, 1);
         if (LUACL_UNLIKELY(events.size() == 0)) {

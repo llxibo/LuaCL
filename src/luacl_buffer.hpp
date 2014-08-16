@@ -46,7 +46,7 @@ struct luacl_object_constants<luacl_buffer_info> {
         return LUACL_MEM_TOSTRING;
     }
     static cl_int Release(luacl_buffer_info mem) {
-        cl_int err = mem->ReleaseMem(); /* The destructor will do this. In order to get err code, release it prior to destruction. */
+        cl_int err = mem->ReleaseMem(); /* The mem destructor will also release mem. In order to get err code, release it prior to destruction. */
         delete mem;
         return err;
     }
