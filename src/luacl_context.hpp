@@ -133,16 +133,16 @@ struct luacl_context {
         cl_context context = traits::CheckObject(L);
         cl_uint numDevices = 0;
         cl_int err = clGetContextInfo(context, CL_CONTEXT_NUM_DEVICES, sizeof(numDevices), &numDevices, NULL);
-        CheckCLError(L, err, "Failed requesting number of devices: %d.");
+        CheckCLError(L, err, "Failed requesting number of devices: %s.");
 
         size_t size = 0;
         err = clGetContextInfo(context, CL_CONTEXT_DEVICES, 0, NULL, &size);
-        CheckCLError(L, err, "Failed requesting length of device list: %d.");
+        CheckCLError(L, err, "Failed requesting length of device list: %s.");
         assert(numDevices * sizeof(cl_device_id) == size);
 
         std::vector<cl_device_id> devices(numDevices);
         err = clGetContextInfo(context, CL_CONTEXT_DEVICES, size, devices.data(), NULL);
-        CheckCLError(L, err, "Failed requesting device list: %d.");
+        CheckCLError(L, err, "Failed requesting device list: %s.");
         for (unsigned int index = 0; index < numDevices; index++) {
             luacl_object<cl_device_id>::Wrap(L, devices[index]);
         }
@@ -153,12 +153,12 @@ struct luacl_context {
         cl_context context = traits::CheckObject(L);
         size_t size = 0;
         cl_int err = clGetContextInfo(context, CL_CONTEXT_PROPERTIES, 0, NULL, &size);
-        CheckCLError(L, err, "Failed requesting length of property table: %d.");
+        CheckCLError(L, err, "Failed requesting length of property table: %s.");
         assert(size == 3 * sizeof(cl_context_properties));
 
         std::vector<cl_context_properties> prop(3);
         err = clGetContextInfo(context, CL_CONTEXT_PROPERTIES, size, prop.data(), NULL);
-        CheckCLError(L, err, "Failed requesting property table: %d.");
+        CheckCLError(L, err, "Failed requesting property table: %s.");
         assert(prop[0] == CL_CONTEXT_PLATFORM);
         cl_platform_id platform = reinterpret_cast<cl_platform_id>(prop[1]);
         luacl_object<cl_platform_id>::Wrap(L, platform);

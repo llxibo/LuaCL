@@ -88,7 +88,7 @@ struct luacl_buffer {
 
         cl_int err = 0;
         cl_mem mem = clCreateBuffer(context, flags, size, NULL, &err);
-        CheckCLError(L, err, "Failed creating buffer: %d.");    /* Potential function exit, *data will be released by bufferObject destructor */
+        CheckCLError(L, err, "Failed creating buffer: %s.");    /* Potential function exit, *data will be released by bufferObject destructor */
         bufferObject->mem = mem;
         return 1;
     }

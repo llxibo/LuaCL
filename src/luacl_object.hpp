@@ -2,39 +2,10 @@
 #define __LUACL_OBJECT_HPP
 
 #include "LuaCL.h"
+#include "luacl_error.hpp"
 #include <vector>
 #include <string>
 #include <assert.h>
-
-static const char LUACL_ERR_MALLOC[] = "Insufficient memory";
-
-/* Macro instead of inline function to explicitly return from caller function.
- * The inline version will longjmp away from caller, leaving its following pointer usage safe.
- * However, compilers and analyzers may not recognize this behavior and therefore complain about it.
- * An exception could also jump out of caller function, but it comes with extra overhead, and could be hard to handle.
- * So we got this work-around, to shut compiler from complaining and keep away from exception implementation.
- * The macro is assumed to be used in a lua_CFunction, which returns int. */
-#define CHECK_ALLOC_ERROR_MACRO 1
-#if (CHECK_ALLOC_ERROR_MACRO)
-#define CheckAllocError(L, p) {             \
-    if (LUACL_UNLIKELY(p == NULL)) {        \
-        luaL_error(L, LUACL_ERR_MALLOC);    \
-        return 0;                           \
-    }                                       \
-};
-#else
-void CheckAllocError(lua_State *L, void *p, const char * msg = LUACL_ERR_MALLOC) {
-    if (LUACL_UNLIKELY(p == NULL)) {
-        luaL_error(L, msg);
-    }
-}
-#endif
-
-void CheckCLError(lua_State *L, cl_uint err, const char * msg) {
-    if (LUACL_UNLIKELY(err != CL_SUCCESS)) {
-        luaL_error(L, msg, err);
-    }
-}
 
 /* template trait class holding constants */
 template <class cl_object_const_type>
@@ -77,7 +48,7 @@ struct luacl_object {
         l_debug(L, "__gc Releasing %s: %p", traits::TOSTRING(), object);
         LUACL_TRYCALL(
             cl_int err = traits::Release(object);
-            CheckCLError(L, err, "Failed releasing LuaCL object: %d.");
+            CheckCLError(L, err, "Failed releasing LuaCL object: %s.");
         );
         return 0;
     }

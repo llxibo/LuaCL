@@ -42,7 +42,7 @@ struct luacl_event {
             return luaL_error(L, "Bad arguments: expecting LuaCL_Event objects or table of LuaCL_Event objects.");
         }
         cl_int err = clWaitForEvents(static_cast<cl_uint>(events.size()), events.data());
-        CheckCLError(L, err, "Failed requesting wait event: %d.");
+        CheckCLError(L, err, "Failed requesting wait event: %s.");
         return 0;
     }
 };

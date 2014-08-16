@@ -54,7 +54,7 @@ struct luacl_kernel {
         const char * kernelName = luaL_checkstring(L, 2);
         cl_int err;
         cl_kernel krnl = clCreateKernel(program, kernelName, &err);
-        CheckCLError(L, err, "Failed creating kernel: %d.");
+        CheckCLError(L, err, "Failed creating kernel: %s.");
         traits::Wrap(L, krnl);
         return 1;
     }
@@ -63,7 +63,7 @@ struct luacl_kernel {
         cl_kernel krnl = traits::CheckObject(L);
         cl_context context = NULL;
         cl_int err = clGetKernelInfo(krnl, CL_KERNEL_CONTEXT, sizeof(cl_context), &context, NULL);
-        CheckCLError(L, err, "Failed requesting context info from kernel: %d.");
+        CheckCLError(L, err, "Failed requesting context info from kernel: %s.");
         luacl_object<cl_context>::Wrap(L, context);
         return 1;
     }
@@ -72,7 +72,7 @@ struct luacl_kernel {
         cl_kernel krnl = traits::CheckObject(L);
         cl_program program = NULL;
         cl_int err = clGetKernelInfo(krnl, CL_KERNEL_PROGRAM, sizeof(cl_program), &program, NULL);
-        CheckCLError(L, err, "Failed requesting program info from kernel: %d.");
+        CheckCLError(L, err, "Failed requesting program info from kernel: %s.");
         luacl_object<cl_program>::Wrap(L, program);
         return 1;
     }
@@ -81,7 +81,7 @@ struct luacl_kernel {
         cl_kernel krnl = traits::CheckObject(L);
         cl_uint numArgs = 0;
         cl_int err = clGetKernelInfo(krnl, CL_KERNEL_NUM_ARGS, sizeof(cl_uint), &numArgs, NULL);
-        CheckCLError(L, err, "Failed requesting number of args info from kernel: %d.");
+        CheckCLError(L, err, "Failed requesting number of args info from kernel: %s.");
         lua_pushnumber(L, numArgs);
         return 1;
     }
@@ -90,11 +90,11 @@ struct luacl_kernel {
         cl_kernel krnl = traits::CheckObject(L);
         size_t size = 0;
         cl_int err = clGetKernelInfo(krnl, CL_KERNEL_FUNCTION_NAME, 0, NULL, &size);
-        CheckCLError(L, err, "Failed requesting size of function name from kernel: %d.");
+        CheckCLError(L, err, "Failed requesting size of function name from kernel: %s.");
 
         std::vector<char> funcName(size);
         err = clGetKernelInfo(krnl, CL_KERNEL_FUNCTION_NAME, size, funcName.data(), NULL);
-        CheckCLError(L, err, "Failed requesting number of args info from kernel: %d.");
+        CheckCLError(L, err, "Failed requesting number of args info from kernel: %s.");
         lua_pushstring(L, std::string(funcName.data(), size).c_str());
         return 1;
     }
@@ -117,7 +117,7 @@ struct luacl_kernel {
         cl_uint index = static_cast<cl_uint>(luaL_checknumber(L, 2));
         T value = static_cast<T>(luaL_checknumber(L, 3));
         cl_int err = clSetKernelArg(krnl, index - 1, sizeof(T), &value);
-        CheckCLError(L, err, "Failed setting kernel arg: %d.");
+        CheckCLError(L, err, "Failed setting kernel arg: %s.");
         return 0;
     }
 
@@ -127,7 +127,7 @@ struct luacl_kernel {
         luacl_buffer_info buffer = luacl_object<luacl_buffer_info>::CheckObject(L, 3);
         l_debug(L, "kernel:SetArg index %d, buffer %p, mem %p", index, buffer, buffer->mem);
         cl_int err = clSetKernelArg(krnl, index - 1, sizeof(cl_mem), &(buffer->mem));
-        CheckCLError(L, err, "Failed setting kernel arg as mem object: %d.");
+        CheckCLError(L, err, "Failed setting kernel arg as mem object: %s.");
         return 0;
     }
 
@@ -135,12 +135,12 @@ struct luacl_kernel {
     static int PushWorkGroupInfo(lua_State *L, cl_kernel krnl, cl_device_id device, cl_kernel_work_group_info param, const char * paramName, int length = 1) {
         size_t size = 0;
         cl_int err = clGetKernelWorkGroupInfo(krnl, device, param, 0, NULL, &size);
-        CheckCLError(L, err, "Failed requesting size of workgroup info: %d.");
+        CheckCLError(L, err, "Failed requesting size of workgroup info: %s.");
         assert(size == sizeof(T) * length);
 
         std::vector<T> value(length);
         err = clGetKernelWorkGroupInfo(krnl, device, param, size, value.data(), NULL);
-        CheckCLError(L, err, "Failed requesting workgroup info: %d.");
+        CheckCLError(L, err, "Failed requesting workgroup info: %s.");
         if (LUACL_UNLIKELY(length > 1)) {
             lua_newtable(L);
             for (int index = 0; index < length; index++) {
@@ -171,12 +171,12 @@ struct luacl_kernel {
     static int PushArgInfo(lua_State *L, cl_kernel krnl, cl_uint index, cl_kernel_arg_info param, const char * paramName) {
         size_t size = 0;
         cl_int err = clGetKernelArgInfo(krnl, index, param, 0, NULL, &size);
-        CheckCLError(L, err, "Failed requesting size of kernel arg info: %d.");
+        CheckCLError(L, err, "Failed requesting size of kernel arg info: %s.");
         assert(size == sizeof(T));
 
         T value = 0;
         err = clGetKernelArgInfo(krnl, index, param, size, &value, NULL);
-        CheckCLError(L, err, "Failed requesting kernel arg info: %d.");
+        CheckCLError(L, err, "Failed requesting kernel arg info: %s.");
         lua_pushnumber(L, static_cast<lua_Number>(value));
         lua_setfield(L, -2, paramName);
         return 0;
@@ -185,12 +185,12 @@ struct luacl_kernel {
     static int PushArgInfoStr(lua_State *L, cl_kernel krnl, cl_uint index, cl_kernel_arg_info param, const char * paramName) {
         size_t size = 0;
         cl_int err = clGetKernelArgInfo(krnl, index, param, 0, NULL, &size);
-        CheckCLError(L, err, "Failed requesting size of kernel arg info string: %d.");
+        CheckCLError(L, err, "Failed requesting size of kernel arg info string: %s.");
 
         //l_debug(L, "Pushing arg info str %s with length %d", paramName, size);
         std::vector<char> value(size);
         err = clGetKernelArgInfo(krnl, index, param, size, value.data(), NULL);
-        CheckCLError(L, err, "Failed requesting kernel arg info string: %d.");
+        CheckCLError(L, err, "Failed requesting kernel arg info string: %s.");
         lua_pushstring(L, std::string(value.data(), value.size()).c_str());
         lua_setfield(L, -2, paramName);
         return 0;

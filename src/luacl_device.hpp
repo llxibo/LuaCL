@@ -38,11 +38,11 @@ struct luacl_device {
 
         cl_uint numDevices = 0;
         cl_int err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 0, NULL, &numDevices);
-        CheckCLError(L, err, "Failed requesting number of devices: %d.");
+        CheckCLError(L, err, "Failed requesting number of devices: %s.");
 
         std::vector<cl_device_id> devices(numDevices);
         err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, numDevices, devices.data(), NULL);
-        CheckCLError(L, err, "Failed requesting platform list: %d.");
+        CheckCLError(L, err, "Failed requesting platform list: %s.");
 
         for (cl_uint index = 0; index < numDevices; index++) {
             //l_debug(L, "Wrapping device: %p", devices[index]);
@@ -122,11 +122,11 @@ struct luacl_device {
         }
         size_t size = 0;
         cl_int err = clGetDeviceInfo(device, param, 0, NULL, &size);
-        CheckCLError(L, err, "Failed requesting length of device info string: %d.");
+        CheckCLError(L, err, "Failed requesting length of device info string: %s.");
 
         std::vector<char> value(size);
         err = clGetDeviceInfo(device, param, size, value.data(), NULL);
-        CheckCLError(L, err, "Failed requesting device info as string: %d.");
+        CheckCLError(L, err, "Failed requesting device info as string: %s.");
 
         lua_pushstring(L, std::string(value.data(), size).c_str());
         lua_setfield(L, -2, key);
@@ -136,14 +136,14 @@ struct luacl_device {
     template <typename T> static int PushDeviceInfo(lua_State *L, cl_device_id device, cl_device_info param, const char * key) {
         size_t size = 0;
         cl_int err = clGetDeviceInfo(device, param, 0, NULL, &size);
-        CheckCLError(L, err, "Failed requesting length of device info: %d.");
+        CheckCLError(L, err, "Failed requesting length of device info: %s.");
         //l_debug(L, "%d: %d - %d", param, size, sizeof(T));
         if (LUACL_UNLIKELY(size != sizeof(T))) {
             return luaL_error(L, "Device info size mismatch: %s", key);
         }
         T value = 0;
         err = clGetDeviceInfo(device, param, sizeof(T), &value, NULL);
-        CheckCLError(L, err, "Failed requesting device info: %d.");
+        CheckCLError(L, err, "Failed requesting device info: %s.");
 
         lua_pushnumber(L, static_cast<lua_Number>(value));
         lua_setfield(L, -2, key);
@@ -153,14 +153,14 @@ struct luacl_device {
     template <typename T> static int PushDeviceInfoArray(lua_State *L, cl_device_id device, cl_device_info param, const char * key) {
         size_t size = 0;
         cl_int err = clGetDeviceInfo(device, param, 0, NULL, &size);
-        CheckCLError(L, err, "Failed requesting length of device info array: %d.");
+        CheckCLError(L, err, "Failed requesting length of device info array: %s.");
         if (LUACL_UNLIKELY(size % sizeof(T) != 0)) {
             return luaL_error(L, "Device info array size mismatch: %s", key);
         }
 
         std::vector<T> value(size / sizeof(T));
         err = clGetDeviceInfo(device, param, size, value.data(), NULL);
-        CheckCLError(L, err, "Failed requesting device info as array: %d.");
+        CheckCLError(L, err, "Failed requesting device info as array: %s.");
         lua_newtable(L);
         for (unsigned int index = 0; index < (size / sizeof(T)); index++) {
             lua_pushnumber(L, static_cast<lua_Number>(value[index]));
@@ -174,13 +174,13 @@ struct luacl_device {
         cl_device_id device = traits::CheckObject(L);
         size_t size = 0;
         cl_int err = clGetDeviceInfo(device, CL_DEVICE_PLATFORM, 0, NULL, &size);
-        CheckCLError(L, err, "Failed requesting length of device platform: %d.");
+        CheckCLError(L, err, "Failed requesting length of device platform: %s.");
         if (LUACL_UNLIKELY(size != sizeof(cl_platform_id))) {
             return luaL_error(L, "Device platform size mismatch.");
         }
         cl_platform_id platform = NULL;
         err = clGetDeviceInfo(device, CL_DEVICE_PLATFORM, sizeof(cl_platform_id), &platform, NULL);
-        CheckCLError(L, err, "Failed requesting device platform: %d.");
+        CheckCLError(L, err, "Failed requesting device platform: %s.");
         luacl_object<cl_platform_id>::Wrap(L, platform);
         return 1;
     }

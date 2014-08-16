@@ -53,7 +53,7 @@ struct luacl_cmdqueue {
 
         cl_int err = 0;
         cl_command_queue cmdqueue = clCreateCommandQueue(context, device, prop, &err);
-        CheckCLError(L, err, "Failed creating command queue: %d.");
+        CheckCLError(L, err, "Failed creating command queue: %s.");
         
         traits::Wrap(L, cmdqueue);
         return 1;
@@ -95,7 +95,7 @@ struct luacl_cmdqueue {
             eventsData,
             &event
         );
-        CheckCLError(L, err, "Failed requesting enqueue NDRange: %d.");
+        CheckCLError(L, err, "Failed requesting enqueue NDRange: %s.");
         return 0;
     }
 
@@ -123,7 +123,7 @@ struct luacl_cmdqueue {
             eventList.empty() ? NULL : eventList.data(),
             &event
         );
-        CheckCLError(L, err, "Failed requesting enqueue write buffer: %d.");
+        CheckCLError(L, err, "Failed requesting enqueue write buffer: %s.");
         
         luacl_object<cl_event>::Wrap(L, event);
         return 1;
@@ -153,23 +153,32 @@ struct luacl_cmdqueue {
             eventList.empty() ? NULL : eventList.data(),
             &event
         );
-        CheckCLError(L, err, "Failed requesting enqueue read buffer: %d.");
+        CheckCLError(L, err, "Failed requesting enqueue read buffer: %s.");
         
         luacl_object<cl_event>::Wrap(L, event);
         return 1;
     }
-
+    /*
+    static int EnqueueMarker(lua_State *L) {
+        cl_command_queue cmdqueue = traits::CheckObject(L);
+        cl_event event = NULL;
+        cl_int err = clEnqueueMarker(cmdqueue, &event);
+        CheckCLError(L, err, "Failed requesting enqueue marker: %s.");
+        luacl_object<cl_event>::Wrap(L, event);
+        return 1;
+    }
+    //*/
     static int Finish(lua_State *L) {
         cl_command_queue cmdqueue = traits::CheckObject(L);
         cl_int err = clFinish(cmdqueue);
-        CheckCLError(L, err, "Failed finishing command queue: %d.");
+        CheckCLError(L, err, "Failed finishing command queue: %s.");
         return 0;
     }
     
     static int Flush(lua_State *L) {
         cl_command_queue cmdqueue = traits::CheckObject(L);
         cl_int err = clFlush(cmdqueue);
-        CheckCLError(L, err, "Failed flushing command queue: %d.");
+        CheckCLError(L, err, "Failed flushing command queue: %s.");
         return 0;
     }
 };
