@@ -135,6 +135,9 @@
     <ClInclude Include="src\luacl_math.hpp">
       <Filter>头文件\util</Filter>
     </ClInclude>
+    <ClInclude Include="src\luacl_error.hpp">
+      <Filter>头文件\glue</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\LuaCL.cpp">
