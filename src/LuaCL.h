@@ -16,7 +16,7 @@ extern "C" {
 
 /* Include OpenCL libraries */
 /* OpenCL.h has built-in extern C protection */
-#ifdef __APPLE__
+#if defined(__APPLE__)
 #   include <OpenCL/cl.h>
 #else
 #   include "CL/OpenCL.h"
@@ -32,9 +32,11 @@ extern "C" {
 #endif
 
 /* Structured Exception Handling (SEH) of Windows could handle potential system exceptions
-   in OpenCL calls as C++ exception, and therefore recover from it. */
-#ifdef _MSC_VER
-#   define LUACL_TRYCALL(call) __try {                                      \
+   in OpenCL calls as C++ exception, and therefore recover from it.
+   The macro is assumed to be used with (lua_State *L). */
+#if defined(_MSC_VER)
+#   define LUACL_TRYCALL(call)                                              \
+    __try {                                                                 \
         call                                                                \
     }                                                                       \
     __except (1) {                                                          \

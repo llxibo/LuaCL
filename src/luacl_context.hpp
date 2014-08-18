@@ -65,7 +65,7 @@ struct luacl_context {
         else {
             return luaL_error(L, "CreateContext: Bad argument, expecting one or more valid devices on arg #2.");
         }
-        if (devices.empty()) {          /* The device list should not be NULL by now */
+        if (LUACL_UNLIKELY(devices.empty())) {          /* The device list should not be NULL by now */
             return luaL_error(L, "CreateContext: Bad argument, expecting one or more valid devices on arg #2.");
         }
 
@@ -79,8 +79,7 @@ struct luacl_context {
 
             Another work-around is to request for a lua_ref in registry, and use it as callback reference.
             Drawback of this approach is that context will be unavailable for callback function, which is unacceptable.
-            We could utilize another entry in registry, i.e. reg[ref] = lightudata: context; reg[context] = func.
-        */
+            We could utilize another entry in registry, i.e. reg[ref] = lightudata: context; reg[context] = func. */
         lua_State * callbackThread = NULL;
         if (lua_isfunction(L, 3)) {
             lua_getfield(L, LUA_REGISTRYINDEX, LUACL_CONTEXT_REGISTRY_CALLBACK);    /* reg */
