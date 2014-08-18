@@ -53,13 +53,34 @@ struct luacl_object {
         return 0;
     }
     
+    /* Create object metatable, and register __tostring to it. Leaves metatable in stack. */
     static void CreateMetatable(lua_State *L) {
-        luaL_newmetatable(L, traits::METATABLE());
-        lua_pushcfunction(L, ToString);
-        lua_setfield(L, -2, "__tostring");
+        luaL_newmetatable(L, traits::METATABLE());      /* mt */
+        lua_pushcfunction(L, ToString);                 /* tostring, mt */
+        lua_setfield(L, -2, "__tostring");              /* mt */
         lua_newtable(L);
     }
     
+    /* Create userdata registry, setting its __mode as weak. Stack balanced. */
+    static void CreateRegistry(lua_State *L) {
+        lua_newtable(L);                                            /* reg */
+        lua_newtable(L);                                            /* mt, reg */
+        lua_pushstring(L, "kv");                                    /* "kv", mt, reg */
+        lua_setfield(L, -2, "__mode");                              /* mt(__mode="kv"), reg */
+        lua_setmetatable(L, -2);                                    /* reg(mt) */
+        lua_setfield(L, LUA_REGISTRYINDEX, traits::REGISTRY());     /* (empty stack) */
+    }
+
+    /* Create registry for callback functions */
+    static void CreateCallbackRegistry(lua_State *L) {
+        lua_newtable(L);                                /* reg */
+        lua_newtable(L);                                /* mt, reg */
+        lua_pushstring(L, "k");                         /* "k*, mt, reg */
+        lua_setfield(L, -2, "__mode");                  /* mt(__mode="k"), reg */
+        lua_setmetatable(L, -2);                        /* reg(mt) */
+        lua_setfield(L, LUA_REGISTRYINDEX, traits::CALLBACK())
+    }
+
     static void RegisterFunction(lua_State *L, lua_CFunction func, const char *name, int index = -2) {
         lua_pushcfunction(L, func);
         lua_setfield(L, index, name);
@@ -68,16 +89,6 @@ struct luacl_object {
     static void RegisterRelease(lua_State *L) {
         lua_pushcfunction(L, Release);
         lua_setfield(L, -2, "__gc");
-    }
-    
-    static void CreateRegistry(lua_State *L) {
-        /* Create device userdata registry */
-        lua_newtable(L);                                            /* reg */
-        lua_newtable(L);                                            /* mt, reg */
-        lua_pushstring(L, "kv");                                    /* "kv", mt, reg */
-        lua_setfield(L, -2, "__mode");                              /* mt(__mode="kv"), reg */
-        lua_setmetatable(L, -2);                                    /* reg(mt) */
-        lua_setfield(L, LUA_REGISTRYINDEX, traits::REGISTRY());     /* (empty stack) */
     }
 
     /* Check and return OpenCL object wrapped in a userdata.
