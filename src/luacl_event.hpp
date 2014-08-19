@@ -8,6 +8,7 @@
 static const char LUACL_EVENT_REGISTRY[] = "LuaCL_Event_Registry";
 static const char LUACL_EVENT_METATABLE[] = "LuaCL_Event";
 static const char LUACL_EVENT_TOSTRING[] = "LuaCL_Event";
+static const char LUACL_EVENT_CALLBACK_REGISTRY[] = "LuaCL_Event_Callback";
 
 template <>
 struct luacl_object_constants<cl_event> {
@@ -23,6 +24,10 @@ struct luacl_object_constants<cl_event> {
     static cl_uint Release(cl_event event) {
         return clReleaseEvent(event);
     }
+    static const char * CALLBACK() {
+        return LUACL_EVENT_CALLBACK_REGISTRY;
+    }
+
 };
 
 struct luacl_event {
@@ -82,7 +87,7 @@ struct luacl_event {
 
     static int RegisterCallback(lua_State *L) {
         cl_event event = traits::CheckObject(L);
-        cl_int cmdType = luaL_checknumber(L, 2);
+        cl_int cmdType = static_cast<cl_int>(luaL_checknumber(L, 2));
         lua_State *thread = traits::CreateCallbackThread(L, 3);
         if (thread == NULL) {
             return 0;
