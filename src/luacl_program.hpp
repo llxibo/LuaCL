@@ -30,13 +30,6 @@ struct luacl_object_constants <cl_program> {
     static const char * CALLBACK() {
         return LUACL_PROGRAM_REGISTRY_CALLBACK;
     }
-
-    typedef void (CL_CALLBACK *CallbackFunc)(cl_program program, void *user_data);
-    static void CL_CALLBACK DoCallback(cl_program program, void *user_data) {
-        lua_State *L = reinterpret_cast<lua_State *>(user_data);
-        luacl_object<cl_program>::Wrap(L, program);
-        lua_call(L, 1, 0);
-    }
 };
 
 struct luacl_program {
@@ -112,10 +105,19 @@ struct luacl_program {
 
     static int Build(lua_State *L) {
         cl_program program = traits::CheckObject(L);
-        const char * options = lua_tostring(L, 2);
-        cl_int err = clBuildProgram(program, 0, NULL, options, NULL, NULL);
-        lua_pushnumber(L, err);
-        return 1;
+        const char *options = lua_tostring(L, 2);
+        lua_State *thread = traits::CreateCallbackThread(L, 3);
+        cl_int err = clBuildProgram(program, 0, NULL, options, thread ? Callback : NULL, thread);
+        CheckCLError(L, err, "Failed building program: %s.");
+        lua_pushvalue(L, 1);
+        traits::RegisterCallback(L);
+        return 0;
+    }
+
+    static void CL_CALLBACK Callback(cl_program program, void *user_data) {
+        lua_State *L = reinterpret_cast<lua_State *>(user_data);
+        luacl_object<cl_program>::Wrap(L, program);
+        lua_call(L, 1, 0);
     }
 
     static int GetContext(lua_State *L) {
