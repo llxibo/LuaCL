@@ -73,13 +73,11 @@ struct luacl_context {
         /*  The easiest way of registering callback function is to insert func into a registry table.
             However, it requires a unique key, for calling back as well as removing callback entry upon __gc.
             Ideally, cl_context is the best key, but it is not available before clCreateContext.
+            Another issue is that lua_State will not be available unless it is kept by somewhere "global".
 
             To work around this, push callback function to a new thread prior to creation of context.
             Then insert the thread to registry, and set context as key of it.
-
-            Another work-around is to request for a lua_ref in registry, and use it as callback reference.
-            Drawback of this approach is that context will be unavailable for callback function, which is unacceptable.
-            We could utilize another entry in registry, i.e. reg[ref] = lightudata: context; reg[context] = func. */
+            The pointer of new lua_State is a nice reference, contains all information we need to call a lua function. */
         lua_State * callbackThread = NULL;
         if (lua_isfunction(L, 3)) {
             lua_getfield(L, LUA_REGISTRYINDEX, LUACL_CONTEXT_REGISTRY_CALLBACK);    /* reg */
@@ -90,7 +88,7 @@ struct luacl_context {
         cl_context_properties prop[] = {
             CL_CONTEXT_PLATFORM, reinterpret_cast<cl_context_properties>(platform), 0   /* static_cast denied by MSVC? */
         };
-        cl_int err;
+        cl_int err = 0;
         cl_context context = clCreateContext(prop, static_cast<cl_uint>(devices.size()), devices.data(), Callback, static_cast<void *>(callbackThread), &err);
         CheckCLError(L, err, "Failed creating context: %d");
 
