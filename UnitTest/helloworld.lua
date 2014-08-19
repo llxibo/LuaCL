@@ -1,7 +1,7 @@
 require("UnitTest.object")
 
 local CL_DEVICE_TYPE_GPU = 4
-local bufferSize = 1024 * 1024 * 1
+local bufferSize = 1024 * 128
 
 print("UnitTest.helloworld loaded")
 
@@ -12,7 +12,7 @@ local source = [[
     ) {
         int gid = get_global_id(0);
         int c = 0;
-        for (int i = 0; i < 1048576; i++) {
+        for (int i = 0; i < 1024; i++) {
             c += (int)a[gid] | i;
         }
         result[gid] = a[gid] + b[gid] + c;

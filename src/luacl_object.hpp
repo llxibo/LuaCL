@@ -16,11 +16,16 @@ template <typename cl_object>
 struct luacl_object {
     typedef luacl_object_constants<cl_object> traits;
 
+    /* Wrap an object as lua userdata, and push it onto stack.
+       It relies on a registry table, which is located in LUA_REGISTRY. */
     static int Wrap(lua_State *L, cl_object object) {
+        if (object == NULL) {
+            return luaL_error(L, "Attempt to wrap a null object.");
+        }
         l_debug(L, "Wrapping %s %p", typeid(cl_object).name(), object);
-        lua_getfield(L, LUA_REGISTRYINDEX, traits::REGISTRY());
+        lua_getfield(L, LUA_REGISTRYINDEX, traits::REGISTRY());                             /* reg */
         assert(lua_istable(L, -1));
-        /* Now the top of stack is registry table */
+
         lua_pushlightuserdata(L, static_cast<void *>(object));                              /* p, reg */
         lua_gettable(L, -2);    /* Query the registry table with value of pointer */
         void *p = lua_touserdata(L, -1);                                                    /* udata/nil, reg */
@@ -43,6 +48,7 @@ struct luacl_object {
         return 1;
     }
 
+    /* Release an object by calling object-specific release function. */
     static int Release(lua_State *L) {
         cl_object object = CheckObject(L);
         l_debug(L, "__gc Releasing %s: %p", traits::TOSTRING(), object);
@@ -78,14 +84,20 @@ struct luacl_object {
         lua_pushstring(L, "k");                         /* "k*, mt, reg */
         lua_setfield(L, -2, "__mode");                  /* mt(__mode="k"), reg */
         lua_setmetatable(L, -2);                        /* reg(mt) */
-        lua_setfield(L, LUA_REGISTRYINDEX, traits::CALLBACK())
+        lua_setfield(L, LUA_REGISTRYINDEX, traits::CALLBACK());
     }
 
+    static void RegisterCallback(lua_State *L) {
+
+    }
+
+    /* Register a CFunction to a table. */
     static void RegisterFunction(lua_State *L, lua_CFunction func, const char *name, int index = -2) {
         lua_pushcfunction(L, func);
         lua_setfield(L, index, name);
     }
     
+    /* Register object release function to be called upon __gc. */
     static void RegisterRelease(lua_State *L) {
         lua_pushcfunction(L, Release);
         lua_setfield(L, -2, "__gc");
@@ -96,18 +108,19 @@ struct luacl_object {
     static cl_object CheckObject(lua_State *L, int index = 1) {
         cl_object *p = static_cast<cl_object *>(luaL_checkudata(L, index, traits::METATABLE()));
         if (LUACL_UNLIKELY(p == NULL)) {
-            // free(resource);
             luaL_error(L, "Failed resolving object from userdata.");    /* This function never returns */
-            return NULL;
+            return NULL;                                                /* return to make compiler happy */
         }
         return *p;
     }
 
+    /* Lua function, converts a userdata to lua string. */
     static int ToString(lua_State *L) {
         lua_pushfstring(L, "%s: %p", traits::TOSTRING(), CheckObject(L));
         return 1;
     }
 
+    /* Check a stack index for a table of objects. */
     static std::vector<cl_object> CheckObjectTable(lua_State *L, int index, bool allowNil = false) {
         if (allowNil && lua_isnoneornil(L, index)) {
             return std::vector<cl_object>();

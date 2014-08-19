@@ -11,6 +11,7 @@
 static const char LUACL_PROGRAM_REGISTRY[] = "LuaCL_Program_Registry";
 static const char LUACL_PROGRAM_METATABLE[] = "LuaCL_Program";
 static const char LUACL_PROGRAM_TOSTRING[] = "LuaCL_Program";
+static const char LUACL_PROGRAM_REGISTRY_CALLBACK[] = "LuaCL_Program_Callback";
 
 template <>
 struct luacl_object_constants <cl_program> {
@@ -25,6 +26,16 @@ struct luacl_object_constants <cl_program> {
     }
     static cl_int Release(cl_program program) {
         return clReleaseProgram(program);
+    }
+    static const char * CALLBACK() {
+        return LUACL_PROGRAM_REGISTRY_CALLBACK;
+    }
+
+    typedef void (CL_CALLBACK *CallbackFunc)(cl_program program, void *user_data);
+    static void CL_CALLBACK DoCallback(cl_program program, void *user_data) {
+        lua_State *L = reinterpret_cast<lua_State *>(user_data);
+        luacl_object<cl_program>::Wrap(L, program);
+        lua_call(L, 1, 0);
     }
 };
 
@@ -44,6 +55,7 @@ struct luacl_program {
         traits::RegisterRelease(L);
 
         traits::CreateRegistry(L);
+        traits::CreateCallbackRegistry(L);
     }
 
     static int Create(lua_State *L) {
