@@ -79,6 +79,27 @@ struct luacl_event {
         CheckCLError(L, err, "Failed requesting wait event: %s.");
         return 0;
     }
+
+    static int RegisterCallback(lua_State *L) {
+        cl_event event = traits::CheckObject(L);
+        cl_int cmdType = luaL_checknumber(L, 2);
+        lua_State *thread = traits::CreateCallbackThread(L, 3);
+        if (thread == NULL) {
+            return 0;
+        }
+        cl_int err = clSetEventCallback(event, cmdType, Callback, thread);
+        CheckCLError(L, err, "Failed registering event callback: %s.");
+        lua_pushvalue(L, 1);
+        traits::RegisterCallback(L);
+        return 0;
+    }
+
+    static void CL_CALLBACK Callback(cl_event event, cl_int event_command_exec_status, void *user_data) {
+        lua_State *L = static_cast<lua_State *>(user_data);
+        traits::Wrap(L, event);
+        lua_pushnumber(L, event_command_exec_status);
+        lua_call(L, 2, 0);
+    }
 };
 
 #endif /* __LUACL_EVENT_HPP */
