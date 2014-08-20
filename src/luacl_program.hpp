@@ -111,13 +111,16 @@ struct luacl_program {
         CheckCLError(L, err, "Failed building program: %s.");
         lua_pushvalue(L, 1);
         traits::RegisterCallback(L);
+        // Callback(program, thread); /* Test callback function */
         return 0;
     }
 
     static void CL_CALLBACK Callback(cl_program program, void *user_data) {
-        lua_State *L = reinterpret_cast<lua_State *>(user_data);
-        luacl_object<cl_program>::Wrap(L, program);
-        lua_call(L, 1, 0);
+        if (user_data != NULL) {
+            lua_State *L = static_cast<lua_State *>(user_data);
+            luacl_object<cl_program>::Wrap(L, program);
+            traits::DoCallback(L, 1);
+        }
     }
 
     static int GetContext(lua_State *L) {

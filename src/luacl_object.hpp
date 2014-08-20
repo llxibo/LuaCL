@@ -17,7 +17,7 @@ struct luacl_object {
     typedef luacl_object_constants<cl_object> traits;
 
     /* Wrap an object as lua userdata, and push it onto stack.
-       It relies on a registry table, which is located in LUA_REGISTRY. */
+       It relies on a registry table, which is located in LUA_REGISTRY. [-0, +1, v] */
     static int Wrap(lua_State *L, cl_object object) {
         if (object == NULL) {
             return luaL_error(L, "Attempt to wrap a null object.");
@@ -48,7 +48,7 @@ struct luacl_object {
         return 1;
     }
 
-    /* Lua function, release an object by calling object-specific release function. */
+    /* Lua function, release an object by calling object-specific release function. [-1, 0, v] */
     static int Release(lua_State *L) {
         cl_object object = CheckObject(L);
         l_debug(L, "__gc Releasing %s: %p", traits::TOSTRING(), object);
@@ -59,7 +59,7 @@ struct luacl_object {
         return 0;
     }
     
-    /* Create object metatable, and register __tostring to it. Leaves metatable in stack. */
+    /* Create object metatable, and register __tostring to it. [-0, +1, m] */
     static void CreateMetatable(lua_State *L) {
         luaL_newmetatable(L, traits::METATABLE());                  /* mt */
         lua_pushcfunction(L, ToString);                             /* tostring, mt */
@@ -67,7 +67,7 @@ struct luacl_object {
         lua_newtable(L);
     }
     
-    /* Create userdata registry, setting its __mode as weak. Stack balanced. */
+    /* Create userdata registry, setting its __mode as weak. [-0, +0, m] */
     static void CreateRegistry(lua_State *L) {
         lua_newtable(L);                                            /* reg */
         lua_newtable(L);                                            /* mt, reg */
@@ -77,31 +77,34 @@ struct luacl_object {
         lua_setfield(L, LUA_REGISTRYINDEX, traits::REGISTRY());     /* (empty stack) */
     }
 
-    /* Create registry for callback functions */
+    /* Create registry for callback functions. [-0, +0, m] */
     static void CreateCallbackRegistry(lua_State *L) {
         lua_newtable(L);                                            /* reg */
         lua_newtable(L);                                            /* mt, reg */
         lua_pushstring(L, "k");                                     /* "k*, mt, reg */
         lua_setfield(L, -2, "__mode");                              /* mt(__mode="k"), reg */
         lua_setmetatable(L, -2);                                    /* reg(mt) */
-        lua_setfield(L, LUA_REGISTRYINDEX, traits::CALLBACK());
+        lua_setfield(L, LUA_REGISTRYINDEX, traits::CALLBACK());     /* (empty stack) */
     }
 
-    /* Create a new lua thread, and wrap the callback function into its stack. Leaves the thread (or nil) in stack. */
+    /* Create a new lua thread, and wrap the callback function into its stack. [-0, +1, m] */
     static lua_State *CreateCallbackThread(lua_State *L, int index) {
         if (!lua_isfunction(L, index)) {
             lua_pushnil(L);                                         /* nil */
             return NULL;
         }
-        /* Make a copy of callback function in the stack, to keep stack balanced */
+        /* Make a copy of callback func in the stack before touching the stack, or the index of func may be altered */
         lua_pushvalue(L, index);                                    /* func */
         lua_State *thread = lua_newthread(L);                       /* thread, func */
-        lua_xmove(L, thread, -2);                                   /* thread */
+        lua_insert(L, -2);                                          /* func, thread */
+        printf("CallbackFuncType: %s\n", luaL_typename(L, -1));
+        /* Move top 1 item(func) into thread stack */
+        lua_xmove(L, thread, 1);                                    /* thread */
         return thread;
     }
 
     /* Registers the key on stack -1 and value on -2 into callback registry. Pops the key and value.
-       Notice that the key-value sequence in stack is NOT the same with lua_settable. */
+       Notice that the key-value sequence in stack is NOT the same with lua_settable. [-2, +0, v] */
     static void RegisterCallback(lua_State *L) {
         lua_getfield(L, LUA_REGISTRYINDEX, traits::CALLBACK());     /* reg, key, value */
         if (lua_isnil(L, -1)) {
@@ -113,20 +116,27 @@ struct luacl_object {
         lua_pop(L, 1);                                              /* (empty) */
     }
 
-    /* Register a CFunction to a table. Stack balanced. */
+    /* Calls a callback function, leaving the function in the stack for next call. [-nargs, +0, e] */
+    static void DoCallback(lua_State *L, int nargs) {
+        lua_pushvalue(L, -nargs - 1);                               /* func, (args), func */
+        lua_insert(L, -nargs - 1);                                  /* (args), func, func */
+        lua_call(L, nargs, 0);                                      /* func */
+    }
+
+    /* Register a CFunction to a table. [-0, +0, -] */
     static void RegisterFunction(lua_State *L, lua_CFunction func, const char *name, int index = -2) {
         lua_pushcfunction(L, func);
         lua_setfield(L, index, name);
     }
     
-    /* Register object release function to be called upon __gc. Stack balanced. */
+    /* Register object release function to be called upon __gc. [-0, +0, -] */
     static void RegisterRelease(lua_State *L) {
         lua_pushcfunction(L, Release);
         lua_setfield(L, -2, "__gc");
     }
 
     /* Check and return OpenCL object wrapped in a userdata.
-       This function always return a non-NULL value, or it will throw a Lua error. Stack balanced. */
+       This function always return a non-NULL value, or it will throw a Lua error. [-0, +0, v] */
     static cl_object CheckObject(lua_State *L, int index = 1) {
         cl_object *p = static_cast<cl_object *>(luaL_checkudata(L, index, traits::METATABLE()));
         if (LUACL_UNLIKELY(p == NULL)) {
@@ -136,13 +146,13 @@ struct luacl_object {
         return *p;
     }
 
-    /* Lua function, returns lua string for an object. Stack NOT balanced. */
+    /* Lua function, returns lua string for an object. [0, +1, m] */
     static int ToString(lua_State *L) {
         lua_pushfstring(L, "%s: %p", traits::TOSTRING(), CheckObject(L));
         return 1;
     }
 
-    /* Check a stack index for a table of objects, returns vector of objects. Stack balanced. */
+    /* Check a stack index for a table of objects, returns vector of objects. [-0, +0, v] */
     static std::vector<cl_object> CheckObjectTable(lua_State *L, int index, bool allowNil = false) {
         if (allowNil && lua_isnoneornil(L, index)) {
             return std::vector<cl_object>();

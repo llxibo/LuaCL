@@ -81,7 +81,7 @@ function _M.TestProgram(program, context, devices)
         assert(buildInfo:len() == 0)        -- Build not done, expecting empty log
     end
 
-    program:Build()
+    program:Build("", print)
 
     for index, device in ipairs(programDevices) do
         local buildStatus = program:GetBuildStatus(device)
