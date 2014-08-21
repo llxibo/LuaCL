@@ -26,6 +26,9 @@ struct luacl_object_constants<cl_context> {
     static cl_int Release(cl_context context) {
         return clReleaseContext(context);
     }
+    static const char * CALLBACK() {
+        return LUACL_CONTEXT_REGISTRY_CALLBACK;
+    }
 };
 
 struct luacl_context {
@@ -78,39 +81,22 @@ struct luacl_context {
             To work around this, push callback function to a new thread prior to creation of context.
             Then insert the thread to registry, and set context as key of it.
             The pointer of new lua_State is a nice reference, contains all information we need to call a lua function. */
-        lua_State * callbackThread = NULL;
-        if (lua_isfunction(L, 3)) {
-            lua_getfield(L, LUA_REGISTRYINDEX, LUACL_CONTEXT_REGISTRY_CALLBACK);    /* reg */
-            callbackThread = lua_newthread(L);                                      /* thread, reg */
-        }
+        lua_State *thread = traits::CreateCallbackThread(L, 3);                     /* thread */
 
-        /* Actually create context */
         cl_context_properties prop[] = {
             CL_CONTEXT_PLATFORM, reinterpret_cast<cl_context_properties>(platform), 0   /* static_cast denied by MSVC? */
         };
         cl_int err = 0;
-        cl_context context = clCreateContext(prop, static_cast<cl_uint>(devices.size()), devices.data(), Callback, static_cast<void *>(callbackThread), &err);
+        cl_context context = clCreateContext(prop, static_cast<cl_uint>(devices.size()), devices.data(), thread ? Callback : NULL, thread, &err);
         CheckCLError(L, err, "Failed creating context: %d");
 
-        /* Use context pointer as a key, to register callback func */
-        if (callbackThread != NULL) {   /* we have a callback func */
-            lua_pushlightuserdata(L, static_cast<void *>(context));                 /* p, thread, reg */
-            lua_insert(L, -2);                                                      /* thread, p, reg */
-            lua_settable(L, -3);
-        }
+        traits::Wrap(L, context);                                                   /* context, thread */
+        traits::RegisterCallback(L);                                                /* (empty stack) */
 
-        /* Wrap it and return */
-        traits::Wrap(L, context);
-        if (callbackThread != NULL) {
-            lua_pushvalue(L, -3);
-            lua_pushvalue(L, -2);               /* Copy wrapped context object */
-            lua_xmove(L, callbackThread, 2);    /* Move it to new thread */
-        }
-
-#if _DEBUG
-        const char private_info[] = "private_info";
-        /* Test callback */
-        Callback("errinfo", private_info, sizeof(private_info), static_cast<void *>(callbackThread));
+        traits::Wrap(L, context);                                                   /* context */
+#if _DEBUG              /* Test callback */
+        const char private_info[] = "private_info"; 
+        Callback("errinfo", private_info, sizeof(private_info), static_cast<void *>(thread));
 #endif
         return 1;
     }
@@ -118,11 +104,10 @@ struct luacl_context {
     static void CL_CALLBACK Callback(const char *errinfo, const void *private_info, size_t cb, void *user_data) {
         //printf("CALLBACK!\n");
         if (user_data != NULL) {
-            lua_State * callbackThread = static_cast<lua_State *>(user_data);
-            lua_pushstring(callbackThread, errinfo);
-            lua_pushlstring(callbackThread, static_cast<const char *>(private_info), cb);
-            assert(lua_type(callbackThread, -4) == LUA_TFUNCTION);
-            lua_resume(callbackThread, 3);
+            lua_State *L = static_cast<lua_State *>(user_data);
+            lua_pushstring(L, errinfo);
+            lua_pushlstring(L, static_cast<const char *>(private_info), cb);
+            traits::DoCallback(L, 3);
         }
     }
 
