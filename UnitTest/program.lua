@@ -81,6 +81,7 @@ function _M.TestProgram(program, context, devices)
         assert(buildInfo:len() == 0)        -- Build not done, expecting empty log
     end
 
+    print("Building program with callback...")
     program:Build("", print)
 
     for index, device in ipairs(programDevices) do
