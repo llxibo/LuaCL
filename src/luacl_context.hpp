@@ -104,10 +104,13 @@ struct luacl_context {
     static void CL_CALLBACK Callback(const char *errinfo, const void *private_info, size_t cb, void *user_data) {
         //printf("CALLBACK!\n");
         if (user_data != NULL) {
-            lua_State *L = static_cast<lua_State *>(user_data);
-            lua_pushstring(L, errinfo);
-            lua_pushlstring(L, static_cast<const char *>(private_info), cb);
-            traits::DoCallback(L, 3);
+            lua_State *L = static_cast<lua_State *>(user_data);                     /* context, func */
+            lua_pushvalue(L, -1);                                                   /* context, context, func */
+            lua_insert(L, -3);                                                      /* context, func, context */
+            lua_pushstring(L, errinfo);                                             /* errinfo, context, func, context */
+            lua_pushlstring(L, static_cast<const char *>(private_info), cb);        /* private_info, errinfo, context, func, context */
+            traits::DoCallback(L, 3);                                               /* func, context */
+            lua_insert(L, -2);                                                      /* context, func */
         }
     }
 
