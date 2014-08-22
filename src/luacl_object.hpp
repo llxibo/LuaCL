@@ -2,6 +2,7 @@
 #define __LUACL_OBJECT_HPP
 
 #include "LuaCL.h"
+#include "luacl_debug.hpp"
 #include "luacl_error.hpp"
 #include <vector>
 #include <string>

@@ -3,29 +3,7 @@
 
 #include "LuaCL.h"
 #include "luacl_object.hpp"
-
-const char LUACL_DEBUG_CALLBACK_FUNC[] = "LuaCL_Debug_Callback_Func";
-
-#if defined(_DEBUG)
-    /* Debug function. Calls registered callback function with debug string. [-0, +0, e] */
-    inline void l_debug(lua_State *L, const char * message, ...) {
-        lua_getfield(L, LUA_REGISTRYINDEX, LUACL_DEBUG_CALLBACK_FUNC);  /* func/nil */
-        if (!lua_isfunction(L, -1)) {
-            lua_pop(L, 1);      /* Pop nil to keep stack balanced */
-            return;
-        }
-        va_list argp;
-        va_start(argp, message);
-        lua_pushvfstring(L, message, argp);                             /* str, func */
-        va_end(argp);
-        lua_call(L, 1, 0);                                              /* (empty stack) */
-    }
-#else
-    void l_debug(lua_State *L, const char * message, ...) {
-        LUACL_UNUSED(L);
-        LUACL_UNUSED(message);
-    }
-#endif /* _DEBUG */
+#include "luacl_error.hpp"
 
 struct luacl_debug {
     typedef luacl_object<void *> traits;
