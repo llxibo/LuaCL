@@ -25,10 +25,12 @@ struct luacl_object {
         }
         l_debug(L, "Wrapping %s %p", typeid(cl_object).name(), object);
         lua_getfield(L, LUA_REGISTRYINDEX, traits::REGISTRY());                             /* reg */
-        assert(lua_istable(L, -1));
+        if (!lua_istable(L, -1)) {  /* Registry must be present for the object type */
+            return luaL_error(L, "Failed wrapping OpenCL object: Registry not found for object type %s", typeid(cl_object).name());
+        }
 
         lua_pushlightuserdata(L, static_cast<void *>(object));                              /* p, reg */
-        lua_gettable(L, -2);    /* Query the registry table with value of pointer */
+        lua_gettable(L, -2);        /* Query the registry table with value of pointer */
         void *p = lua_touserdata(L, -1);                                                    /* udata/nil, reg */
         if (p == NULL) {
             // l_debug(L, "Wrap: Creating cache entry");
@@ -39,8 +41,8 @@ struct luacl_object {
             lua_pushlightuserdata(L, static_cast<void *>(object));                          /* p, udata(mt), nil, reg */
             lua_pushvalue(L, -2);                                                           /* udata(mt), p, udata(mt), nil, reg */
             lua_settable(L, -5);                                                            /* udata(mt), nil, reg */
-            lua_remove(L, -3);
-            lua_remove(L, -2);
+            lua_remove(L, -3);                                                              /* udata(mt), nil, */
+            lua_remove(L, -2);                                                              /* udata(mt) */
         }
         else {
             luaL_checkudata(L, -1, traits::METATABLE());                                    /* udata, reg */
@@ -158,10 +160,7 @@ struct luacl_object {
         if (allowNil && lua_isnoneornil(L, index)) {
             return std::vector<cl_object>();
         }
-        if (LUACL_UNLIKELY(!lua_istable(L, index))) {
-            luaL_error(L, "Bad argument #%d, table of %s expected, got %s.", index, traits::TOSTRING(), luaL_typename(L, index));
-            return std::vector<cl_object>();
-        }
+        luaL_argcheck(L, lua_istable(L, index), index, "not a table");
         
         std::vector<cl_object> objects;
         size_t size = lua_objlen(L, index);
@@ -175,31 +174,32 @@ struct luacl_object {
         return objects;
     }
 
-    static std::vector<cl_object> CheckNumberTable(lua_State *L, int index, bool allowNil = false) {
+    /* Check a stack index for a table of size_t, returns vector of size_t.
+       Lua error will be produced for any non-number or negative number. [-0, +0, v] */
+    static std::vector<size_t> CheckSizeTable(lua_State *L, int index, bool allowNil = false) {
         if (allowNil && lua_isnoneornil(L, index)) {
-            return std::vector<cl_object>();
+            return std::vector<size_t>();
         }
-        if (LUACL_UNLIKELY(!lua_istable(L, index))) {
-            luaL_error(L, "Bad argument #%d, table of number expected, got %s.", index, luaL_typename(L, index));
-            return std::vector<cl_object>();
-        }
+        luaL_argcheck(L, lua_istable(L, index), index, "not a table");
         
-        std::vector<cl_object> numbers;
-        size_t size = lua_objlen(L, index);     /* Must be a table now */
+        std::vector<size_t> numbers;
+        size_t size = lua_objlen(L, index);     /* Must be a table now, safe to take its length */
         for (unsigned int i = 0; i < size; i++) {
             lua_rawgeti(L, index, i + 1);
-            cl_object num = static_cast<cl_object>(luaL_checknumber(L, -1));
-            numbers.push_back(num);
-            lua_pop(L, 1);
+            lua_Integer num = lua_tointeger(L, -1);
+            if ((num == 0 && !lua_isnumber(L, -1)) || num < 0) {
+                /* Using pushfstring to avoid creating string buffer and sprintf. The extra string in stack will be removed by lua_error anyway. */
+                const char *msg = lua_pushfstring(L, "Table of positive number expected, got %s on index %d", luaL_typename(L, -1), i);
+                luaL_argerror(L, index, msg);   /* This function never returns */
+            }
+            numbers.push_back(static_cast<size_t>(num));
+            lua_pop(L, 1);                      /* Pop the number to keep stack balance */
         }
         return numbers;
     }
 
     static std::vector<std::string> CheckStringTable(lua_State *L, int index) {
-        if (LUACL_UNLIKELY(!lua_istable(L, index))) {
-            luaL_error(L, "Bad argument #%d, table of string expected, got %s.", index, luaL_typename(L, index));
-            return std::vector<std::string>();
-        }
+        luaL_argcheck(L, lua_istable(L, index), index, "not a table");
         
         std::vector<std::string> strings;
         lua_pushnil(L);

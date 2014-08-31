@@ -62,9 +62,9 @@ struct luacl_cmdqueue {
     static int EnqueueNDRangeKernel(lua_State *L) {
         cl_command_queue cmdqueue = traits::CheckObject(L);
         cl_kernel krnl = luacl_object<cl_kernel>::CheckObject(L, 2);
-        std::vector<size_t> localWorkSize = luacl_object<size_t>::CheckNumberTable(L, 3, true); /* Optional arg */
-        std::vector<size_t> globalWorkSize = luacl_object<size_t>::CheckNumberTable(L, 4);
-        std::vector<size_t> globalWorkOffset = luacl_object<size_t>::CheckNumberTable(L, 5, true);  /* Optional arg */
+        std::vector<size_t> localWorkSize = traits::CheckSizeTable(L, 3, true); /* Optional arg */
+        std::vector<size_t> globalWorkSize = traits::CheckSizeTable(L, 4);
+        std::vector<size_t> globalWorkOffset = traits::CheckSizeTable(L, 5, true);  /* Optional arg */
 
         /* Work dimension extraction and check */
         cl_uint workDim = static_cast<cl_uint>(globalWorkSize.size());
