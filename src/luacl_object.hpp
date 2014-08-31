@@ -206,7 +206,7 @@ struct luacl_object {
         while (lua_next(L, index)) {
             size_t len = 0;
             const char * str = luaL_checklstring(L, -1, &len);
-            l_debug(L, "CheckString key %d: %p", static_cast<int>(lua_tonumber(L, -2)), reinterpret_cast<void *>(len));
+            l_debug(L, "CheckString key %d: %p", lua_tointeger(L, -2), reinterpret_cast<void *>(len));
             strings.push_back(std::string(str, len));
             lua_pop(L, 1);
         }
