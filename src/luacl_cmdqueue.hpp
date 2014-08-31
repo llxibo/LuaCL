@@ -68,15 +68,10 @@ struct luacl_cmdqueue {
 
         /* Work dimension extraction and check */
         cl_uint workDim = static_cast<cl_uint>(globalWorkSize.size());
-        if (LUACL_UNLIKELY(workDim == 0)) {
-            return luaL_error(L, "Invalid working dimension.");
-        }
+        luaL_argcheck(L, workDim != 0, 4, "Invalid working dimension");
         /* Dimension of local work size must match. Global work offset could match the dimension or be (optionally) empty */
-        if (LUACL_UNLIKELY(
-            (!localWorkSize.empty() && workDim != localWorkSize.size()) ||
-                (!globalWorkOffset.empty() && globalWorkOffset.size() != workDim))) {
-            return luaL_error(L, "Working dimension mismatch.");
-        }
+        luaL_argcheck(L, localWorkSize.empty() || workDim == localWorkSize.size(), 3, "Dimension of local work size mismatch");
+        luaL_argcheck(L, globalWorkOffset.empty() || globalWorkOffset.size() == workDim, 5, "Dimension of global work offset mismatch");
 
         std::vector<cl_event> events = luacl_object<cl_event>::CheckObjectTable(L, 6, true);    /* Event list could be empty */
 
@@ -104,11 +99,13 @@ struct luacl_cmdqueue {
         luacl_buffer_info buffer = luacl_object<luacl_buffer_info>::CheckObject(L, 2);
         std::vector<cl_event> eventList = luacl_object<cl_event>::CheckObjectTable(L, 3, true);
         size_t size = static_cast<size_t>(lua_tonumber(L, 4));
+        luaL_argcheck(L, size > 0, 4, "Invalid buffer size");
+        
         size_t offset = static_cast<size_t>(lua_tonumber(L, 5));
-        size = (size == 0) ? buffer->size : size;
-        if (LUACL_UNLIKELY(size + offset > buffer->size)) {
-            return luaL_error(L, "Invalid size or offset.");
-        }
+        luaL_argcheck(L, offset >= 0, 5, "Invalid offset");
+        luaL_argcheck(L, buffer->size <= offset, 5, "Offset out of bound");
+        size = (size == 0) ? buffer->size - offset : size;
+        luaL_argcheck(L, size + offset <= buffer->size, 4, "Range of buffer access out of bound");
         cl_bool blocking = lua_toboolean(L, 6);
 
         cl_event event = NULL;

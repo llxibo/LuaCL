@@ -65,12 +65,7 @@ struct luacl_context {
             cl_device_id device = luacl_object<cl_device_id>::CheckObject(L, 2);
             devices.push_back(device);
         }
-        else {
-            return luaL_error(L, "CreateContext: Bad argument, expecting one or more valid devices on arg #2.");
-        }
-        if (LUACL_UNLIKELY(devices.empty())) {          /* The device list should not be NULL by now */
-            return luaL_error(L, "CreateContext: Bad argument, expecting one or more valid devices on arg #2.");
-        }
+        luaL_argcheck(L, !devices.empty(), 2, "Expecting one or more valid devices");
 
         /* Get arg3: callbackFunc | nil */
         /*  The easiest way of registering callback function is to insert func into a registry table.

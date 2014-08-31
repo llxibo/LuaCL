@@ -11,11 +11,7 @@ local source = [[
                                 __global float *result
     ) {
         int gid = get_global_id(0);
-        int c = 0;
-        for (int i = 0; i < 1024; i++) {
-            c += (int)a[gid] | i;
-        }
-        result[gid] = a[gid] + b[gid] + c;
+        result[gid] = a[gid] + b[gid];
     };
 ]]
 

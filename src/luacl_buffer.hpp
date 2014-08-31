@@ -75,9 +75,8 @@ struct luacl_buffer {
         cl_mem_flags flags = static_cast<cl_mem_flags>(lua_tonumber(L, 3));
         flags = (flags == 0) ? (CL_MEM_READ_WRITE) : flags;
 
-        if (LUACL_UNLIKELY(size == 0)) {
-            return luaL_error(L, "Bad argument #2: size of buffer must be greater than %d.", LUACL_BUFFER_MIN_SIZE);
-        }
+        luaL_argcheck(L, size >= LUACL_BUFFER_MIN_SIZE, 2, "size of buffer too small");
+        
         void * data = malloc(size);
         CheckAllocError(L, data);
         memset(data, 0, size);
@@ -112,9 +111,9 @@ struct luacl_buffer {
         luacl_buffer_info buffer = traits::CheckObject(L, 1);
         ptrdiff_t index = static_cast<ptrdiff_t>(lua_tonumber(L, 2));
 
-        if (index < 0 || (index + 1) * sizeof(T) > buffer->size) {
-            luaL_error(L, "Buffer access out of bound.");
-        }
+        luaL_argcheck(L, index >= 0, 2, "Invalid index");
+        luaL_argcheck(L, (index + 1) * sizeof(T) <= buffer->size, 2, "Index out of bound");
+        
         T * data = reinterpret_cast<T *>(buffer->data);
         lua_pushnumber(L, static_cast<lua_Number>(data[index]));
         return 1;
@@ -126,9 +125,8 @@ struct luacl_buffer {
         ptrdiff_t index = static_cast<ptrdiff_t>(lua_tonumber(L, 2));
         T value = static_cast<T>(lua_tonumber(L, 3));
 
-        if (index < 0 || (index + 1) * sizeof(T) > buffer->size) {
-            luaL_error(L, "Buffer access out of bound.");
-        }
+        luaL_argcheck(L, index >= 0, 2, "Invalid index");
+        luaL_argcheck(L, (index + 1) * sizeof(T) <= buffer->size, 2, "Index out of bound");
         T * data = reinterpret_cast<T *>(buffer->data);
         data[index] = value;
         //* (reinterpret_cast<T *>(buffer->data) + addr) = value; /* Compare de-asm for performance? */
@@ -148,9 +146,10 @@ struct luacl_buffer {
         ptrdiff_t range = static_cast<ptrdiff_t>(lua_tonumber(L, 3));
         range = (range == 0) ? buffer->size / sizeof(T) - index : range;
 
-        if (index < 0 || range < 0 || (index + 1) * sizeof(T) > buffer->size) {
-            luaL_error(L, "Buffer access out of bound.");
-        }
+        luaL_argcheck(L, index >= 0, 2, "Invalid index");
+        luaL_argcheck(L, range >= 0, 3, "Invalid range");
+        luaL_argcheck(L, (index + range + 1) * sizeof(T) <= buffer->size, 2, "Index out of bound");
+
         T * data = reinterpret_cast<T *>(buffer->data);
         LUACL_TRYCALL(
             util::luacl_byte_order_reverse<T>(data + index, range);
@@ -163,9 +162,9 @@ struct luacl_buffer {
         size_t offset = static_cast<size_t>(lua_tonumber(L, 2));
         size_t bytes = static_cast<size_t>(lua_tonumber(L, 3));
         bytes = (bytes == 0) ? (buffer->size - offset) : bytes;
-        if (bytes + offset > buffer->size) {
-            luaL_error(L, "Bad argument: size and offset range out of bound");
-        }
+        
+        luaL_argcheck(L, bytes + offset <= buffer->size, 2, "Index and range out of bound");
+
         memset(reinterpret_cast<char *>(buffer->data) + offset, 0, bytes);
         return 0;
     }
