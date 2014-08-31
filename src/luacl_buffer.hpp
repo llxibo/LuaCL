@@ -146,7 +146,7 @@ struct luacl_buffer {
         luaL_argcheck(L, index >= 0, 2, "Invalid index");
         lua_Integer range = luaL_optinteger(L, 3, buffer->size / sizeof(T) - index);    /* Arg 2:       range (optional) */
         luaL_argcheck(L, range >= 0, 3, "Invalid range");
-        luaL_argcheck(L, (index + range + 1) * sizeof(T) <= buffer->size, 2, "Buffer access out of bound");
+        luaL_argcheck(L, (index + range) * sizeof(T) <= buffer->size, 2, "Buffer access out of bound");
 
         T * data = reinterpret_cast<T *>(buffer->data);
         LUACL_TRYCALL(
@@ -158,9 +158,9 @@ struct luacl_buffer {
     static int Clear(lua_State *L) {
         luacl_buffer_info buffer = traits::CheckObject(L);
         size_t offset = luaL_optinteger(L, 2, 0);
-        luaL_argcheck(L, offset > 0, 2, "Invalid offset");
+        luaL_argcheck(L, offset >= 0, 2, "Invalid offset");
         size_t bytes = luaL_optinteger(L, 3, buffer->size - offset);
-        luaL_argcheck(L, bytes, 3, "Invalid length");
+        luaL_argcheck(L, bytes >= 0, 3, "Invalid length");
         luaL_argcheck(L, bytes + offset <= buffer->size, 2, "Buffer access out of bound");
 
         memset(reinterpret_cast<char *>(buffer->data) + offset, 0, bytes);
