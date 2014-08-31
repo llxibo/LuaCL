@@ -69,14 +69,15 @@ function _M.Test(context)
                 -- Check lower boundary
                 local ret, err = pcall(get, buffer, -1)
                 assert(not ret)
-                assert(err == "Buffer access out of bound.")
+                assert(err:find("Invalid index"))
 
                 -- Check upper boundary
                 local uBound = floor(size / typeInfo.size)
                 -- print("Asserting ubound", uBound)
+                print(typeName)
                 local ret, err = pcall(get, buffer, uBound)
                 assert(not ret)
-                assert(err == "Buffer access out of bound.")
+                assert(err:find("Index out of bound"))
 
                 assert(buffer.Clear)
                 buffer:Clear()
@@ -98,6 +99,7 @@ function _M.Test(context)
                     end
                 end
                 assert(buffer["ReverseEndian" .. typeName])
+                print(typeName)
                 buffer["ReverseEndian" .. typeName](buffer)
             end
         end
