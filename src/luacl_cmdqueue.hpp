@@ -98,13 +98,11 @@ struct luacl_cmdqueue {
         cl_command_queue cmdqueue = traits::CheckObject(L);
         luacl_buffer_info buffer = luacl_object<luacl_buffer_info>::CheckObject(L, 2);
         std::vector<cl_event> eventList = luacl_object<cl_event>::CheckObjectTable(L, 3, true);
-        size_t size = static_cast<size_t>(lua_tonumber(L, 4));
-        luaL_argcheck(L, size > 0, 4, "Invalid buffer size");
-        
-        size_t offset = static_cast<size_t>(lua_tonumber(L, 5));
-        luaL_argcheck(L, offset >= 0, 5, "Invalid offset");
-        luaL_argcheck(L, buffer->size <= offset, 5, "Offset out of bound");
-        size = (size == 0) ? buffer->size - offset : size;
+        lua_Integer offset = luaL_optinteger(L, 4, 0);
+        luaL_argcheck(L, offset >= 0, 4, "Invalid offset");
+        luaL_argcheck(L, buffer->size <= offset, 4, "Offset out of bound");
+        lua_Integer size = luaL_optinteger(L, 5, buffer->size - offset);
+        luaL_argcheck(L, size > 0, 5, "Invalid buffer size");
         luaL_argcheck(L, size + offset <= buffer->size, 4, "Range of buffer access out of bound");
         cl_bool blocking = lua_toboolean(L, 6);
 
@@ -130,12 +128,12 @@ struct luacl_cmdqueue {
         cl_command_queue cmdqueue = traits::CheckObject(L);
         luacl_buffer_info buffer = luacl_object<luacl_buffer_info>::CheckObject(L, 2);
         std::vector<cl_event> eventList = luacl_object<cl_event>::CheckObjectTable(L, 3);
-        size_t size = static_cast<size_t>(lua_tonumber(L, 4));
-        size_t offset = static_cast<size_t>(lua_tonumber(L, 5));
-        size = size == 0 ? buffer->size : size;
-        if (LUACL_UNLIKELY(size + offset > buffer->size)) {
-            return luaL_error(L, "Invalid size or offset.");
-        }
+        lua_Integer offset = luaL_optinteger(L, 4, 0);
+        luaL_argcheck(L, offset >= 0, 4, "Invalid offset");
+        luaL_argcheck(L, buffer->size <= offset, 4, "Offset out of bound");
+        lua_Integer size = luaL_optinteger(L, 5, buffer->size - offset);
+        luaL_argcheck(L, size > 0, 5, "Invalid buffer size");
+        luaL_argcheck(L, size + offset <= buffer->size, 4, "Range of buffer access out of bound");
         cl_bool blocking = lua_toboolean(L, 6);
 
         cl_event event = NULL;
