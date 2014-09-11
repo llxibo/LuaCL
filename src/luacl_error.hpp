@@ -69,6 +69,10 @@ inline const char *GetCLErrorInfo(cl_int err) {
         LUACL_ERROR_DEFINE(INVALID_LINKER_OPTIONS)
         LUACL_ERROR_DEFINE(INVALID_DEVICE_PARTITION_COUNT)
 #endif /* CL_VERSION_1_2 */
+#ifdef CL_VERSION_2_0
+        LUACL_ERROR_DEFINE(CL_INVALID_PIPE_SIZE)
+        LUACL_ERROR_DEFINE(CL_INVALID_DEVICE_QUEUE)
+#endif /* CL_VERSION_2_0 */
         default:
             return std::to_string(err).c_str();
     }
