@@ -12,29 +12,30 @@
 template <class cl_object_const_type>
 struct luacl_object_constants {};
 
-/* Template class for all kinds of OpenCL objects */
-template <typename cl_object>
+/* Template class for all kinds of OpenCL objects.
+ * The second template type is for alternative output type. */
+template <typename cl_object, typename cl_object_output = cl_object>
 struct luacl_object {
     typedef luacl_object_constants<cl_object> traits;
 
     /* Wrap an object as lua userdata, and push it onto stack.
        It relies on a registry table, which is located in LUA_REGISTRY. [-0, +1, v] */
-    static int Wrap(lua_State *L, cl_object object) {
+    static cl_object_output *Wrap(lua_State *L, cl_object object, size_t size = 0) {
         if (object == NULL) {
-            return luaL_error(L, "Attempt to wrap a null object.");
+            luaL_error(L, "Attempt to wrap a null object.");
         }
         l_debug(L, "Wrapping %s %p", typeid(cl_object).name(), object);
         lua_getfield(L, LUA_REGISTRYINDEX, traits::REGISTRY());                             /* reg */
         if (!lua_istable(L, -1)) {  /* Registry must be present for the object type */
-            return luaL_error(L, "Failed wrapping OpenCL object: Registry not found for object type %s", typeid(cl_object).name());
+            luaL_error(L, "Failed wrapping OpenCL object: Registry not found for object type %s", typeid(cl_object).name());
         }
 
         lua_pushlightuserdata(L, static_cast<void *>(object));                              /* p, reg */
         lua_gettable(L, -2);        /* Query the registry table with value of pointer */
-        void *p = lua_touserdata(L, -1);                                                    /* udata/nil, reg */
+        cl_object *p = reinterpret_cast<cl_object *>(lua_touserdata(L, -1));                /* udata/nil, reg */
         if (p == NULL) {
             // l_debug(L, "Wrap: Creating cache entry");
-            cl_object *p = static_cast<cl_object *>(lua_newuserdata(L, sizeof(cl_object))); /* udata, nil, reg */
+            p = static_cast<cl_object *>(lua_newuserdata(L, sizeof(cl_object) + size));     /* udata, nil, reg */
             *p = object;
             luaL_getmetatable(L, traits::METATABLE());                                      /* mt, udata, nil, reg */
             lua_setmetatable(L, -2);                                                        /* udata(mt), nil, reg */
@@ -48,12 +49,12 @@ struct luacl_object {
             luaL_checkudata(L, -1, traits::METATABLE());                                    /* udata, reg */
             lua_remove(L, -2);                                                              /* udata */
         }
-        return 1;
+        return reinterpret_cast<cl_object_output *>(p);
     }
 
     /* Lua function, release an object by calling object-specific release function. [-1, 0, v] */
     static int Release(lua_State *L) {
-        cl_object object = CheckObject(L);
+        cl_object object = *reinterpret_cast<cl_object *>(CheckObject(L, 1));
         l_debug(L, "__gc Releasing %s: %p", traits::TOSTRING(), object);
         LUACL_TRYCALL(
             cl_int err = traits::Release(object);
@@ -140,18 +141,18 @@ struct luacl_object {
 
     /* Check and return OpenCL object wrapped in a userdata.
        This function always return a non-NULL value, or it will throw a Lua error. [-0, +0, v] */
-    static cl_object CheckObject(lua_State *L, int index = 1) {
+    static cl_object_output *CheckObject(lua_State *L, int index) {
         cl_object *p = static_cast<cl_object *>(luaL_checkudata(L, index, traits::METATABLE()));
-        if (LUACL_UNLIKELY(p == NULL)) {
+        if (LUACL_UNLIKELY(*p == NULL)) {
             luaL_error(L, "Failed checking object from userdata."); /* This function never returns */
             return NULL;                                            /* return to make compiler happy */
         }
-        return *p;
+        return reinterpret_cast<cl_object_output *>(p);
     }
-
+    
     /* Lua function, returns lua string for an object. [0, +1, m] */
     static int ToString(lua_State *L) {
-        lua_pushfstring(L, "%s: %p", traits::TOSTRING(), CheckObject(L));
+        lua_pushfstring(L, "%s: %p", traits::TOSTRING(), *reinterpret_cast<size_t *>(CheckObject(L, 1)));
         return 1;
     }
 
@@ -166,7 +167,7 @@ struct luacl_object {
         size_t size = lua_objlen(L, index);
         for (unsigned int i = 0; i < size; i++) {
             lua_rawgeti(L, index, i + 1);
-            cl_object object = CheckObject(L, -1);
+            cl_object object = *CheckObject(L, -1);
             l_debug(L, "CheckObject %s %p", typeid(object).name(), object);
             objects.push_back(object);
             lua_pop(L, 1);

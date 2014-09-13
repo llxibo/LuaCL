@@ -84,7 +84,7 @@ function _M.AssertRegMatch(objType, t)
         assert(addrKey, "Illegal key in registry")
         local addrValue = tostring(value):match(tostringName .. ": (.+)$")
         assert(addrValue, "Illegal value in registry")
-        assert(addrKey == addrValue, "Key and value address mismatch")
+        assert(addrKey == addrValue, "Key and value address mismatch " .. addrKey .. " " .. addrValue)
     end
     return _M.MatchTableValue(objectReg, t)
 end

@@ -34,7 +34,9 @@ struct luacl_object_constants <cl_program> {
 
 struct luacl_program {
     typedef luacl_object<cl_program> traits;
-
+    typedef luacl_object<cl_context> traits_context;
+    typedef luacl_object<cl_device_id> traits_device;
+    
     static void Init(lua_State *L) {
         traits::CreateMetatable(L);
         traits::RegisterFunction(L, Build, "Build");
@@ -52,7 +54,7 @@ struct luacl_program {
     }
 
     static int Create(lua_State *L) {
-        cl_context context = luacl_object<cl_context>::CheckObject(L);
+        cl_context context = *traits_context::CheckObject(L, 1);
         size_t size = 0;
         const char * source = luaL_checklstring(L, 2, &size);
         cl_int err;
@@ -63,7 +65,7 @@ struct luacl_program {
     }
 
     static int CreateFromBinary(lua_State *L) {
-        cl_context context = luacl_object<cl_context>::CheckObject(L);
+        cl_context context = *traits_context::CheckObject(L, 1);
         std::vector<cl_device_id> devices = luacl_object<cl_device_id>::CheckObjectTable(L, 2);
         std::vector<std::string> binaries = traits::CheckStringTable(L, 3);
 
@@ -102,7 +104,7 @@ struct luacl_program {
     }
 
     static int Build(lua_State *L) {
-        cl_program program = traits::CheckObject(L);
+        cl_program program = *traits::CheckObject(L, 1);
         const char *options = lua_tostring(L, 2);
         lua_State *thread = traits::CreateCallbackThread(L, 3);
         cl_int err = clBuildProgram(program, 0, NULL, options, thread ? Callback : NULL, thread);
@@ -122,7 +124,7 @@ struct luacl_program {
     }
 
     static int GetContext(lua_State *L) {
-        cl_program program = traits::CheckObject(L);
+        cl_program program = *traits::CheckObject(L, 1);
         cl_context context = NULL;
         cl_int err = clGetProgramInfo(program, CL_PROGRAM_CONTEXT, sizeof(cl_context), &context, NULL);
         CheckCLError(L, err, "Failed requesting context from program: %s.");
@@ -131,7 +133,7 @@ struct luacl_program {
     }
 
     static int GetDevices(lua_State *L) {
-        cl_program program = luacl_object<cl_program>::CheckObject(L);
+        cl_program program = *traits::CheckObject(L, 1);
         cl_uint numDevices = 0;
         cl_int err = clGetProgramInfo(program, CL_PROGRAM_NUM_DEVICES, sizeof(numDevices), &numDevices, NULL);
         CheckCLError(L, err, "Failed requesting number of devices in program: %s.");
@@ -147,7 +149,7 @@ struct luacl_program {
     }
 
     static int GetBinary(lua_State *L) {
-        cl_program program = traits::CheckObject(L);
+        cl_program program = *traits::CheckObject(L, 1);
 
         /* Get size of binary size list */
         size_t sizeOfSizes = 0;
@@ -193,8 +195,8 @@ struct luacl_program {
     }
 
     static int GetBuildStatus(lua_State *L) {
-        cl_program program = traits::CheckObject(L);
-        cl_device_id device = luacl_object<cl_device_id>::CheckObject(L, 2);
+        cl_program program = *traits::CheckObject(L, 1);
+        cl_device_id device = *traits_device::CheckObject(L, 2);
         cl_build_status status = CL_BUILD_NONE;
         cl_int err = clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_STATUS, sizeof(cl_build_status), &status, NULL);
         CheckCLError(L, err, "Failed requesting build status: %s.");
@@ -203,8 +205,8 @@ struct luacl_program {
     }
 
     static int GetBuildLog(lua_State *L) {
-        cl_program program = traits::CheckObject(L);
-        cl_device_id device = luacl_object<cl_device_id>::CheckObject(L, 2);
+        cl_program program = *traits::CheckObject(L, 1);
+        cl_device_id device = *traits_device::CheckObject(L, 2);
         size_t size = 0;
         cl_int err = clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, 0, NULL, &size);
         CheckCLError(L, err, "Failed requesting length of build log: %s.");

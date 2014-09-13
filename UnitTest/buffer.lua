@@ -55,7 +55,7 @@ function _M.Test(context)
             UnitTest.AssertRegMatch("buffer", {buffer})
 
             assert(buffer.GetBufferSize)
-            assert(buffer:GetBufferSize() == size)
+            assert(buffer:GetBufferSize() == size, "Buffer size mismatch " .. buffer:GetBufferSize() .. " expecting " .. size)
             for typeName, typeInfo in pairs(bufferTypes) do
                 -- print("Testing", typeName, typeInfo.size)
                 local get = buffer["Get" .. typeName]

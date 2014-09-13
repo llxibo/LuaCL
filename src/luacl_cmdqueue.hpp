@@ -28,7 +28,10 @@ struct luacl_object_constants<cl_command_queue> {
 
 struct luacl_cmdqueue {
     typedef luacl_object<cl_command_queue> traits;
-
+    typedef luacl_object<cl_context> traits_context;
+    typedef luacl_object<cl_device_id> traits_device;
+    typedef luacl_object<cl_kernel> traits_kernel;
+    
     static void Init(lua_State *L) {
         traits::CreateMetatable(L);
         traits::RegisterFunction(L, Finish, "Finish");
@@ -42,8 +45,8 @@ struct luacl_cmdqueue {
     }
 
     static int Create(lua_State *L) {
-        cl_context context = luacl_object<cl_context>::CheckObject(L);
-        cl_device_id device = luacl_object<cl_device_id>::CheckObject(L, 2);
+        cl_context context = *traits_context::CheckObject(L, 1);
+        cl_device_id device = *traits_device::CheckObject(L, 2);
         lua_checkstack(L, 4);
         int outOfOrder = lua_toboolean(L, 3);
         int profiling = lua_toboolean(L, 4);
@@ -60,8 +63,8 @@ struct luacl_cmdqueue {
     }
 
     static int EnqueueNDRangeKernel(lua_State *L) {
-        cl_command_queue cmdqueue = traits::CheckObject(L);
-        cl_kernel krnl = luacl_object<cl_kernel>::CheckObject(L, 2);
+        cl_command_queue cmdqueue = *traits::CheckObject(L, 1);
+        cl_kernel krnl = *traits_kernel::CheckObject(L, 2);
         std::vector<size_t> localWorkSize = traits::CheckSizeTable(L, 3, true); /* Optional arg */
         std::vector<size_t> globalWorkSize = traits::CheckSizeTable(L, 4);
         std::vector<size_t> globalWorkOffset = traits::CheckSizeTable(L, 5, true);  /* Optional arg */
@@ -95,8 +98,8 @@ struct luacl_cmdqueue {
     }
 
     static int EnqueueWriteBuffer(lua_State *L) {
-        cl_command_queue cmdqueue = traits::CheckObject(L);
-        luacl_buffer_info buffer = luacl_object<luacl_buffer_info>::CheckObject(L, 2);
+        cl_command_queue cmdqueue = *traits::CheckObject(L, 1);
+        luacl_buffer_object *buffer = luacl_buffer::traits::CheckObject(L, 2);
         std::vector<cl_event> eventList = luacl_object<cl_event>::CheckObjectTable(L, 3, true);
         lua_Integer offset = luaL_optinteger(L, 4, 0);
         luaL_argcheck(L, offset >= 0, 4, "Invalid offset");
@@ -113,7 +116,7 @@ struct luacl_cmdqueue {
             blocking,
             offset,
             size,
-            buffer->data,
+            &(buffer->data),
             static_cast<cl_uint>(eventList.size()),
             eventList.empty() ? NULL : eventList.data(),
             &event
@@ -125,8 +128,8 @@ struct luacl_cmdqueue {
     }
 
     static int EnqueueReadBuffer(lua_State *L) {
-        cl_command_queue cmdqueue = traits::CheckObject(L);
-        luacl_buffer_info buffer = luacl_object<luacl_buffer_info>::CheckObject(L, 2);
+        cl_command_queue cmdqueue = *traits::CheckObject(L, 1);
+        luacl_buffer_object *buffer = luacl_buffer::traits::CheckObject(L, 2);
         std::vector<cl_event> eventList = luacl_object<cl_event>::CheckObjectTable(L, 3);
         lua_Integer offset = luaL_optinteger(L, 4, 0);
         luaL_argcheck(L, offset >= 0, 4, "Invalid offset");
@@ -143,7 +146,7 @@ struct luacl_cmdqueue {
             blocking,
             offset,
             size,
-            buffer->data,
+            &(buffer->data),
             static_cast<cl_uint>(eventList.size()),
             eventList.empty() ? NULL : eventList.data(),
             &event
@@ -155,7 +158,7 @@ struct luacl_cmdqueue {
     }
     /*
     static int EnqueueMarker(lua_State *L) {
-        cl_command_queue cmdqueue = traits::CheckObject(L);
+        cl_command_queue cmdqueue = *traits::CheckObject(L, 1);
         cl_event event = NULL;
         cl_int err = clEnqueueMarker(cmdqueue, &event);
         CheckCLError(L, err, "Failed requesting enqueue marker: %s.");
@@ -164,14 +167,14 @@ struct luacl_cmdqueue {
     }
     //*/
     static int Finish(lua_State *L) {
-        cl_command_queue cmdqueue = traits::CheckObject(L);
+        cl_command_queue cmdqueue = *traits::CheckObject(L, 1);
         cl_int err = clFinish(cmdqueue);
         CheckCLError(L, err, "Failed finishing command queue: %s.");
         return 0;
     }
     
     static int Flush(lua_State *L) {
-        cl_command_queue cmdqueue = traits::CheckObject(L);
+        cl_command_queue cmdqueue = *traits::CheckObject(L, 1);
         cl_int err = clFlush(cmdqueue);
         CheckCLError(L, err, "Failed flushing command queue: %s.");
         return 0;

@@ -44,7 +44,7 @@ struct luacl_event {
     }
     
     static int GetCommandQueue(lua_State *L) {
-        cl_event event = traits::CheckObject(L);
+        cl_event event = *traits::CheckObject(L, 1);
         size_t size = 0;
         cl_command_queue cmdqueue = NULL;
         cl_int err = clGetEventInfo(event, CL_EVENT_COMMAND_QUEUE, 0, NULL, &size);
@@ -60,7 +60,7 @@ struct luacl_event {
     }
     
     static int GetContext(lua_State *L) {
-        cl_event event = traits::CheckObject(L);
+        cl_event event = *traits::CheckObject(L, 1);
         size_t size = 0;
         cl_context context = NULL;
         cl_int err = clGetEventInfo(event, CL_EVENT_CONTEXT, 0, NULL, &size);
@@ -84,7 +84,7 @@ struct luacl_event {
     }
 
     static int RegisterCallback(lua_State *L) {
-        cl_event event = traits::CheckObject(L);
+        cl_event event = *traits::CheckObject(L, 1);
         cl_int cmdType = static_cast<cl_int>(luaL_checknumber(L, 2));
         lua_State *thread = traits::CreateCallbackThread(L, 3);
         if (thread == NULL) {

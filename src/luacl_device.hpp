@@ -24,7 +24,8 @@ struct luacl_object_constants<cl_device_id> {
 
 struct luacl_device {
     typedef luacl_object<cl_device_id> traits;
-
+    typedef luacl_object<cl_platform_id> traits_platform;
+    
     static void Init(lua_State *L) {
         traits::CreateMetatable(L);
         traits::RegisterFunction(L, GetInfo, "GetInfo");
@@ -34,7 +35,7 @@ struct luacl_device {
     }
 
     static int Get(lua_State *L) {
-        cl_platform_id platform = luacl_object<cl_platform_id>::CheckObject(L);
+        cl_platform_id platform = *traits_platform::CheckObject(L, 1);
 
         cl_uint numDevices = 0;
         cl_int err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 0, NULL, &numDevices);
@@ -52,7 +53,7 @@ struct luacl_device {
     }
 
     static int GetInfo(lua_State *L) {
-        cl_device_id device = traits::CheckObject(L);
+        cl_device_id device = *traits::CheckObject(L, 1);
         lua_newtable(L);
         PushDeviceInfo<cl_device_type>              (L, device, CL_DEVICE_TYPE,                             "TYPE");
         PushDeviceInfo<cl_uint>                     (L, device, CL_DEVICE_VENDOR_ID,                        "VENDOR_ID");
@@ -171,7 +172,7 @@ struct luacl_device {
     }
 
     static int GetPlatform(lua_State *L) {
-        cl_device_id device = traits::CheckObject(L);
+        cl_device_id device = *traits::CheckObject(L, 1);
         size_t size = 0;
         cl_int err = clGetDeviceInfo(device, CL_DEVICE_PLATFORM, 0, NULL, &size);
         CheckCLError(L, err, "Failed requesting length of device platform: %s.");
@@ -181,7 +182,7 @@ struct luacl_device {
         cl_platform_id platform = NULL;
         err = clGetDeviceInfo(device, CL_DEVICE_PLATFORM, sizeof(cl_platform_id), &platform, NULL);
         CheckCLError(L, err, "Failed requesting device platform: %s.");
-        luacl_object<cl_platform_id>::Wrap(L, platform);
+        traits_platform::Wrap(L, platform);
         return 1;
     }
 };
