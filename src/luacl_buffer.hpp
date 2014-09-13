@@ -15,7 +15,7 @@ static const ptrdiff_t LUACL_BUFFER_MIN_SIZE = 2;
 #pragma pack(push, 1)
 struct luacl_buffer_object {
     cl_mem mem;
-    ptrdiff_t size;
+    size_t size;
     char data;
 private:
     luacl_buffer_object() {}    /* The struct is never meant to be instantiated. */
@@ -98,7 +98,7 @@ struct luacl_buffer {
         luaL_argcheck(L, (index + 1) * sizeof(T) <= buffer->size, 2, "Index out of bound");
         
         T * data = reinterpret_cast<T *>(&buffer->data);
-        lua_pushnumber(L, static_cast<lua_Number>(data[index]));
+        lua_pushnumber(L, lua_Number(data[index]));
         return 1;
     }
 
@@ -106,7 +106,7 @@ struct luacl_buffer {
     static int Set(lua_State *L) {
         luacl_buffer_object *buffer = traits::CheckObject(L, 1);
         lua_Integer index = luaL_checkinteger(L, 2);
-        T value = static_cast<T>(lua_tonumber(L, 3));
+        T value = T(lua_tonumber(L, 3));
 
         luaL_argcheck(L, index >= 0, 2, "Invalid index");
         luaL_argcheck(L, (index + 1) * sizeof(T) <= buffer->size, 2, "Index out of bound");
@@ -118,7 +118,7 @@ struct luacl_buffer {
 
     template <typename T>
     static int GetSize(lua_State *L) {
-        lua_pushnumber(L, static_cast<lua_Number>(sizeof(T)));
+        lua_pushnumber(L, lua_Number(sizeof(T)));
         return 1;
     }
 
