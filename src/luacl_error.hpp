@@ -125,7 +125,7 @@ void CheckAllocError(lua_State *L, void *p, const char * msg = LUACL_ERR_MALLOC)
 }
 #endif
 
-void CheckCLError(lua_State *L, cl_int err, const char * msg) {
+void inline CheckCLError(lua_State *L, cl_int err, const char * msg) {
     if (LUACL_UNLIKELY(err != CL_SUCCESS)) {
         luaL_error(L, msg, GetCLErrorInfo(err));
     }
