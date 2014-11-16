@@ -3,20 +3,8 @@
         2014.7.18, Aean
     This module simulates a robot called 'Bling', which have several classic spells.
     You can derive your own module from this sample.
-
-    I have made a guide to build minimalist C++ simulator a long time ago, which uses
-    simplified Bling for example. This time Bling will be a little bit more versatile.
 */
 
-/**
-*   Class moudle source file is cutted to several segments, each filled into different
-*   location of 'frm.c', which is the simulator's back-end framework.
-*   To seperate segments, use old-style C header guard words:
-*       LUACL_LOAD_DECLARATIONS           -  Data structures of this module, which could be used as a member of player_t or snapshot_t.
-*       LUACL_LOAD_SNAPSHOT_T_MEMBERLIST  -  The member list of struct 'snapshot_t', which is used to preserve past states for scheduled events.
-*       LUACL_LOAD_PLAYER_T_MEMBERLIST    -  The member list of struct 'player_t'.
-*       LUACL_LOAD_MODULE_BODY            -  Code body of this module.
-*/
 #ifdef LUACL_LOAD_DECLARATIONS
 
     typedef struct {
@@ -41,19 +29,6 @@
     time_t gcd;
 #endif /* LUACL_LOAD_PLAYER_T_MEMBERLIST */
 
-/**
-*   Your module have to implement at least two functions:
-*
-*       void module_init ( rtinfo_t* rti )
-*           Put initialization codes here.
-*           When a thread is launched the simulator initializer will invoke this function.
-*
-*       void routine_entries ( rtinfo_t* rti, _event_t e )
-*           Define the behaviors for all kinds of events.
-*           When an event 'e' is executed the EQ framework will invoke this function.
-*
-*   Any other functions is at your options.
-*/
 #ifdef LUACL_LOAD_MODULE_BODY
 enum{
     DMGTYPE_NORMAL,
@@ -72,7 +47,7 @@ void deal_damage( rtinfo_t* rti, float dmg, k8u dmgtype ) {
         dmg *= 1.04f;
         break;
     }
-	lprintf("damage %.0f", dmg);
+	lprintf(("damage %.0f", dmg));
     rti->damage_collected += dmg;
 }
 
@@ -121,7 +96,7 @@ DECL_EVENT( livingbomb_tick ) {
         snapshot_kill( rti, snapshot );
         return;
     }
-	lprintf("livingbomb tick");
+	lprintf(("livingbomb tick"));
     deal_damage( rti, 100.0f, DMGTYPE_MAGIC );
     next_tick = TIME_OFFSET( FROM_SECONDS( 3 ) );
     if ( next_tick <= rti->player.livingbomb.expire ) {
@@ -135,7 +110,7 @@ DECL_EVENT( livingbomb_expire ) {
     /* Livingbomb may be refreshed. Double check the expire time. */
     snapshot_t* ss = snapshot_read( rti, snapshot );
     if ( ss->ip[0] == (k32u)rti->player.livingbomb.expire ){
-		lprintf("livingbomb expire");
+		lprintf(("livingbomb expire"));
 		deal_damage( rti, 600.0f, DMGTYPE_MAGIC );
     }
     snapshot_kill( rti, snapshot );
@@ -151,12 +126,12 @@ DECL_EVENT( bsod_execute ) {
 
 DECL_EVENT( bsod_cd ) {
     /* Do nothing. */
-    lprintf("bsod ready");
+    lprintf(("bsod ready"));
 }
 
 DECL_EVENT( bsod_expire ) {
     /* Do nothing. */
-    lprintf("bsod expire");
+    lprintf(("bsod expire"));
 }
 
 DECL_SPELL( smackthat ) {
@@ -165,7 +140,7 @@ DECL_SPELL( smackthat ) {
     power_consume( rti, 5.0f );
     gcd_start( rti, FROM_SECONDS( 1.5 ) );
     eq_enqueue( rti, TIME_OFFSET( FROM_SECONDS( 1 ) ), routnum_smackthat_land, 0 );
-    lprintf("cast smackthat");
+    lprintf(("cast smackthat"));
 }
 DECL_SPELL( livingbomb ) {
     if ( rti->player.gcd > rti->timestamp ) return;
@@ -173,14 +148,14 @@ DECL_SPELL( livingbomb ) {
     power_consume( rti, 20.0f );
     gcd_start( rti, FROM_SECONDS( 1.5 ) );
     eq_enqueue( rti, rti->timestamp, routnum_livingbomb_execute, 0 );
-    lprintf("cast livingbomb");
+    lprintf(("cast livingbomb"));
 }
 DECL_SPELL( bsod ) {
     if ( rti->player.gcd > rti->timestamp ) return;
     if ( rti->player.bsod.cd > rti->timestamp ) return;
     gcd_start( rti, FROM_SECONDS( 1.5 ) );
     eq_enqueue( rti, rti->timestamp, routnum_bsod_execute, 0 );
-    lprintf("cast bsod");
+    lprintf(("cast bsod"));
 }
 
 void routine_entries( rtinfo_t* rti, _event_t e ){
