@@ -11,20 +11,16 @@ LUA_API int panic(lua_State *L) {
     return 1;
 }
 
-static int Run(lua_State *L) {
-    lua_getfield(L, LUA_GLOBALSINDEX, "dofile");
-    lua_pushstring(L, "UnitTest.lua");
-    lua_call(L, 1, 0);
-    return 0;
-}
-
 static int ErrorHandler(lua_State *L) {
-    lua_getfield(L, LUA_REGISTRYINDEX, "traceback");
-    lua_pushvalue(L, -2);
-    lua_pushinteger(L, 2);
-    lua_call(L, 2, 1);
+    lua_getfield(L, LUA_REGISTRYINDEX, "traceback");    /* traceback, msg */
+    if (!lua_isfunction(L, -1)) {
+        return panic(L);
+    }
+    lua_pushvalue(L, -2);                               /* msg, traceback, msg */
+    lua_pushinteger(L, 2);                              /* 2, msg, traceback, msg */
+    lua_call(L, 2, 1);                                  /* traceback_msg, msg */
     fprintf(stderr, "%s\n", lua_tostring(L, -1));
-    lua_pop(L, 2);
+    lua_pop(L, 2);                                      /* (empty stack) */
     return 0;
 }
 
@@ -54,10 +50,9 @@ int main(int argc, char **argv) {
     luacl_buffer::Init(L);
     luacl_event::Init(L);
 
-    lua_getfield(L, LUA_GLOBALSINDEX, "xpcall");
-    lua_pushcfunction(L, Run);
     lua_pushcfunction(L, ErrorHandler);
-    lua_call(L, 2, 0);
+    luaL_loadfile(L, "UnitTest.lua") || lua_pcall(L, 0, 0, -2); /* Stack -1: func; Stack -2: ErrorHandler */
+    
     lua_close(L);
 
 #if defined(_LUACL_PAUSE_SYSTEM)

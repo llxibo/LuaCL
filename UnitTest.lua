@@ -1,9 +1,9 @@
-print("LuaCL unit test")
-
 local orig_print = print
 function print(...)
 	orig_print(os.clock(), ...)
 end
+
+print("LuaCL unit test")
 
 -- debugInfo is an array that allows indexing values from the end with negative index
 local debugInfo = setmetatable({}, {

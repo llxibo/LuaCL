@@ -44,7 +44,7 @@ struct luacl_event {
     }
     
     static int GetCommandQueue(lua_State *L) {
-        cl_event event = traits::CheckObject(L);
+        cl_event event = *traits::CheckObject(L, 1);
         size_t size = 0;
         cl_command_queue cmdqueue = NULL;
         cl_int err = clGetEventInfo(event, CL_EVENT_COMMAND_QUEUE, 0, NULL, &size);
@@ -60,7 +60,7 @@ struct luacl_event {
     }
     
     static int GetContext(lua_State *L) {
-        cl_event event = traits::CheckObject(L);
+        cl_event event = *traits::CheckObject(L, 1);
         size_t size = 0;
         cl_context context = NULL;
         cl_int err = clGetEventInfo(event, CL_EVENT_CONTEXT, 0, NULL, &size);
@@ -77,16 +77,14 @@ struct luacl_event {
     
     static int WaitForEvents(lua_State *L) {
         std::vector<cl_event> events = traits::CheckObjectTable(L, 1);
-        if (LUACL_UNLIKELY(events.size() == 0)) {
-            return luaL_error(L, "Bad arguments: expecting LuaCL_Event objects or table of LuaCL_Event objects.");
-        }
+        luaL_argcheck(L, !events.empty(), 1, "expecting table of luacl_event");
         cl_int err = clWaitForEvents(static_cast<cl_uint>(events.size()), events.data());
         CheckCLError(L, err, "Failed requesting wait event: %s.");
         return 0;
     }
 
     static int RegisterCallback(lua_State *L) {
-        cl_event event = traits::CheckObject(L);
+        cl_event event = *traits::CheckObject(L, 1);
         cl_int cmdType = static_cast<cl_int>(luaL_checknumber(L, 2));
         lua_State *thread = traits::CreateCallbackThread(L, 3);
         if (thread == NULL) {

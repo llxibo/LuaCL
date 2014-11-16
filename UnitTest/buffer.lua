@@ -55,7 +55,7 @@ function _M.Test(context)
             UnitTest.AssertRegMatch("buffer", {buffer})
 
             assert(buffer.GetBufferSize)
-            assert(buffer:GetBufferSize() == size)
+            assert(buffer:GetBufferSize() == size, "Buffer size mismatch " .. buffer:GetBufferSize() .. " expecting " .. size)
             for typeName, typeInfo in pairs(bufferTypes) do
                 -- print("Testing", typeName, typeInfo.size)
                 local get = buffer["Get" .. typeName]
@@ -69,14 +69,14 @@ function _M.Test(context)
                 -- Check lower boundary
                 local ret, err = pcall(get, buffer, -1)
                 assert(not ret)
-                assert(err == "Buffer access out of bound.")
+                assert(err:find("Invalid index"))
 
                 -- Check upper boundary
                 local uBound = floor(size / typeInfo.size)
                 -- print("Asserting ubound", uBound)
                 local ret, err = pcall(get, buffer, uBound)
                 assert(not ret)
-                assert(err == "Buffer access out of bound.")
+                assert(err:find("Index out of bound"))
 
                 assert(buffer.Clear)
                 buffer:Clear()

@@ -57,7 +57,7 @@ struct luacl_platform {
     }
 
     static int GetInfo(lua_State *L) {
-        cl_platform_id platform = traits::CheckObject(L);
+        cl_platform_id platform = *traits::CheckObject(L, 1);
         lua_newtable(L);    /* Create a table */
         PushInfo(L, platform, CL_PLATFORM_PROFILE, "PROFILE");
         PushInfo(L, platform, CL_PLATFORM_VERSION, "VERSION");

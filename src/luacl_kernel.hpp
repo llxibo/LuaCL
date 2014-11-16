@@ -28,7 +28,11 @@ struct luacl_object_constants<cl_kernel> {
 
 struct luacl_kernel {
     typedef luacl_object<cl_kernel> traits;
-
+    typedef luacl_object<cl_program> traits_program;
+    typedef luacl_object<cl_context> traits_context;
+    typedef luacl_object<cl_device_id> traits_device;
+    typedef luacl_object<cl_mem, luacl_buffer_object> traits_buffer;
+    
     static void Init(lua_State *L) {
         traits::CreateMetatable(L);
         traits::RegisterFunction(L, GetContext, "GetContext");
@@ -50,7 +54,7 @@ struct luacl_kernel {
     }
 
     static int Create(lua_State *L) {
-        cl_program program = luacl_object<cl_program>::CheckObject(L);
+        cl_program program = *traits_program::CheckObject(L, 1);
         const char * kernelName = luaL_checkstring(L, 2);
         cl_int err;
         cl_kernel krnl = clCreateKernel(program, kernelName, &err);
@@ -60,25 +64,25 @@ struct luacl_kernel {
     }
 
     static int GetContext(lua_State *L) {
-        cl_kernel krnl = traits::CheckObject(L);
+        cl_kernel krnl = *traits::CheckObject(L, 1);
         cl_context context = NULL;
         cl_int err = clGetKernelInfo(krnl, CL_KERNEL_CONTEXT, sizeof(cl_context), &context, NULL);
         CheckCLError(L, err, "Failed requesting context info from kernel: %s.");
-        luacl_object<cl_context>::Wrap(L, context);
+        traits_context::Wrap(L, context);
         return 1;
     }
 
     static int GetProgram(lua_State *L) {
-        cl_kernel krnl = traits::CheckObject(L);
+        cl_kernel krnl = *traits::CheckObject(L, 1);
         cl_program program = NULL;
         cl_int err = clGetKernelInfo(krnl, CL_KERNEL_PROGRAM, sizeof(cl_program), &program, NULL);
         CheckCLError(L, err, "Failed requesting program info from kernel: %s.");
-        luacl_object<cl_program>::Wrap(L, program);
+        traits_program::Wrap(L, program);
         return 1;
     }
 
     static int GetNumArgs(lua_State *L) {
-        cl_kernel krnl = traits::CheckObject(L);
+        cl_kernel krnl = *traits::CheckObject(L, 1);
         cl_uint numArgs = 0;
         cl_int err = clGetKernelInfo(krnl, CL_KERNEL_NUM_ARGS, sizeof(cl_uint), &numArgs, NULL);
         CheckCLError(L, err, "Failed requesting number of args info from kernel: %s.");
@@ -87,7 +91,7 @@ struct luacl_kernel {
     }
 
     static int GetFunctionName(lua_State *L) {
-        cl_kernel krnl = traits::CheckObject(L);
+        cl_kernel krnl = *traits::CheckObject(L, 1);
         size_t size = 0;
         cl_int err = clGetKernelInfo(krnl, CL_KERNEL_FUNCTION_NAME, 0, NULL, &size);
         CheckCLError(L, err, "Failed requesting size of function name from kernel: %s.");
@@ -100,8 +104,8 @@ struct luacl_kernel {
     }
 
     static int GetWorkGroupInfo(lua_State *L) {
-        cl_kernel krnl = traits::CheckObject(L);
-        cl_device_id device = luacl_object<cl_device_id>::CheckObject(L, 2);
+        cl_kernel krnl = *traits::CheckObject(L, 1);
+        cl_device_id device = *traits_device::CheckObject(L, 2);
         lua_newtable(L);
         PushWorkGroupInfo<size_t>(L, krnl, device, CL_KERNEL_WORK_GROUP_SIZE, "WORK_GROUP_SIZE");
         PushWorkGroupInfo<size_t>(L, krnl, device, CL_KERNEL_COMPILE_WORK_GROUP_SIZE, "COMPILE_WORK_GROUP_SIZE", 3);
@@ -113,7 +117,7 @@ struct luacl_kernel {
 
     template <typename T>
     static int SetArg(lua_State *L) {
-        cl_kernel krnl = traits::CheckObject(L);
+        cl_kernel krnl = *traits::CheckObject(L, 1);
         cl_uint index = static_cast<cl_uint>(luaL_checknumber(L, 2));
         T value = static_cast<T>(luaL_checknumber(L, 3));
         cl_int err = clSetKernelArg(krnl, index - 1, sizeof(T), &value);
@@ -122,9 +126,9 @@ struct luacl_kernel {
     }
 
     static int SetArgMem(lua_State *L) {
-        cl_kernel krnl = traits::CheckObject(L);
+        cl_kernel krnl = *traits::CheckObject(L, 1);
         cl_uint index = static_cast<cl_uint>(luaL_checknumber(L, 2));
-        luacl_buffer_info buffer = luacl_object<luacl_buffer_info>::CheckObject(L, 3);
+        luacl_buffer_object *buffer = traits_buffer::CheckObject(L, 3);
         l_debug(L, "kernel:SetArg index %d, buffer %p, mem %p", index, buffer, buffer->mem);
         cl_int err = clSetKernelArg(krnl, index - 1, sizeof(cl_mem), &(buffer->mem));
         CheckCLError(L, err, "Failed setting kernel arg as mem object: %s.");
@@ -156,7 +160,7 @@ struct luacl_kernel {
 
 #ifdef CL_VERSION_1_2
     static int GetArgInfo(lua_State *L) {
-        cl_kernel krnl = traits::CheckObject(L);
+        cl_kernel krnl = *traits::CheckObject(L, 1);
         cl_uint index = static_cast<cl_uint>(luaL_checknumber(L, 2) - 1);
         lua_newtable(L);
         PushArgInfo<cl_kernel_arg_address_qualifier>(L, krnl, index, CL_KERNEL_ARG_ADDRESS_QUALIFIER, "ADDRESS_QUALIFIER");

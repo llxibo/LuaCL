@@ -33,6 +33,8 @@ struct luacl_object_constants<cl_context> {
 
 struct luacl_context {
     typedef luacl_object<cl_context> traits;
+    typedef luacl_object<cl_platform_id> traits_platform;
+    typedef luacl_object<cl_device_id> traits_device;
 
     static void Init(lua_State *L) {
         traits::CreateMetatable(L);
@@ -52,25 +54,20 @@ struct luacl_context {
 
     static int Create(lua_State *L) {
         /* Get arg1: platform */
-        cl_platform_id platform = luacl_object<cl_platform_id>::CheckObject(L);
+        cl_platform_id platform = *traits_platform::CheckObject(L, 1);
 
         /* Get arg2: device | {devices} */
         std::vector<cl_device_id> devices;
         if (lua_istable(L, 2)) {
             //l_debug(L, "CreateContext: Checking table as device list...");
-            devices = luacl_object<cl_device_id>::CheckObjectTable(L, 2);
+            devices = traits_device::CheckObjectTable(L, 2);
         }
         else if (lua_isuserdata(L, 2)) {
             //l_debug(L, "CreateContext: Checking userdata as device...");
-            cl_device_id device = luacl_object<cl_device_id>::CheckObject(L, 2);
+            cl_device_id device = *traits_device::CheckObject(L, 2);
             devices.push_back(device);
         }
-        else {
-            return luaL_error(L, "CreateContext: Bad argument, expecting one or more valid devices on arg #2.");
-        }
-        if (LUACL_UNLIKELY(devices.empty())) {          /* The device list should not be NULL by now */
-            return luaL_error(L, "CreateContext: Bad argument, expecting one or more valid devices on arg #2.");
-        }
+        luaL_argcheck(L, !devices.empty(), 2, "Expecting one or more valid devices");
 
         /* Get arg3: callbackFunc | nil */
         /*  The easiest way of registering callback function is to insert func into a registry table.
@@ -115,7 +112,7 @@ struct luacl_context {
     }
 
     static int GetDevices(lua_State *L) {
-        cl_context context = traits::CheckObject(L);
+        cl_context context = *traits::CheckObject(L, 1);
         cl_uint numDevices = 0;
         cl_int err = clGetContextInfo(context, CL_CONTEXT_NUM_DEVICES, sizeof(numDevices), &numDevices, NULL);
         CheckCLError(L, err, "Failed requesting number of devices: %s.");
@@ -135,7 +132,7 @@ struct luacl_context {
     }
 
     static int GetPlatform(lua_State *L) {
-        cl_context context = traits::CheckObject(L);
+        cl_context context = *traits::CheckObject(L, 1);
         size_t size = 0;
         cl_int err = clGetContextInfo(context, CL_CONTEXT_PROPERTIES, 0, NULL, &size);
         CheckCLError(L, err, "Failed requesting length of property table: %s.");
@@ -151,7 +148,7 @@ struct luacl_context {
     }
 
     static int Release(lua_State *L) {
-        cl_context context = traits::CheckObject(L);
+        cl_context context = *traits::CheckObject(L, 1);
 
         /* reg[p] = nil */
         lua_getfield(L, LUA_REGISTRYINDEX, LUACL_CONTEXT_REGISTRY_CALLBACK);
