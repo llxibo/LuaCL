@@ -50,7 +50,12 @@ void luacl_numerical_characteristic(
         datacopy[i] = _data[i] - mean;
         datacopy[i] *= datacopy[i];
     }
-    stddev = sqrt(luacl_prefix_sum(datacopy) / static_cast<T>(n));
+
+    if (n >= 2){
+        stddev = sqrt(luacl_prefix_sum(datacopy) / static_cast<T>(n - 1));
+    }else{
+        stddev = static_cast<T>(0);
+    }
 }
 
 /* Phi(x) - the cumulative distribution function for standard normal distribution( mean = 0, stddev = 1 ). */
