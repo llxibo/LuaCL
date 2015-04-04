@@ -52,7 +52,7 @@ void deal_damage( rtinfo_t* rti, float dmg, k8u dmgtype ) {
 }
 
 /* Event list. */
-#define DECL_EVENT( name ) void event_##name ( rtinfo_t* rti, k8u snapshot )
+#define DECL_EVENT( name ) void event_##name ( rtinfo_t* rti, k32u snapshot )
 #define HOOK_EVENT( name ) case routnum_##name: event_##name( rti, e.snapshot ); break;
 #define DECL_SPELL( name ) void spell_##name ( rtinfo_t* rti )
 #define SPELL( name ) spell_##name ( rti )

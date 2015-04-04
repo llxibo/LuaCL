@@ -91,6 +91,7 @@ void free( void* );
 #define K64U_C(num) (num##ULL)
 #define convert_ushort_sat(num) ((num) < 0 ? (k16u)0 : (num) > 0xffff ? (k16u)0xffff : (k16u)(num))
 #define convert_ushort_rtp(num) ((k16u)(num) + !!((float)(num) - (float)(k16u)(num)))
+#define convert_uint_rtp(num) ((k32u)(num) + !!((float)(num) - (float)(k32u)(num)))
 float convert_float_rtp( k64u x ) {
     union {
         k32u u;
@@ -159,14 +160,14 @@ unsigned char _BitScanReverse( unsigned long* _Index, unsigned long _Mask ); /* 
     On 32-bit machine, _BitScanReverse only accept 32 bit number.
     So we need do some cascade.
 */
-k8u clz( k64u mask ) {
+k32u clz( k64u mask ) {
     unsigned long IDX = 0;
     if ( mask >> 32 ) {
         _BitScanReverse( &IDX, mask >> 32 );
-        return ( k8u )( 31 - IDX );
+        return ( k32u )( 31 - IDX );
     }
     _BitScanReverse( &IDX, mask & 0xFFFFFFFFULL );
-    return ( k8u )( 63 - IDX );
+    return ( k32u )( 63 - IDX );
 }
 #else
 /*
@@ -193,8 +194,8 @@ k8u clz( k64u mask ) {
         http://supertech.csail.mit.edu/papers/debruijn.pdf
     result for zero input is NOT same as MSVC intrinsic version, but still undefined.
 */
-k8u clz( k64u mask ) {
-    static k8u DeBruijn[64] = {
+k32u clz( k64u mask ) {
+    static k32u DeBruijn[64] = {
         /*        0   1   2   3   4   5   6   7 */
         /*  0 */  0, 63, 62, 11, 61, 57, 10, 37,
         /*  8 */ 60, 26, 23, 56, 30,  9, 16, 36,
@@ -238,33 +239,28 @@ double clamp( double val, double min, double max ) {
 /* Seed struct which holds the current state. */
 typedef struct {
     k32u mt[4]; /* State words. */
-    k16u mti;   /* State counter: must be within [0,3]. */
+    k32u mti;   /* State counter: must be within [0,3]. */
 } seed_t;
 
-/*
-    Timestamp is defined as a 16-bit unsigned int.
-    the atomic time unit is 10 milliseconds, thus the max representable timestamp is 10'55"350.
-    Add and substract of time_t should be done with TIME_OFFSET / TIME_DISTANT macro, to avoid overflow.
-*/
-typedef k16u time_t;
-#define FROM_SECONDS( sec ) ((time_t)convert_ushort_rtp((float)(sec) * 100.0f))
-#define FROM_MILLISECONDS( msec ) ((time_t)((float)(msec) * 0.1f))
-#define TO_SECONDS( timestamp ) (convert_float_rtp((k16u)timestamp) * 0.01f)
-#define TIME_OFFSET( time ) ((time_t)convert_ushort_sat((k32s)(rti->timestamp) + (k32s)time))
-#define TIME_DISTANT( time ) ((time_t)convert_ushort_sat((k32s)(time) - (k32s)(rti->timestamp)))
+typedef k32u time_t;
+#define FROM_SECONDS( sec ) ((time_t)convert_uint_rtp((float)(sec) * 1000.0f))
+#define FROM_MILLISECONDS( msec ) ((time_t)(msec))
+#define TO_SECONDS( timestamp ) (convert_float_rtp((k32u)timestamp) * 0.001f)
+#define TIME_OFFSET( time ) ((time_t)max((k32s)rti->timestamp + (k32s)time, 0))
+#define TIME_DISTANT( time ) ((time_t)max((k32s)(time) - (k32s)(rti->timestamp), 0))
 #define UP( time_to_check ) ( rti->player.time_to_check && rti->player.time_to_check > rti->timestamp )
-#define REMAIN( time_to_check ) TIME_DISTANT( rti->player.time_to_check )
+#define REMAIN( time_to_check ) ((time_t)max(((k32s)rti->player.time_to_check - (k32s)rti->timestamp), 0))
 
 /* Event queue. */
 #define EQ_SIZE_EXP (6)
 #define EQ_SIZE ((1 << EQ_SIZE_EXP) - 1)
 typedef struct {
     time_t time;
-    k8u routine;
-    k8u snapshot;
+    k32u routine;
+    k32u snapshot;
 } _event_t;
 typedef struct {
-    k16u count;
+    k32u count;
     time_t power_suffice;
     _event_t event[EQ_SIZE];
 } event_queue_t;
@@ -311,7 +307,7 @@ typedef struct kdeclspec( packed ) {
 /* Formated time print. */
 hostonly(
 void tprint( rtinfo_t* rti ) {
-    printf( "%02d:%02d.%03d ", rti->timestamp / 6000, ( rti->timestamp % 6000 ) / 100, ( ( rti->timestamp % 6000 ) % 100 ) * 10 );
+    printf( "%02d:%02d.%03d ", rti->timestamp / 60000, ( rti->timestamp % 60000 ) / 1000, ( ( rti->timestamp % 60000 ) % 1000 ) );
 }
 )
 #if defined(SHOW_LOG)
@@ -390,7 +386,7 @@ float stdnor_rng( rtinfo_t* rti ) {
 }
 
 /* Enqueue an event into EQ. */
-_event_t* eq_enqueue( rtinfo_t* rti, time_t trigger, k8u routine, k8u snapshot ) {
+_event_t* eq_enqueue( rtinfo_t* rti, time_t trigger, k32u routine, k32u snapshot ) {
     k32u i = ++( rti->eq.count );
     _event_t* p = &( rti->eq.event[-1] );
 
@@ -443,7 +439,7 @@ void power_consume( rtinfo_t* rti, float cost ) {
 
 /* Execute the top priority. */
 int eq_execute( rtinfo_t* rti ) {
-    k16u i, child;
+    k32u i, child;
     _event_t min, last;
     _event_t* p = &rti->eq.event[-1];
 
@@ -514,7 +510,7 @@ int eq_execute( rtinfo_t* rti ) {
 }
 
 /* Delete an event from EQ. Costly. */
-void eq_delete( rtinfo_t* rti, time_t time, k8u routnum ) {
+void eq_delete( rtinfo_t* rti, time_t time, k32u routnum ) {
     _event_t* p = &rti->eq.event[-1];
     k32u i = 1, child;
     _event_t last;
@@ -543,8 +539,8 @@ void eq_delete( rtinfo_t* rti, time_t time, k8u routnum ) {
 
 }
 
-k8u snapshot_alloc( rtinfo_t* rti, snapshot_t** snapshot ) {
-    k8u no;
+k32u snapshot_alloc( rtinfo_t* rti, snapshot_t** snapshot ) {
+    k32u no;
     assert( rti->snapshot_manager.bitmap ); /* Full check. */
     no = clz( rti->snapshot_manager.bitmap ); /* Get first available place. */
     rti->snapshot_manager.bitmap &= ~( K64U_MSB >> no ); /* Mark as occupied. */
@@ -552,14 +548,14 @@ k8u snapshot_alloc( rtinfo_t* rti, snapshot_t** snapshot ) {
     return no;
 }
 
-snapshot_t* snapshot_kill( rtinfo_t* rti, k8u no ) {
+snapshot_t* snapshot_kill( rtinfo_t* rti, k32u no ) {
     assert( no < SNAPSHOT_SIZE ); /* Subscript check. */
     assert( ~rti->snapshot_manager.bitmap & ( K64U_MSB >> no ) ); /* Existance check. */
     rti->snapshot_manager.bitmap |= K64U_MSB >> no; /* Mark as available. */
     return &( rti->snapshot_manager.buffer[ no ] );
 }
 
-snapshot_t* snapshot_read( rtinfo_t* rti, k8u no ) {
+snapshot_t* snapshot_read( rtinfo_t* rti, k32u no ) {
     assert( no < SNAPSHOT_SIZE ); /* Subscript check. */
     assert( ~rti->snapshot_manager.bitmap & ( K64U_MSB >> no ) ); /* Existance check. */
     return &( rti->snapshot_manager.buffer[ no ] );
@@ -577,7 +573,7 @@ float enemy_health_percent( rtinfo_t* rti ) {
         The best solution here is to use a linear mix of time to approximate the health precent,
         which is used in SimC for the very first iteration.
     */
-    time_t remainder = max( ( k16u )FROM_SECONDS( 0 ), ( k16u )( rti->expected_combat_length - rti->timestamp ) );
+    time_t remainder = max( ( k32u )FROM_SECONDS( 0 ), ( k32u )( rti->expected_combat_length - rti->timestamp ) );
     return mix( death_pct, initial_health_percentage, ( float )remainder / ( float )rti->expected_combat_length );
 }
 
@@ -631,7 +627,9 @@ deviceonly( __kernel ) void sim_iterate(
 #include "bling\bling.c"
 #undef LUACL_LOAD_MODULE_BODY
 
+
 /* Delete this. */
+#if !defined(__OPENCL_VERSION__)
 void scan_apl( rtinfo_t* rti ) {
     if ( UP( livingbomb.expire ) && REMAIN( livingbomb.expire ) < FROM_SECONDS( 5 ) )
         SPELL( bsod );
@@ -641,7 +639,7 @@ void scan_apl( rtinfo_t* rti ) {
     SPELL( bsod );
 }
 
-#if !defined(__OPENCL_VERSION__)
+
 int main() {
     float* result = malloc( 4 * iterations );
     int i;
