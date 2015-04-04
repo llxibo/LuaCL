@@ -290,7 +290,8 @@ typedef struct kdeclspec( packed ) {
 #define LUACL_LOAD_PLAYER_T_MEMBERLIST
 #include "bling\bling.c"
 #undef LUACL_LOAD_PLAYER_T_MEMBERLIST
-} player_t;
+}
+player_t;
 
 /* Runtime info struct, each thread preserves its own. */
 typedef struct kdeclspec( packed ) {
@@ -302,7 +303,8 @@ typedef struct kdeclspec( packed ) {
     player_t player;
     time_t expected_combat_length;
 
-} rtinfo_t;
+}
+rtinfo_t;
 
 /* Formated time print. */
 hostonly(
@@ -342,8 +344,8 @@ void rng_init( rtinfo_t* rti, k32u seed ) {
     rti->seed.mt[1] = seed & 0xffffffffUL;
     seed = ( 1812433253UL * ( seed ^ ( seed >> 30 ) ) ) + 2;
     rti->seed.mt[2] = seed & 0xffffffffUL;
-	/* Due to multiple run for same kernel, set thread id into state words to avoid seed overlapping. */
-	seed = (k32u)get_global_id(0);
+    /* Due to multiple run for same kernel, set thread id into state words to avoid seed overlapping. */
+    seed = (k32u)get_global_id(0);
     seed = ( 1812433253UL * ( seed ^ ( seed >> 30 ) ) ) + 3;
     rti->seed.mt[3] = seed & 0xffffffffUL;
 }
@@ -407,7 +409,7 @@ _event_t* eq_enqueue( rtinfo_t* rti, time_t trigger, k32u routine, k32u snapshot
             p[i] = p[i >> 1];
         p[i] = ( _event_t ) {
             .time = trigger, .routine = routine, .snapshot = snapshot
-                                    };
+        };
         return &p[i];
     }
     return 0;
