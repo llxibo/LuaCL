@@ -342,6 +342,8 @@ void rng_init( rtinfo_t* rti, k32u seed ) {
     rti->seed.mt[1] = seed & 0xffffffffUL;
     seed = ( 1812433253UL * ( seed ^ ( seed >> 30 ) ) ) + 2;
     rti->seed.mt[2] = seed & 0xffffffffUL;
+	/* Due to multiple run for same kernel, set thread id into state words to avoid seed overlapping. */
+	seed = (k32u)get_global_id(0);
     seed = ( 1812433253UL * ( seed ^ ( seed >> 30 ) ) ) + 3;
     rti->seed.mt[3] = seed & 0xffffffffUL;
 }
