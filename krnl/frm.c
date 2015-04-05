@@ -732,6 +732,7 @@ float get_mastery_rate(rtinfo_t* rti){
 
 float get_crit_rate(rtinfo_t* rti){
     float crit = rti->player.stat.gear_crit;
+	crit *= 1.05;
     crit = 0.05 + crit / 11000;
     if (BUFF_CRIT) crit += 0.05;
 	if (rti->player.stat.race == RACE_NIGHTELF_DAY || rti->player.stat.race == RACE_BLOODELF || rti->player.stat.race == RACE_WORGEN)
@@ -801,7 +802,7 @@ void deal_damage( rtinfo_t* rti, float dmg, k8u dmgtype ) {
 		rti->damage_collected += dmg;
         break;
     case DMGTYPE_PHISICAL:
-		dmg *= 0.650666; 
+		dmg *= 0.650684; 
 		lprintf(("damage %.0f", dmg));
 		rti->damage_collected += dmg;
 
@@ -1176,18 +1177,25 @@ void module_init( rtinfo_t* rti ){
 	rti->player.stat.mh.speed = 2.6;
 	rti->player.stat.mh.type = WEAPON_1H;
 	rti->player.stat.oh = rti->player.stat.mh;
+
+	lprintf(("Raid buffed str %d", get_str(rti)));
+	lprintf(("Raid buffed ap %d", get_ap(rti)));
+	lprintf(("Raid buffed crit %f", get_crit_rate(rti)));
+	lprintf(("Raid buffed haste %f", get_haste_rate(rti)));
+	lprintf(("Raid buffed mastery %f", get_mastery_rate(rti)));
+	lprintf(("Raid buffed mult %f", get_mult_rate(rti)));
+	lprintf(("Raid buffed vers %f", get_vers_rate(rti)));
+
 }
 
 
 /* Delete this. */
 #if !defined(__OPENCL_VERSION__)
 void scan_apl( rtinfo_t* rti ) {
-    if ( UP( livingbomb.expire ) && REMAIN( livingbomb.expire ) < FROM_SECONDS( 5 ) )
-        SPELL( bsod );
-    if ( ! UP( livingbomb.expire ) )
-        SPELL( livingbomb );
-    SPELL( smackthat );
-    SPELL( bsod );
+    SPELL( bloodthirst );
+    SPELL( execute );
+    SPELL( ragingblow );
+    SPELL( wildstrike );
 }
 
 
