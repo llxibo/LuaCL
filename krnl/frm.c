@@ -798,31 +798,67 @@ float ap_dmg(rtinfo_t* rti, float ap_multiplier){
 }
 
 enum{
-    DMGTYPE_NORMAL,
-    DMGTYPE_PHISICAL,
+    DMGTYPE_NONE,
+    DMGTYPE_MELEE,
+	DMGTYPE_SPECIAL,
 };
-void deal_damage( rtinfo_t* rti, float dmg, k8u dmgtype ) {
+kbool deal_damage( rtinfo_t* rti, float dmg, k32u dmgtype, float extra_crit_rate ) {
     switch( dmgtype ){
-    case DMGTYPE_NORMAL:
+    case DMGTYPE_NONE:
 		lprintf(("damage %.0f", dmg));
 		rti->damage_collected += dmg;
+		return 0;
         break;
-    case DMGTYPE_PHISICAL:
-		dmg *= 0.650684f; 
-		lprintf(("damage %.0f", dmg));
-		rti->damage_collected += dmg;
+	default:
+	{
+		float c = uni_rng(rti);
+		float cr = get_crit_rate(rti) - 0.03 + extra_crit_rate;
+		kbool ret;
+		float fdmg;
+
+		dmg *= 0.650684f;
+
+		fdmg = dmg;
+		if (c < cr) {
+			ret = 1;
+			fdmg *= (RACE == RACE_DWARF || RACE == RACE_TAUREN) ? 2.04f : 2.0f;
+			lprintf(("damage *%.0f*", fdmg));
+		}
+		else {
+			ret = 0;
+			lprintf(("damage %.0f", fdmg));
+		}
+		rti->damage_collected += fdmg;
 
 		float mr = 0.5f * get_mult_rate(rti);
 		float m = uni_rng(rti);
 		if (m < mr){
-			lprintf(("mult damage %.0f", dmg * 0.3f));
-			rti->damage_collected += dmg * 0.3f;
+			c = uni_rng(rti);
+			fdmg = dmg * 0.3;
+			if (c < cr){
+				fdmg *= (RACE == RACE_DWARF || RACE == RACE_TAUREN) ? 2.04f : 2.0f;
+				lprintf(("mult damage *%.0f*", fdmg));
+			}
+			else {
+				lprintf(("mult damage %.0f", fdmg));
+			}
+			rti->damage_collected += fdmg;
 		}
 		m = uni_rng(rti);
 		if (m < mr){
-			lprintf(("mult damage %.0f", dmg * 0.3f));
-			rti->damage_collected += dmg * 0.3f;
+			c = uni_rng(rti);
+			fdmg = dmg * 0.3;
+			if (c < cr){
+				fdmg *= (RACE == RACE_DWARF || RACE == RACE_TAUREN) ? 2.04f : 2.0f;
+				lprintf(("mult damage *%.0f*", fdmg));
+			}
+			else {
+				lprintf(("mult damage %.0f", fdmg));
+			}
+			rti->damage_collected += fdmg;
 		}
+		return ret;
+	}
 		break;
     }
 	
@@ -863,7 +899,6 @@ DECL_EVENT( gcd_expire ) {
 
 DECL_EVENT( bloodthirst_execute ) {
     float d = weapon_dmg(rti, 0.5f, 1, 0);
-    float c = uni_rng( rti );
 
     power_gain( rti, 10.0f );
     rti->player.bloodthirst.cd = TIME_OFFSET( FROM_SECONDS( 4.5 / (1.0f + get_haste_rate(rti)) ) );
@@ -873,9 +908,8 @@ DECL_EVENT( bloodthirst_execute ) {
         eq_enqueue( rti, TIME_OFFSET( FROM_SECONDS( 0.1 ) ), routnum_bloodsurge_trigger, 0 );
     }
 
-    if (c < get_crit_rate(rti) + 0.4f){
+    if ( deal_damage(rti, d, DMGTYPE_SPECIAL, 0.4) ){
         /* Crit */
-        d *= 2.0f;
         eq_enqueue( rti, TIME_OFFSET( FROM_SECONDS( 0.1 ) ), routnum_enrage_trigger, 0 );
         lprintf(("bloodthirst crit"));
 
@@ -884,7 +918,6 @@ DECL_EVENT( bloodthirst_execute ) {
         lprintf(("bloodthirst hit"));
     }
 
-    deal_damage( rti, d, DMGTYPE_PHISICAL );
 }
 
 DECL_EVENT( bloodthirst_cd ) {
@@ -894,8 +927,6 @@ DECL_EVENT( bloodthirst_cd ) {
 DECL_EVENT( ragingblow_execute ) {
 	/* Main hand. */
     float d = weapon_dmg(rti, 2.0f, 1, 0);
-    float c = uni_rng( rti );
-	float cr = get_crit_rate(rti);
 
     rti->player.ragingblow.stack --;
     if (rti->player.ragingblow.stack == 0){
@@ -904,9 +935,8 @@ DECL_EVENT( ragingblow_execute ) {
 		lprintf(("ragingblow expire"));
     }
 
-    if (c < cr ){
+    if (deal_damage(rti, d, DMGTYPE_SPECIAL, 0) ){
         /* Crit */
-        d *= 2.0f;
         lprintf(("ragingblow crit"));
 
     }else{
@@ -914,14 +944,10 @@ DECL_EVENT( ragingblow_execute ) {
         lprintf(("ragingblow hit"));
     }
 
-    deal_damage( rti, d, DMGTYPE_PHISICAL );
-
 	/* Off hand. */
 	d = weapon_dmg(rti, 2.0, 1, 1);
-	c = uni_rng( rti );
-	if (c < cr ){
+	if (deal_damage(rti, d, DMGTYPE_SPECIAL, 0) ){
         /* Crit */
-        d *= 2.0f;
         lprintf(("ragingblow oh crit"));
 
     }else{
@@ -929,7 +955,6 @@ DECL_EVENT( ragingblow_execute ) {
         lprintf(("ragingblow oh hit"));
     }
 
-    deal_damage( rti, d, DMGTYPE_PHISICAL );
 }
 
 DECL_EVENT( ragingblow_trigger ) {
@@ -966,50 +991,42 @@ DECL_EVENT( enrage_expire ) {
 DECL_EVENT( execute_execute ) {
 	/* Main hand. */
     float d = weapon_dmg(rti, 3.5f * 1.2f, 1, 0);
-    float c = uni_rng( rti );
-	float cr = get_crit_rate(rti);
-
 	if (SINGLE_MINDED) d *= 1.15f;
-    if (c < cr ){
+
+    if (deal_damage( rti, d, DMGTYPE_SPECIAL, 0 ) ){
         /* Crit */
-        d *= 2.0f;
         lprintf(("execute crit"));
 
     }else{
         /* Hit */
         lprintf(("execute hit"));
     }
-    deal_damage( rti, d, DMGTYPE_PHISICAL );
 
 	/* Off hand. */
+
 	d = weapon_dmg(rti, 3.5f * 1.2f, 1, 1);
-	c = uni_rng( rti );
 	if (SINGLE_MINDED) d *= 1.15f;
-	if (c < cr ){
+
+	if (deal_damage( rti, d, DMGTYPE_SPECIAL, 0 ) ){
         /* Crit */
-        d *= 2.0f;
         lprintf(("execute oh crit"));
 
     }else{
         /* Hit */
         lprintf(("execute oh hit"));
     }
-    deal_damage( rti, d, DMGTYPE_PHISICAL );
 }
 DECL_EVENT( wildstrike_execute ){
     float d = weapon_dmg(rti, 3.75f, 1, 1);
-    float c = uni_rng( rti );
 
-    if (c < get_crit_rate(rti) ){
+    if (deal_damage( rti, d, DMGTYPE_SPECIAL, 0 ) ){
         /* Crit */
-        d *= 2.0f;
         lprintf(("wildstrike crit"));
 
     }else{
         /* Hit */
         lprintf(("wildstrike hit"));
     }
-    deal_damage( rti, d, DMGTYPE_PHISICAL );
 }
 
 DECL_EVENT( bloodsurge_trigger ){
@@ -1029,10 +1046,8 @@ DECL_EVENT( bloodsurge_expire ){
 
 DECL_EVENT( auto_attack_mh ){
     float d = weapon_dmg(rti, 1.0f, 0, 0);
-    float c = uni_rng( rti );
-	float cr = get_crit_rate(rti);
 
-    if (c < 0.19f ){
+    if (uni_rng(rti) < 0.19f ){
         /* Miss */
         lprintf(("mh miss"));
     }else{
@@ -1040,15 +1055,13 @@ DECL_EVENT( auto_attack_mh ){
         if (uni_rng( rti ) < 0.10f){
             eq_enqueue( rti, TIME_OFFSET( FROM_SECONDS( 0.1 ) ), routnum_sudden_death_trigger, 0 );
         }
-        if(c < 0.19f + cr){
+        if(deal_damage( rti, d, DMGTYPE_MELEE, 0)){
             /* Crit */
-            d *= 2.0f;
             lprintf(("mh crit"));
         }else{
             /* Hit */
             lprintf(("mh hit"));
         }
-        deal_damage( rti, d, DMGTYPE_PHISICAL );
     }
 
     eq_enqueue(rti, TIME_OFFSET( FROM_SECONDS( rti->player.stat.mh.speed / (1.0f + get_haste_rate(rti)) ) ), routnum_auto_attack_mh, 0);
@@ -1056,10 +1069,8 @@ DECL_EVENT( auto_attack_mh ){
 
 DECL_EVENT( auto_attack_oh ){
     float d = weapon_dmg(rti, 1.0f, 0, 1);
-    float c = uni_rng( rti );
-	float cr = get_crit_rate(rti);
 
-    if (c < 0.19f ){
+    if (uni_rng(rti) < 0.19f ){
         /* Miss */
         lprintf(("oh miss"));
     }else{
@@ -1067,15 +1078,13 @@ DECL_EVENT( auto_attack_oh ){
         if (uni_rng( rti ) < 0.10f){
             eq_enqueue( rti, TIME_OFFSET( FROM_SECONDS( 0.1 ) ), routnum_sudden_death_trigger, 0 );
         }
-        if(c < 0.19f + cr){
+        if(deal_damage( rti, d, DMGTYPE_MELEE, 0)){
             /* Crit */
-            d *= 2.0f;
             lprintf(("oh crit"));
         }else{
             /* Hit */
             lprintf(("oh hit"));
         }
-        deal_damage( rti, d, DMGTYPE_PHISICAL );
     }
 
     eq_enqueue(rti, TIME_OFFSET( FROM_SECONDS( rti->player.stat.oh.speed / (1.0f + get_haste_rate(rti)) ) ), routnum_auto_attack_oh, 0);
