@@ -901,6 +901,7 @@ DECL_EVENT( ragingblow_execute ) {
     if (rti->player.ragingblow.stack == 0){
         rti->player.ragingblow.expire = 0;
         eq_enqueue( rti, rti->timestamp, routnum_ragingblow_expire, 0 );
+		lprintf(("ragingblow expire"));
     }
 
     if (c < cr ){
@@ -942,9 +943,8 @@ DECL_EVENT( ragingblow_trigger ) {
 }
 
 DECL_EVENT( ragingblow_expire ) {
-    if (rti->player.ragingblow.expire <= rti->timestamp || rti->player.ragingblow.stack == 0){
+    if (rti->player.ragingblow.expire == rti->timestamp){
         rti->player.ragingblow.stack = 0;
-        rti->player.ragingblow.expire = 0;
         lprintf(("ragingblow expire"));
     }
 }
@@ -958,7 +958,7 @@ DECL_EVENT( enrage_trigger ) {
 }
 
 DECL_EVENT( enrage_expire ) {
-    if (rti->player.enrage.expire <= rti->timestamp){
+    if (rti->player.enrage.expire == rti->timestamp){
         lprintf(("enrage expire"));
     }
 }
@@ -1020,7 +1020,7 @@ DECL_EVENT( bloodsurge_trigger ){
 }
 
 DECL_EVENT( bloodsurge_expire ){
-    if (rti->player.bloodsurge.expire <= rti->timestamp || rti->player.bloodsurge.stack == 0){
+    if (rti->player.bloodsurge.expire == rti->timestamp){
         rti->player.bloodsurge.stack = 0;
         rti->player.bloodsurge.expire = 0;
         lprintf(("bloodsurge expire"));
@@ -1088,7 +1088,7 @@ DECL_EVENT(sudden_death_trigger){
 }
 
 DECL_EVENT( sudden_death_expire ){
-    if (rti->player.sudden_death.expire <= rti->timestamp){
+    if (rti->player.sudden_death.expire == rti->timestamp){
         lprintf(("suddendeath expire"));
     }
 }
@@ -1135,6 +1135,7 @@ DECL_SPELL( wildstrike ){
         if (rti->player.bloodsurge.stack == 0){
             rti->player.bloodsurge.expire = 0;
             eq_enqueue( rti, rti->timestamp, routnum_bloodsurge_expire, 0 );
+			lprintf(("bloodsurge expire"));
         }
     }
     gcd_start( rti, FROM_SECONDS( 0.75 ) );
