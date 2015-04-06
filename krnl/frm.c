@@ -92,6 +92,7 @@ void free( void* );
 #define convert_ushort_sat(num) ((num) < 0 ? (k16u)0 : (num) > 0xffff ? (k16u)0xffff : (k16u)(num))
 #define convert_ushort_rtp(num) ((k16u)(num) + !!((float)(num) - (float)(k16u)(num)))
 #define convert_uint_rtp(num) ((k32u)(num) + !!((float)(num) - (float)(k32u)(num)))
+#define convert_uint_rtz(num) ((k32u)(num))
 float convert_float_rtp( k64u x ) {
     union {
         k32u u;
@@ -246,7 +247,7 @@ typedef k32u time_t;
 #define FROM_SECONDS( sec ) ((time_t)convert_uint_rtp((float)(sec) * 1000.0f))
 #define FROM_MILLISECONDS( msec ) ((time_t)(msec))
 #define TO_SECONDS( timestamp ) (convert_float_rtp((k32u)timestamp) * 0.001f)
-#define TIME_OFFSET( time ) ((time_t)max((k32s)rti->timestamp + (k32s)time, 0))
+#define TIME_OFFSET( time ) ((time_t)((k32s)rti->timestamp + (k32s)time))
 #define TIME_DISTANT( time ) ((time_t)max((k32s)(time) - (k32s)(rti->timestamp), 0))
 #define UP( time_to_check ) ( rti->player.time_to_check && rti->player.time_to_check > rti->timestamp )
 #define REMAIN( time_to_check ) ((time_t)max(((k32s)rti->player.time_to_check - (k32s)rti->timestamp), 0))
@@ -297,7 +298,7 @@ typedef struct {
 } snapshot_manager_t;
 
 /* Stats manager. */
-#define PLATE_SPECIALIZATION 1
+#define PLATE_SPECIALIZATION 0
 #define SINGLE_MINDED 1
 #define BUFF_STR_AGI_INT 1
 #define BUFF_AP 1
@@ -321,11 +322,12 @@ typedef struct weapon_t{
 #define WEAPON_DAGGER 2
 
 deviceonly( __constant ) float normalized_weapon_speed[] = {
-    3.3,
-    2.4,
-    1.7,
+    3.3f,
+    2.4f,
+    1.7f,
 };
 
+#define RACE RACE_NONE
 #define RACE_NONE 0
 #define RACE_HUMAN 1
 #define RACE_DWARF 2
@@ -348,7 +350,6 @@ deviceonly( __constant ) k32s racial_base_str[] = {
 
 
 typedef struct stat_t{
-	k32u race;
     k32u gear_str;
     k32u gear_crit;
     k32u gear_haste;
@@ -709,58 +710,62 @@ deviceonly( __kernel ) void sim_iterate(
 
 /* Class module. */
 k32u get_str(rtinfo_t* rti){
-    k32u str = rti->player.stat.gear_str;
-    str += 1455; /* Base str @lvl 100. */
-    str += racial_base_str[rti->player.stat.race]; /* Racial str. */
-    if (PLATE_SPECIALIZATION) str *= 1.05;
-    if (BUFF_STR_AGI_INT) str *= 1.05;
+    float fstr = rti->player.stat.gear_str;
+	k32u str;
+	float coeff = 1.0f;
+	if (PLATE_SPECIALIZATION) coeff *= 1.05f;
+    if (BUFF_STR_AGI_INT) coeff *= 1.05f;
+	str = convert_uint_rtz(fstr * coeff);
+	fstr = 1455; /* Base str @lvl 100. */
+    fstr += racial_base_str[RACE]; /* Racial str. */
+	str += convert_uint_rtz(fstr * coeff);
     return str;
 }
 
 k32u get_ap(rtinfo_t* rti){
     k32u ap = get_str(rti);
-    if (BUFF_AP) ap *= 1.1;
+    if (BUFF_AP) ap = convert_uint_rtz(ap * 1.1f + 0.5f);
     return ap;
 }
 
 float get_mastery_rate(rtinfo_t* rti){
     float mastery = rti->player.stat.gear_mastery;
     if (BUFF_MASTERY) mastery += 550;
-    mastery = 1.4 * (0.08 + mastery / 11000);
+    mastery = 1.4f * (0.08f + mastery / 11000);
     return mastery;
 }
 
 float get_crit_rate(rtinfo_t* rti){
     float crit = rti->player.stat.gear_crit;
-	crit *= 1.05;
-    crit = 0.05 + crit / 11000;
-    if (BUFF_CRIT) crit += 0.05;
-	if (rti->player.stat.race == RACE_NIGHTELF_DAY || rti->player.stat.race == RACE_BLOODELF || rti->player.stat.race == RACE_WORGEN)
-		crit += 0.01;
+	crit *= 1.05f;
+    crit = 0.05f + crit / 11000;
+    if (BUFF_CRIT) crit += 0.05f;
+	if (RACE == RACE_NIGHTELF_DAY || RACE == RACE_BLOODELF || RACE == RACE_WORGEN)
+		crit += 0.01f;
     return crit;
 }
 
 float get_haste_rate(rtinfo_t* rti){
 	float haste = rti->player.stat.gear_haste;
-	haste = 1.0 + haste / 9000;
-	if (BUFF_HASTE) haste *= 1.05;
-	if (rti->player.stat.race == RACE_NIGHTELF_NIGHT || rti->player.stat.race == RACE_GOBLIN || rti->player.stat.race == RACE_GNOME)
-		haste *= 1.01;
-	return haste - 1.0;
+	haste = 1.0f + haste / 9000;
+	if (BUFF_HASTE) haste *= 1.05f;
+	if (RACE == RACE_NIGHTELF_NIGHT || RACE == RACE_GOBLIN || RACE == RACE_GNOME)
+		haste *= 1.01f;
+	return haste - 1.0f;
 }
 
 float get_mult_rate(rtinfo_t* rti){
 	float mult = rti->player.stat.gear_mult;
 	mult = mult / 6600;
-	if (BUFF_MULT) mult += 0.05;
+	if (BUFF_MULT) mult += 0.05f;
 	return mult;
 }
 
 float get_vers_rate(rtinfo_t* rti){
 	float vers = rti->player.stat.gear_vers;
-	if (rti->player.stat.race == RACE_HUMAN) vers += 100;
+	if (RACE == RACE_HUMAN) vers += 100;
 	vers = vers / 13000;
-	if (BUFF_VERS) vers += 0.03;
+	if (BUFF_VERS) vers += 0.03f;
 	return vers;
 }
 
@@ -768,11 +773,11 @@ float weapon_dmg(rtinfo_t* rti, float weapon_multiplier, kbool normalized, kbool
     weapon_t* weapon = offhand ? &rti->player.stat.oh : &rti->player.stat.mh;
     float dmg = weapon->low;
     dmg += uni_rng(rti) * (weapon->high - weapon->low);
-    dmg += ( normalized ? normalized_weapon_speed[weapon->type] : weapon->speed ) * get_ap(rti) / 3.5;
+    dmg += ( normalized ? normalized_weapon_speed[weapon->type] : weapon->speed ) * get_ap(rti) / 3.5f;
     dmg *= weapon_multiplier;
     /* Crazed Berserker */
-    if (offhand) dmg *= 0.5 * ( SINGLE_MINDED ? 1.5 : 1.25 );
-    if (SINGLE_MINDED) dmg *= 1.3;
+    if (offhand) dmg *= 0.5f * ( SINGLE_MINDED ? 1.5f : 1.25f );
+    if (SINGLE_MINDED) dmg *= 1.3f;
     if (UP(enrage.expire)){
         dmg *= 1.1f;
         dmg *= 1.0f + get_mastery_rate(rti);
@@ -783,12 +788,13 @@ float weapon_dmg(rtinfo_t* rti, float weapon_multiplier, kbool normalized, kbool
 
 float ap_dmg(rtinfo_t* rti, float ap_multiplier){
     float dmg = ap_multiplier * get_ap(rti);
-    if (SINGLE_MINDED) dmg *= 1.3;
+    if (SINGLE_MINDED) dmg *= 1.3f;
     if (UP(enrage.expire)){
         dmg *= 1.1f;
         dmg *= 1.0f + get_mastery_rate(rti);
     }
     dmg *= 1.0f + get_vers_rate(rti);
+	return dmg;
 }
 
 enum{
@@ -802,20 +808,20 @@ void deal_damage( rtinfo_t* rti, float dmg, k8u dmgtype ) {
 		rti->damage_collected += dmg;
         break;
     case DMGTYPE_PHISICAL:
-		dmg *= 0.650684; 
+		dmg *= 0.650684f; 
 		lprintf(("damage %.0f", dmg));
 		rti->damage_collected += dmg;
 
-		float mr = 0.5 * get_mult_rate(rti);
+		float mr = 0.5f * get_mult_rate(rti);
 		float m = uni_rng(rti);
 		if (m < mr){
-			lprintf(("mult damage %.0f", dmg * 0.3));
-			rti->damage_collected += dmg * 0.3;
+			lprintf(("mult damage %.0f", dmg * 0.3f));
+			rti->damage_collected += dmg * 0.3f;
 		}
 		m = uni_rng(rti);
 		if (m < mr){
-			lprintf(("mult damage %.0f", dmg * 0.3));
-			rti->damage_collected += dmg * 0.3;
+			lprintf(("mult damage %.0f", dmg * 0.3f));
+			rti->damage_collected += dmg * 0.3f;
 		}
 		break;
     }
@@ -823,7 +829,7 @@ void deal_damage( rtinfo_t* rti, float dmg, k8u dmgtype ) {
 }
 
 /* Event list. */
-#define DECL_EVENT( name ) void event_##name ( rtinfo_t* rti, k8u snapshot )
+#define DECL_EVENT( name ) void event_##name ( rtinfo_t* rti, k32u snapshot )
 #define HOOK_EVENT( name ) case routnum_##name: event_##name( rti, e.snapshot ); break;
 #define DECL_SPELL( name ) void spell_##name ( rtinfo_t* rti )
 #define SPELL( name ) spell_##name ( rti )
@@ -856,7 +862,7 @@ DECL_EVENT( gcd_expire ) {
 }
 
 DECL_EVENT( bloodthirst_execute ) {
-    float d = weapon_dmg(rti, 0.5, 1, 0);
+    float d = weapon_dmg(rti, 0.5f, 1, 0);
     float c = uni_rng( rti );
 
     power_gain( rti, 10.0f );
@@ -869,7 +875,7 @@ DECL_EVENT( bloodthirst_execute ) {
 
     if (c < get_crit_rate(rti) + 0.4f){
         /* Crit */
-        d *= 2.0;
+        d *= 2.0f;
         eq_enqueue( rti, TIME_OFFSET( FROM_SECONDS( 0.1 ) ), routnum_enrage_trigger, 0 );
         lprintf(("bloodthirst crit"));
 
@@ -887,7 +893,7 @@ DECL_EVENT( bloodthirst_cd ) {
 
 DECL_EVENT( ragingblow_execute ) {
 	/* Main hand. */
-    float d = weapon_dmg(rti, 2.0, 1, 0);
+    float d = weapon_dmg(rti, 2.0f, 1, 0);
     float c = uni_rng( rti );
 	float cr = get_crit_rate(rti);
 
@@ -899,7 +905,7 @@ DECL_EVENT( ragingblow_execute ) {
 
     if (c < cr ){
         /* Crit */
-        d *= 2.0;
+        d *= 2.0f;
         lprintf(("ragingblow crit"));
 
     }else{
@@ -914,7 +920,7 @@ DECL_EVENT( ragingblow_execute ) {
 	c = uni_rng( rti );
 	if (c < cr ){
         /* Crit */
-        d *= 2.0;
+        d *= 2.0f;
         lprintf(("ragingblow oh crit"));
 
     }else{
@@ -959,14 +965,14 @@ DECL_EVENT( enrage_expire ) {
 
 DECL_EVENT( execute_execute ) {
 	/* Main hand. */
-    float d = weapon_dmg(rti, 3.5 * 1.2, 1, 0);
+    float d = weapon_dmg(rti, 3.5f * 1.2f, 1, 0);
     float c = uni_rng( rti );
 	float cr = get_crit_rate(rti);
 
-	if (SINGLE_MINDED) d *= 1.15;
+	if (SINGLE_MINDED) d *= 1.15f;
     if (c < cr ){
         /* Crit */
-        d *= 2.0;
+        d *= 2.0f;
         lprintf(("execute crit"));
 
     }else{
@@ -976,12 +982,12 @@ DECL_EVENT( execute_execute ) {
     deal_damage( rti, d, DMGTYPE_PHISICAL );
 
 	/* Off hand. */
-	d = weapon_dmg(rti, 3.5 * 1.2, 1, 1);
+	d = weapon_dmg(rti, 3.5f * 1.2f, 1, 1);
 	c = uni_rng( rti );
-	if (SINGLE_MINDED) d *= 1.15;
+	if (SINGLE_MINDED) d *= 1.15f;
 	if (c < cr ){
         /* Crit */
-        d *= 2.0;
+        d *= 2.0f;
         lprintf(("execute oh crit"));
 
     }else{
@@ -991,12 +997,12 @@ DECL_EVENT( execute_execute ) {
     deal_damage( rti, d, DMGTYPE_PHISICAL );
 }
 DECL_EVENT( wildstrike_execute ){
-    float d = weapon_dmg(rti, 3.75, 1, 1);
+    float d = weapon_dmg(rti, 3.75f, 1, 1);
     float c = uni_rng( rti );
 
     if (c < get_crit_rate(rti) ){
         /* Crit */
-        d *= 2.0;
+        d *= 2.0f;
         lprintf(("wildstrike crit"));
 
     }else{
@@ -1022,7 +1028,7 @@ DECL_EVENT( bloodsurge_expire ){
 }
 
 DECL_EVENT( auto_attack_mh ){
-    float d = weapon_dmg(rti, 1.0, 0, 0);
+    float d = weapon_dmg(rti, 1.0f, 0, 0);
     float c = uni_rng( rti );
 	float cr = get_crit_rate(rti);
 
@@ -1036,7 +1042,7 @@ DECL_EVENT( auto_attack_mh ){
         }
         if(c < 0.19f + cr){
             /* Crit */
-            d *= 2.0;
+            d *= 2.0f;
             lprintf(("mh crit"));
         }else{
             /* Hit */
@@ -1049,7 +1055,7 @@ DECL_EVENT( auto_attack_mh ){
 }
 
 DECL_EVENT( auto_attack_oh ){
-    float d = weapon_dmg(rti, 1.0, 0, 1);
+    float d = weapon_dmg(rti, 1.0f, 0, 1);
     float c = uni_rng( rti );
 	float cr = get_crit_rate(rti);
 
@@ -1063,7 +1069,7 @@ DECL_EVENT( auto_attack_oh ){
         }
         if(c < 0.19f + cr){
             /* Crit */
-            d *= 2.0;
+            d *= 2.0f;
             lprintf(("oh crit"));
         }else{
             /* Hit */
@@ -1165,7 +1171,6 @@ void module_init( rtinfo_t* rti ){
     rti->player.power = 0.0f;
     eq_enqueue(rti, rti->timestamp, routnum_auto_attack_mh, 0);
     eq_enqueue(rti, TIME_OFFSET( FROM_SECONDS( 0.5 ) ), routnum_auto_attack_oh, 0);
-	rti->player.stat.race = RACE_NONE;
 	rti->player.stat.gear_str = 3945;
 	rti->player.stat.gear_crit = 1714;
 	rti->player.stat.gear_haste = 917;
@@ -1174,7 +1179,7 @@ void module_init( rtinfo_t* rti ){
 	rti->player.stat.gear_vers = 0;
 	rti->player.stat.mh.low = 814;
 	rti->player.stat.mh.high = 1514;
-	rti->player.stat.mh.speed = 2.6;
+	rti->player.stat.mh.speed = 2.6f;
 	rti->player.stat.mh.type = WEAPON_1H;
 	rti->player.stat.oh = rti->player.stat.mh;
 
