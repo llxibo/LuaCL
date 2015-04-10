@@ -286,31 +286,31 @@ typedef struct {
 } event_queue_t;
 
 /* Declarations from class modules. */
-    typedef struct {
-        time_t cd;
-    } bloodthirst_t;
-    typedef struct {
-        k16u stack;
-        time_t expire;
-    } ragingblow_t;
-    typedef struct {
-        time_t expire;
-    } enrage_t;
-    typedef struct {
-        k16u stack;
-        time_t expire;
-    } bloodsurge_t;
-    typedef struct {
-        time_t expire;
-    } sudden_death_t;
+typedef struct {
+    time_t cd;
+} bloodthirst_t;
+typedef struct {
+    k16u stack;
+    time_t expire;
+} ragingblow_t;
+typedef struct {
+    time_t expire;
+} enrage_t;
+typedef struct {
+    k16u stack;
+    time_t expire;
+} bloodsurge_t;
+typedef struct {
+    time_t expire;
+} sudden_death_t;
 
-	typedef struct {
-		time_t cd;
-	} ICD_t;
-	typedef struct {
-		time_t lasttimeattemps;
-		time_t lasttimeprocs;
-	} RPPM_t;
+typedef struct {
+    time_t cd;
+} ICD_t;
+typedef struct {
+    time_t lasttimeattemps;
+    time_t lasttimeprocs;
+} RPPM_t;
 /* Snapshot saves past states. */
 #define SNAPSHOT_SIZE (64)
 typedef struct {
@@ -323,7 +323,7 @@ typedef struct {
     k64u bitmap;
 } snapshot_manager_t;
 
-typedef struct weapon_t{
+typedef struct weapon_t {
     float speed;
     k32u low;
     k32u high;
@@ -334,19 +334,19 @@ typedef struct weapon_t{
 #define WEAPON_1H 1
 #define WEAPON_DAGGER 2
 
-deviceonly(__constant) weapon_t weapon[] = { 
-	{
-		MH_SPEED,
-		MH_LOW,
-		MH_HIGH,
-		MH_TYPE,
-	},
-	{
-		OH_SPEED,
-		OH_LOW,
-		OH_HIGH,
-		OH_TYPE,
-	},
+deviceonly(__constant) weapon_t weapon[] = {
+    {
+        MH_SPEED,
+        MH_LOW,
+        MH_HIGH,
+        MH_TYPE,
+    },
+    {
+        OH_SPEED,
+        OH_LOW,
+        OH_HIGH,
+        OH_TYPE,
+    },
 };
 
 deviceonly( __constant ) float normalized_weapon_speed[] = {
@@ -377,20 +377,20 @@ deviceonly( __constant ) k32s racial_base_str[] = {
 };
 
 
-typedef struct stat_t{
+typedef struct stat_t {
     k32u gear_str;
     k32u gear_crit;
     k32u gear_haste;
     k32u gear_mastery;
     k32u gear_mult;
     k32u gear_vers;
-	float crit;
-	float haste;
-	float mastery;
-	float mult;
-	float vers;
-	k32u str;
-	k32u ap;
+    float crit;
+    float haste;
+    float mastery;
+    float mult;
+    float vers;
+    k32u str;
+    k32u ap;
 } stat_t;
 
 /* Player struct, filled by the class module. */
@@ -405,7 +405,7 @@ typedef struct kdeclspec( packed ) {
     bloodsurge_t    bloodsurge;
     sudden_death_t  sudden_death;
 
-	RPPM_t		sudden_death_proc;
+    RPPM_t		sudden_death_proc;
 
     time_t gcd;
 }
@@ -700,24 +700,24 @@ float enemy_health_percent( rtinfo_t* rti ) {
 }
 
 void proc_ICD(rtinfo_t* rti, ICD_t* state, float chance, time_t cooldown, k32u routnum, k32u snapshot) {
-	if ((!state->cd || state->cd <= rti->timestamp) && uni_rng(rti) < chance){
-		state->cd = TIME_OFFSET(cooldown);
-		eq_enqueue(rti, rti->timestamp, routnum, snapshot);
-	}
+    if ((!state->cd || state->cd <= rti->timestamp) && uni_rng(rti) < chance) {
+        state->cd = TIME_OFFSET(cooldown);
+        eq_enqueue(rti, rti->timestamp, routnum, snapshot);
+    }
 }
 void proc_PPM(rtinfo_t* rti, float PPM, weapon_t* weapon, k32u routnum, k32u snapshot) {
-	if (uni_rng(rti) < (PPM * weapon->speed / 60.0f)){
-		eq_enqueue(rti, rti->timestamp, routnum, snapshot);
-	}
+    if (uni_rng(rti) < (PPM * weapon->speed / 60.0f)) {
+        eq_enqueue(rti, rti->timestamp, routnum, snapshot);
+    }
 }
-void proc_RPPM(rtinfo_t* rti, RPPM_t* state, float RPPM, k32u routnum, k32u snapshot){
-	float proc = RPPM * min(TO_SECONDS(rti->timestamp - state->lasttimeattemps), 10.0f) / 60.0f;
-	state->lasttimeattemps = rti->timestamp;
-	proc *= max(1.0f, 1.0f + (min(TO_SECONDS(rti->timestamp - state->lasttimeprocs), 1000.0f) / (60.0f / RPPM) - 1.5f) * 3.0f);
-	if (uni_rng(rti) < proc){
-		eq_enqueue(rti, rti->timestamp, routnum, snapshot);
-		state->lasttimeprocs = rti->timestamp;
-	}
+void proc_RPPM(rtinfo_t* rti, RPPM_t* state, float RPPM, k32u routnum, k32u snapshot) {
+    float proc = RPPM * min(TO_SECONDS(rti->timestamp - state->lasttimeattemps), 10.0f) / 60.0f;
+    state->lasttimeattemps = rti->timestamp;
+    proc *= max(1.0f, 1.0f + (min(TO_SECONDS(rti->timestamp - state->lasttimeprocs), 1000.0f) / (60.0f / RPPM) - 1.5f) * 3.0f);
+    if (uni_rng(rti) < proc) {
+        eq_enqueue(rti, rti->timestamp, routnum, snapshot);
+        state->lasttimeprocs = rti->timestamp;
+    }
 }
 
 
@@ -748,105 +748,105 @@ void sim_init( rtinfo_t* rti, k32u seed, snapshot_t* ssbuf ) {
 /* Single iteration logic. */
 deviceonly( __kernel ) void sim_iterate(
     deviceonly( __global ) float* dps_result,
-	k32u deterministic_seed,
-	k32u gear_str,
-	k32u gear_crit,
-	k32u gear_haste,
-	k32u gear_mastery,
-	k32u gear_mult,
-	k32u gear_vers
+    k32u deterministic_seed,
+    k32u gear_str,
+    k32u gear_crit,
+    k32u gear_haste,
+    k32u gear_mastery,
+    k32u gear_mult,
+    k32u gear_vers
 ) {
     deviceonly( __private ) rtinfo_t _rti;
     snapshot_t snapshot_buffer[ SNAPSHOT_SIZE ];
-	/* Write zero to RTI. */
+    /* Write zero to RTI. */
     _rti = ( rtinfo_t ) {
         msvconly( 0 )
     };
 
-	_rti.player.stat.gear_str = gear_str;
-	_rti.player.stat.gear_crit = gear_crit;
-	_rti.player.stat.gear_haste = gear_haste;
-	_rti.player.stat.gear_mastery = gear_mastery;
-	_rti.player.stat.gear_mult = gear_mult;
-	_rti.player.stat.gear_vers = gear_vers;
+    _rti.player.stat.gear_str = gear_str;
+    _rti.player.stat.gear_crit = gear_crit;
+    _rti.player.stat.gear_haste = gear_haste;
+    _rti.player.stat.gear_mastery = gear_mastery;
+    _rti.player.stat.gear_mult = gear_mult;
+    _rti.player.stat.gear_vers = gear_vers;
 
     sim_init(
         &_rti,
         ( k32u )deterministic_seed + ( k32u )get_global_id( 0 ),
         snapshot_buffer
     );
-	
+
     while( eq_execute( &_rti ) );
 
     dps_result[get_global_id( 0 )] = _rti.damage_collected / TO_SECONDS( _rti.expected_combat_length );
 }
 
 /* Class module. */
-void refresh_str(rtinfo_t* rti){
+void refresh_str(rtinfo_t* rti) {
     float fstr = rti->player.stat.gear_str;
-	k32u str;
-	float coeff = 1.0f;
-	if (PLATE_SPECIALIZATION) coeff *= 1.05f;
+    k32u str;
+    float coeff = 1.0f;
+    if (PLATE_SPECIALIZATION) coeff *= 1.05f;
     if (BUFF_STR_AGI_INT) coeff *= 1.05f;
-	str = convert_uint_rtz(fstr * coeff);
-	fstr = 1455; /* Base str @lvl 100. */
+    str = convert_uint_rtz(fstr * coeff);
+    fstr = 1455; /* Base str @lvl 100. */
     fstr += racial_base_str[RACE]; /* Racial str. */
-	str += convert_uint_rtz(fstr * coeff);
+    str += convert_uint_rtz(fstr * coeff);
     rti->player.stat.str = str;
 }
 
-void refresh_ap(rtinfo_t* rti){
+void refresh_ap(rtinfo_t* rti) {
     k32u ap = rti->player.stat.str;
     if (BUFF_AP) ap = convert_uint_rtz(ap * 1.1f + 0.5f);
     rti->player.stat.ap = ap;
 }
 
-void refresh_mastery(rtinfo_t* rti){
+void refresh_mastery(rtinfo_t* rti) {
     float mastery = rti->player.stat.gear_mastery;
     if (BUFF_MASTERY) mastery += 550;
     mastery = 1.4f * (0.08f + mastery / 11000);
     rti->player.stat.mastery = mastery;
 }
 
-void refresh_crit(rtinfo_t* rti){
+void refresh_crit(rtinfo_t* rti) {
     float crit = rti->player.stat.gear_crit;
-	crit *= 1.05f;
+    crit *= 1.05f;
     crit = 0.05f + crit / 11000;
     if (BUFF_CRIT) crit += 0.05f;
-	if (RACE == RACE_NIGHTELF_DAY || RACE == RACE_BLOODELF || RACE == RACE_WORGEN)
-		crit += 0.01f;
+    if (RACE == RACE_NIGHTELF_DAY || RACE == RACE_BLOODELF || RACE == RACE_WORGEN)
+        crit += 0.01f;
     rti->player.stat.crit = crit;
 }
 
-void refresh_haste(rtinfo_t* rti){
-	float haste = rti->player.stat.gear_haste;
-	haste = 1.0f + haste / 9000;
-	if (BUFF_HASTE) haste *= 1.05f;
-	if (RACE == RACE_NIGHTELF_NIGHT || RACE == RACE_GOBLIN || RACE == RACE_GNOME)
-		haste *= 1.01f;
-	rti->player.stat.haste = haste - 1.0f;
+void refresh_haste(rtinfo_t* rti) {
+    float haste = rti->player.stat.gear_haste;
+    haste = 1.0f + haste / 9000;
+    if (BUFF_HASTE) haste *= 1.05f;
+    if (RACE == RACE_NIGHTELF_NIGHT || RACE == RACE_GOBLIN || RACE == RACE_GNOME)
+        haste *= 1.01f;
+    rti->player.stat.haste = haste - 1.0f;
 }
 
-void refresh_mult(rtinfo_t* rti){
-	float mult = rti->player.stat.gear_mult;
-	mult = mult / 6600;
-	if (BUFF_MULT) mult += 0.05f;
-	rti->player.stat.mult = mult;
+void refresh_mult(rtinfo_t* rti) {
+    float mult = rti->player.stat.gear_mult;
+    mult = mult / 6600;
+    if (BUFF_MULT) mult += 0.05f;
+    rti->player.stat.mult = mult;
 }
 
-void refresh_vers(rtinfo_t* rti){
-	float vers = rti->player.stat.gear_vers;
-	if (RACE == RACE_HUMAN) vers += 100;
-	vers = vers / 13000;
-	if (BUFF_VERS) vers += 0.03f;
-	rti->player.stat.vers = vers;
+void refresh_vers(rtinfo_t* rti) {
+    float vers = rti->player.stat.gear_vers;
+    if (RACE == RACE_HUMAN) vers += 100;
+    vers = vers / 13000;
+    if (BUFF_VERS) vers += 0.03f;
+    rti->player.stat.vers = vers;
 }
 
 void mhproc(rtinfo_t* rti);
 void ohproc(rtinfo_t* rti);
 void approc(rtinfo_t* rti);
 
-float weapon_dmg(rtinfo_t* rti, float weapon_multiplier, kbool normalized, kbool offhand){
+float weapon_dmg(rtinfo_t* rti, float weapon_multiplier, kbool normalized, kbool offhand) {
     float dmg = weapon[offhand].low;
     dmg += uni_rng(rti) * (weapon[offhand].high - weapon[offhand].low);
     dmg += ( normalized ? normalized_weapon_speed[weapon[offhand].type] : weapon[offhand].speed ) * rti->player.stat.ap / 3.5f;
@@ -854,92 +854,89 @@ float weapon_dmg(rtinfo_t* rti, float weapon_multiplier, kbool normalized, kbool
     /* Crazed Berserker */
     if (offhand) dmg *= 0.5f * ( SINGLE_MINDED ? 1.5f : 1.25f );
     if (SINGLE_MINDED) dmg *= 1.3f;
-    if (UP(enrage.expire)){
+    if (UP(enrage.expire)) {
         dmg *= 1.1f;
         dmg *= 1.0f + rti->player.stat.mastery;
     }
     dmg *= 1.0f + rti->player.stat.vers;
-	if (offhand) ohproc(rti); else mhproc(rti);
+    if (offhand) ohproc(rti);
+    else mhproc(rti);
     return dmg;
 }
 
-float ap_dmg(rtinfo_t* rti, float ap_multiplier){
+float ap_dmg(rtinfo_t* rti, float ap_multiplier) {
     float dmg = ap_multiplier * rti->player.stat.ap;
     if (SINGLE_MINDED) dmg *= 1.3f;
-    if (UP(enrage.expire)){
+    if (UP(enrage.expire)) {
         dmg *= 1.1f;
         dmg *= 1.0f + rti->player.stat.mastery;
     }
     dmg *= 1.0f + rti->player.stat.vers;
-	approc(rti);
-	return dmg;
+    approc(rti);
+    return dmg;
 }
 
-enum{
+enum {
     DMGTYPE_NONE,
     DMGTYPE_MELEE,
-	DMGTYPE_SPECIAL,
+    DMGTYPE_SPECIAL,
 };
 kbool deal_damage( rtinfo_t* rti, float dmg, k32u dmgtype, float extra_crit_rate ) {
-    switch( dmgtype ){
+    switch( dmgtype ) {
     case DMGTYPE_NONE:
-		lprintf(("damage %.0f", dmg));
-		rti->damage_collected += dmg;
-		return 0;
+        lprintf(("damage %.0f", dmg));
+        rti->damage_collected += dmg;
+        return 0;
         break;
-	default:
-	{
-		float c = uni_rng(rti);
-		float cr = rti->player.stat.crit - 0.03f + extra_crit_rate;
-		kbool ret;
-		float fdmg;
+    default: {
+        float c = uni_rng(rti);
+        float cr = rti->player.stat.crit - 0.03f + extra_crit_rate;
+        kbool ret;
+        float fdmg;
 
-		dmg *= 0.650684f;
+        dmg *= 0.650684f;
 
-		fdmg = dmg;
-		if (c < cr) {
-			ret = 1;
-			fdmg *= (RACE == RACE_DWARF || RACE == RACE_TAUREN) ? 2.04f : 2.0f;
-			lprintf(("damage *%.0f*", fdmg));
-		}
-		else {
-			ret = 0;
-			lprintf(("damage %.0f", fdmg));
-		}
-		rti->damage_collected += fdmg;
+        fdmg = dmg;
+        if (c < cr) {
+            ret = 1;
+            fdmg *= (RACE == RACE_DWARF || RACE == RACE_TAUREN) ? 2.04f : 2.0f;
+            lprintf(("damage *%.0f*", fdmg));
+        } else {
+            ret = 0;
+            lprintf(("damage %.0f", fdmg));
+        }
+        rti->damage_collected += fdmg;
 
-		float mr = 0.5f * rti->player.stat.mult;
-		float m = uni_rng(rti);
-		if (m < mr){
-			c = uni_rng(rti);
-			fdmg = dmg * 0.3f;
-			if (c < cr){
-				fdmg *= (RACE == RACE_DWARF || RACE == RACE_TAUREN) ? 2.04f : 2.0f;
-				lprintf(("mult damage *%.0f*", fdmg));
-			}
-			else {
-				lprintf(("mult damage %.0f", fdmg));
-			}
-			rti->damage_collected += fdmg;
-		}
-		m = uni_rng(rti);
-		if (m < mr){
-			c = uni_rng(rti);
-			fdmg = dmg * 0.3f;
-			if (c < cr){
-				fdmg *= (RACE == RACE_DWARF || RACE == RACE_TAUREN) ? 2.04f : 2.0f;
-				lprintf(("mult damage *%.0f*", fdmg));
-			}
-			else {
-				lprintf(("mult damage %.0f", fdmg));
-			}
-			rti->damage_collected += fdmg;
-		}
-		return ret;
-	}
-		break;
+        float mr = 0.5f * rti->player.stat.mult;
+        float m = uni_rng(rti);
+        if (m < mr) {
+            c = uni_rng(rti);
+            fdmg = dmg * 0.3f;
+            if (c < cr) {
+                fdmg *= (RACE == RACE_DWARF || RACE == RACE_TAUREN) ? 2.04f : 2.0f;
+                lprintf(("mult damage *%.0f*", fdmg));
+            } else {
+                lprintf(("mult damage %.0f", fdmg));
+            }
+            rti->damage_collected += fdmg;
+        }
+        m = uni_rng(rti);
+        if (m < mr) {
+            c = uni_rng(rti);
+            fdmg = dmg * 0.3f;
+            if (c < cr) {
+                fdmg *= (RACE == RACE_DWARF || RACE == RACE_TAUREN) ? 2.04f : 2.0f;
+                lprintf(("mult damage *%.0f*", fdmg));
+            } else {
+                lprintf(("mult damage %.0f", fdmg));
+            }
+            rti->damage_collected += fdmg;
+        }
+        return ret;
     }
-	
+    break;
+    }
+
 }
 
 /* Event list. */
@@ -947,7 +944,7 @@ kbool deal_damage( rtinfo_t* rti, float dmg, k32u dmgtype, float extra_crit_rate
 #define HOOK_EVENT( name ) case routnum_##name: event_##name( rti, e.snapshot ); break;
 #define DECL_SPELL( name ) void spell_##name ( rtinfo_t* rti )
 #define SPELL( name ) spell_##name ( rti )
-enum{
+enum {
     routnum_gcd_expire,
     routnum_bloodthirst_execute,
     routnum_bloodthirst_cd,
@@ -982,16 +979,16 @@ DECL_EVENT( bloodthirst_execute ) {
     rti->player.bloodthirst.cd = TIME_OFFSET( FROM_SECONDS( 4.5 / (1.0f + rti->player.stat.haste) ) );
     eq_enqueue( rti, rti->player.bloodthirst.cd, routnum_bloodthirst_cd, 0 );
 
-    if (uni_rng(rti) < 0.2f){
+    if (uni_rng(rti) < 0.2f) {
         eq_enqueue( rti, TIME_OFFSET( FROM_SECONDS( 0.1 ) ), routnum_bloodsurge_trigger, 0 );
     }
 
-    if ( deal_damage(rti, d, DMGTYPE_SPECIAL, 0.4f) ){
+    if ( deal_damage(rti, d, DMGTYPE_SPECIAL, 0.4f) ) {
         /* Crit */
         eq_enqueue( rti, TIME_OFFSET( FROM_SECONDS( 0.1 ) ), routnum_enrage_trigger, 0 );
         lprintf(("bloodthirst crit"));
 
-    }else{
+    } else {
         /* Hit */
         lprintf(("bloodthirst hit"));
     }
@@ -1003,32 +1000,32 @@ DECL_EVENT( bloodthirst_cd ) {
 }
 
 DECL_EVENT( ragingblow_execute ) {
-	/* Main hand. */
+    /* Main hand. */
     float d = weapon_dmg(rti, 2.0f, 1, 0);
 
     rti->player.ragingblow.stack --;
-    if (rti->player.ragingblow.stack == 0){
+    if (rti->player.ragingblow.stack == 0) {
         rti->player.ragingblow.expire = 0;
         eq_enqueue( rti, rti->timestamp, routnum_ragingblow_expire, 0 );
-		lprintf(("ragingblow expire"));
+        lprintf(("ragingblow expire"));
     }
 
-    if (deal_damage(rti, d, DMGTYPE_SPECIAL, 0) ){
+    if (deal_damage(rti, d, DMGTYPE_SPECIAL, 0) ) {
         /* Crit */
         lprintf(("ragingblow crit"));
 
-    }else{
+    } else {
         /* Hit */
         lprintf(("ragingblow hit"));
     }
 
-	/* Off hand. */
-	d = weapon_dmg(rti, 2.0, 1, 1);
-	if (deal_damage(rti, d, DMGTYPE_SPECIAL, 0) ){
+    /* Off hand. */
+    d = weapon_dmg(rti, 2.0, 1, 1);
+    if (deal_damage(rti, d, DMGTYPE_SPECIAL, 0) ) {
         /* Crit */
         lprintf(("ragingblow oh crit"));
 
-    }else{
+    } else {
         /* Hit */
         lprintf(("ragingblow oh hit"));
     }
@@ -1038,7 +1035,7 @@ DECL_EVENT( ragingblow_execute ) {
 DECL_EVENT( ragingblow_trigger ) {
     rti->player.ragingblow.stack ++;
     rti->player.ragingblow.expire = TIME_OFFSET( FROM_SECONDS( 15 ) );
-    if (rti->player.ragingblow.stack > 2){
+    if (rti->player.ragingblow.stack > 2) {
         rti->player.ragingblow.stack = 2;
     }
     eq_enqueue( rti, rti->player.ragingblow.expire, routnum_ragingblow_expire, 0 );
@@ -1046,7 +1043,7 @@ DECL_EVENT( ragingblow_trigger ) {
 }
 
 DECL_EVENT( ragingblow_expire ) {
-    if (rti->player.ragingblow.expire == rti->timestamp){
+    if (rti->player.ragingblow.expire == rti->timestamp) {
         rti->player.ragingblow.stack = 0;
         lprintf(("ragingblow expire"));
     }
@@ -1061,80 +1058,80 @@ DECL_EVENT( enrage_trigger ) {
 }
 
 DECL_EVENT( enrage_expire ) {
-    if (rti->player.enrage.expire == rti->timestamp){
+    if (rti->player.enrage.expire == rti->timestamp) {
         lprintf(("enrage expire"));
     }
 }
 
 DECL_EVENT( execute_execute ) {
-	/* Main hand. */
+    /* Main hand. */
     float d = weapon_dmg(rti, 3.5f * 1.2f, 1, 0);
-	if (SINGLE_MINDED) d *= 1.15f;
+    if (SINGLE_MINDED) d *= 1.15f;
 
-    if (deal_damage( rti, d, DMGTYPE_SPECIAL, 0 ) ){
+    if (deal_damage( rti, d, DMGTYPE_SPECIAL, 0 ) ) {
         /* Crit */
         lprintf(("execute crit"));
 
-    }else{
+    } else {
         /* Hit */
         lprintf(("execute hit"));
     }
 
-	/* Off hand. */
+    /* Off hand. */
 
-	d = weapon_dmg(rti, 3.5f * 1.2f, 1, 1);
-	if (SINGLE_MINDED) d *= 1.15f;
+    d = weapon_dmg(rti, 3.5f * 1.2f, 1, 1);
+    if (SINGLE_MINDED) d *= 1.15f;
 
-	if (deal_damage( rti, d, DMGTYPE_SPECIAL, 0 ) ){
+    if (deal_damage( rti, d, DMGTYPE_SPECIAL, 0 ) ) {
         /* Crit */
         lprintf(("execute oh crit"));
 
-    }else{
+    } else {
         /* Hit */
         lprintf(("execute oh hit"));
     }
 }
-DECL_EVENT( wildstrike_execute ){
+DECL_EVENT( wildstrike_execute ) {
     float d = weapon_dmg(rti, 3.75f, 1, 1);
 
-    if (deal_damage( rti, d, DMGTYPE_SPECIAL, 0 ) ){
+    if (deal_damage( rti, d, DMGTYPE_SPECIAL, 0 ) ) {
         /* Crit */
         lprintf(("wildstrike crit"));
 
-    }else{
+    } else {
         /* Hit */
         lprintf(("wildstrike hit"));
     }
 }
 
-DECL_EVENT( bloodsurge_trigger ){
+DECL_EVENT( bloodsurge_trigger ) {
     rti->player.bloodsurge.stack = 2;
     rti->player.bloodsurge.expire = TIME_OFFSET( FROM_SECONDS( 15 ) );
     eq_enqueue( rti, rti->player.bloodsurge.expire, routnum_bloodsurge_expire, 0 );
     lprintf(("bloodsurge trig"));
 }
 
-DECL_EVENT( bloodsurge_expire ){
-    if (rti->player.bloodsurge.expire == rti->timestamp){
+DECL_EVENT( bloodsurge_expire ) {
+    if (rti->player.bloodsurge.expire == rti->timestamp) {
         rti->player.bloodsurge.stack = 0;
         rti->player.bloodsurge.expire = 0;
         lprintf(("bloodsurge expire"));
     }
 }
 
-DECL_EVENT( auto_attack_mh ){
+DECL_EVENT( auto_attack_mh ) {
     float d = weapon_dmg(rti, 1.0f, 0, 0);
 
-    if (uni_rng(rti) < 0.19f ){
+    if (uni_rng(rti) < 0.19f ) {
         /* Miss */
         lprintf(("mh miss"));
-    }else{
+    } else {
         power_gain( rti, 3.5f * weapon[0].speed );
-		proc_RPPM(rti, &rti->player.sudden_death_proc, 2.5f * (1.0f + rti->player.stat.haste), routnum_sudden_death_trigger, 0);
-        if(deal_damage( rti, d, DMGTYPE_MELEE, 0)){
+        proc_RPPM(rti, &rti->player.sudden_death_proc, 2.5f * (1.0f + rti->player.stat.haste), routnum_sudden_death_trigger, 0);
+        if(deal_damage( rti, d, DMGTYPE_MELEE, 0)) {
             /* Crit */
             lprintf(("mh crit"));
-        }else{
+        } else {
             /* Hit */
             lprintf(("mh hit"));
         }
@@ -1143,19 +1140,19 @@ DECL_EVENT( auto_attack_mh ){
     eq_enqueue(rti, TIME_OFFSET( FROM_SECONDS( weapon[0].speed / (1.0f + rti->player.stat.haste) ) ), routnum_auto_attack_mh, 0);
 }
 
-DECL_EVENT( auto_attack_oh ){
+DECL_EVENT( auto_attack_oh ) {
     float d = weapon_dmg(rti, 1.0f, 0, 1);
 
-    if (uni_rng(rti) < 0.19f ){
+    if (uni_rng(rti) < 0.19f ) {
         /* Miss */
         lprintf(("oh miss"));
-    }else{
+    } else {
         power_gain( rti, 3.5f * weapon[1].speed * 0.5f );
         proc_RPPM(rti, &rti->player.sudden_death_proc, 2.5f * (1.0f + rti->player.stat.haste), routnum_sudden_death_trigger, 0);
-        if(deal_damage( rti, d, DMGTYPE_MELEE, 0)){
+        if(deal_damage( rti, d, DMGTYPE_MELEE, 0)) {
             /* Crit */
             lprintf(("oh crit"));
-        }else{
+        } else {
             /* Hit */
             lprintf(("oh hit"));
         }
@@ -1164,19 +1161,19 @@ DECL_EVENT( auto_attack_oh ){
     eq_enqueue(rti, TIME_OFFSET( FROM_SECONDS( weapon[1].speed / (1.0f + rti->player.stat.haste) ) ), routnum_auto_attack_oh, 0);
 }
 
-DECL_EVENT(sudden_death_trigger){
+DECL_EVENT(sudden_death_trigger) {
     rti->player.sudden_death.expire = TIME_OFFSET( FROM_SECONDS(10) );
     eq_enqueue(rti, rti->player.sudden_death.expire, routnum_sudden_death_expire, 0);
     lprintf(("suddendeath trig"));
 }
 
-DECL_EVENT( sudden_death_expire ){
-    if (rti->player.sudden_death.expire == rti->timestamp){
+DECL_EVENT( sudden_death_expire ) {
+    if (rti->player.sudden_death.expire == rti->timestamp) {
         lprintf(("suddendeath expire"));
     }
 }
 
-DECL_SPELL( bloodthirst ){
+DECL_SPELL( bloodthirst ) {
     if ( rti->player.gcd > rti->timestamp ) return;
     if ( rti->player.bloodthirst.cd > rti->timestamp ) return;
     gcd_start( rti, FROM_SECONDS( 1.5 / (1.0f + rti->player.stat.haste) ) );
@@ -1184,7 +1181,7 @@ DECL_SPELL( bloodthirst ){
     lprintf(("cast bloodthirst"));
 }
 
-DECL_SPELL( ragingblow ){
+DECL_SPELL( ragingblow ) {
     if ( rti->player.gcd > rti->timestamp ) return;
     if ( !UP(ragingblow.expire) ) return;
     if ( !power_check( rti, 10.0f ) ) return;
@@ -1194,12 +1191,12 @@ DECL_SPELL( ragingblow ){
     lprintf(("cast ragingblow"));
 }
 
-DECL_SPELL( execute ){
+DECL_SPELL( execute ) {
     if ( rti->player.gcd > rti->timestamp ) return;
-    if ( !UP(sudden_death.expire) ){
+    if ( !UP(sudden_death.expire) ) {
         if ( enemy_health_percent(rti) >= 20.0f || !power_check( rti, 30.0f ) ) return;
         power_consume( rti, 30.0f );
-    }else{
+    } else {
         rti->player.sudden_death.expire = 0;
         eq_enqueue( rti, rti->timestamp, routnum_sudden_death_expire, 0 );
     }
@@ -1208,17 +1205,17 @@ DECL_SPELL( execute ){
     lprintf(("cast execute"));
 }
 
-DECL_SPELL( wildstrike ){
+DECL_SPELL( wildstrike ) {
     if ( rti->player.gcd > rti->timestamp ) return;
-    if ( !UP(bloodsurge.expire) ){
+    if ( !UP(bloodsurge.expire) ) {
         if ( !power_check( rti, 45.0f ) ) return;
         power_consume( rti, 45.0f );
-    }else{
+    } else {
         rti->player.bloodsurge.stack --;
-        if (rti->player.bloodsurge.stack == 0){
+        if (rti->player.bloodsurge.stack == 0) {
             rti->player.bloodsurge.expire = 0;
             eq_enqueue( rti, rti->timestamp, routnum_bloodsurge_expire, 0 );
-			lprintf(("bloodsurge expire"));
+            lprintf(("bloodsurge expire"));
         }
     }
     gcd_start( rti, FROM_SECONDS( 0.75 ) );
@@ -1227,8 +1224,8 @@ DECL_SPELL( wildstrike ){
 }
 
 
-void routine_entries( rtinfo_t* rti, _event_t e ){
-    switch(e.routine){
+void routine_entries( rtinfo_t* rti, _event_t e ) {
+    switch(e.routine) {
         HOOK_EVENT( gcd_expire );
         HOOK_EVENT( bloodthirst_execute );
         HOOK_EVENT( bloodthirst_cd );
@@ -1250,40 +1247,40 @@ void routine_entries( rtinfo_t* rti, _event_t e ){
     }
 }
 
-void mhproc(rtinfo_t* rti){
+void mhproc(rtinfo_t* rti) {
 
 }
-void ohproc(rtinfo_t* rti){
+void ohproc(rtinfo_t* rti) {
 
 }
-void approc(rtinfo_t* rti){
+void approc(rtinfo_t* rti) {
 
 }
 
-void module_init( rtinfo_t* rti ){
+void module_init( rtinfo_t* rti ) {
     rti->player.power_regen = 0.0f;
     rti->player.power = 0.0f;
     eq_enqueue(rti, rti->timestamp, routnum_auto_attack_mh, 0);
     eq_enqueue(rti, TIME_OFFSET( FROM_SECONDS( 0.5 ) ), routnum_auto_attack_oh, 0);
-	
-	refresh_str(rti);
-	refresh_ap(rti);
-	refresh_crit(rti);
-	refresh_haste(rti);
-	refresh_mastery(rti);
-	refresh_mult(rti);
-	refresh_vers(rti);
 
-	lprintf(("Raid buffed str %d", rti->player.stat.str));
-	lprintf(("Raid buffed ap %d", rti->player.stat.ap));
-	lprintf(("Raid buffed crit %f", rti->player.stat.crit));
-	lprintf(("Raid buffed haste %f", rti->player.stat.haste));
-	lprintf(("Raid buffed mastery %f", rti->player.stat.mastery));
-	lprintf(("Raid buffed mult %f", rti->player.stat.mult));
-	lprintf(("Raid buffed vers %f", rti->player.stat.vers));
+    refresh_str(rti);
+    refresh_ap(rti);
+    refresh_crit(rti);
+    refresh_haste(rti);
+    refresh_mastery(rti);
+    refresh_mult(rti);
+    refresh_vers(rti);
 
-	rti->player.sudden_death_proc.lasttimeattemps = FROM_SECONDS(10);
-	rti->player.sudden_death_proc.lasttimeprocs = FROM_SECONDS(180);
+    lprintf(("Raid buffed str %d", rti->player.stat.str));
+    lprintf(("Raid buffed ap %d", rti->player.stat.ap));
+    lprintf(("Raid buffed crit %f", rti->player.stat.crit));
+    lprintf(("Raid buffed haste %f", rti->player.stat.haste));
+    lprintf(("Raid buffed mastery %f", rti->player.stat.mastery));
+    lprintf(("Raid buffed mult %f", rti->player.stat.mult));
+    lprintf(("Raid buffed vers %f", rti->player.stat.vers));
+
+    rti->player.sudden_death_proc.lasttimeattemps = FROM_SECONDS(10);
+    rti->player.sudden_death_proc.lasttimeprocs = FROM_SECONDS(180);
 
 }
 
